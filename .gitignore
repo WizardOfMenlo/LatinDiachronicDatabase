@@ -1,0 +1,8 @@
+.vscode
+resultSet*
+debug*
+data/works
+vendor
+*.lock
+*UNZIPPED
+data/
