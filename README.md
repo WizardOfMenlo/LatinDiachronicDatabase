@@ -67,8 +67,6 @@ Furthermore, for each of these routes, say ```/a```, we associate the following:
  1. ```/a/{authorsFilter}```: Runs ```/a``` on the subset of literature defined by the list of authors specified in ```authorsFilter``` (comma separated list). 
  2. ```/aHist/{date]```: Runs ```/a``` on the subset of literature written by authors active before ```date```
 
-List item
-
 ## Contributing
 At the moment the project is undergoing a Rust rewrite, in order to further modularize it and make future development easier. As such most of the contributing should be done on the ```rust``` branch. I will still be monitoring and reviewing pull requests on the ```golang``` branch, but most of my effort will not be directed there. 
 
