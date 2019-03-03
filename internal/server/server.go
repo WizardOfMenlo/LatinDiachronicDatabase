@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/WizardOfMenlo/LatinDiachronicDatabase/internal/backend"
 	"github.com/WizardOfMenlo/LatinDiachronicDatabase/pkg/lword"
@@ -76,6 +77,7 @@ func (s Data) Cleanup() {
 func unzipIfNeeded(dataPath string) (string, error) {
 	fi, err := os.Stat(dataPath)
 	if err != nil {
+		log.Println("Error opening argument file")
 		return "", err
 	}
 
@@ -91,6 +93,7 @@ func unzipIfNeeded(dataPath string) (string, error) {
 	outputPath := filepath.Dir(dataPath)
 	reader, err := zip.OpenReader(dataPath)
 	if err != nil {
+		log.Println("Error opening reader")
 		return "", err
 	}
 
@@ -105,23 +108,45 @@ func unzipIfNeeded(dataPath string) (string, error) {
 
 		fileReader, err := file.Open()
 		if err != nil {
+			log.Println("Error opening file for reading")
 			return "", err
 		}
-		defer fileReader.Close()
-
-		targetFile, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, file.Mode())
+		normalizedPath := normalizePath(path)
+		targetFile, err := os.OpenFile(normalizedPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, file.Mode())
 		if err != nil {
+			log.Println("Error opening file for writing")
 			return "", err
 		}
-		defer targetFile.Close()
 
 		if _, err := io.Copy(targetFile, fileReader); err != nil {
+			log.Println("Error copying file")
 			return "", err
 		}
+
+		fileReader.Close()
+		targetFile.Close()
 	}
 
 	// TODO This only works if the zip contains a single folder, same name as the zip
 	finalPath := filepath.Join(outputPath, strings.TrimSuffix(filepath.Base(dataPath), ".zip"))
 
 	return finalPath, nil
+}
+
+func normalizePath(s string) string {
+	if utf8.ValidString(s) {
+		return s
+	}
+
+	v := make([]rune, 0, len(s))
+	for i, r := range s {
+		if r == utf8.RuneError {
+			_, size := utf8.DecodeRuneInString(s[i:])
+			if size == 1 {
+				continue
+			}
+		}
+		v = append(v, r)
+	}
+	return string(v)
 }
