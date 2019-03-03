@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/WizardOfMenlo/FrequentialDictionary/pkg/lword"
 	"github.com/WizardOfMenlo/LatinDiachronicDatabase/internal/backend"
+	"github.com/WizardOfMenlo/LatinDiachronicDatabase/pkg/lword"
 )
 
 // Data encapsulates the state of the server

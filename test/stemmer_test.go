@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/WizardOfMenlo/FrequentialDictionary/pkg/lword"
+	"github.com/WizardOfMenlo/LatinDiachronicDatabase/pkg/lword"
 )
 
 func TestDictionary(t *testing.T) {

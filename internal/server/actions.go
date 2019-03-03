@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/WizardOfMenlo/FrequentialDictionary/pkg/lword"
+	"github.com/WizardOfMenlo/LatinDiachronicDatabase/pkg/lword"
 	"github.com/gorilla/mux"
 )
 

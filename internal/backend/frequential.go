@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/WizardOfMenlo/FrequentialDictionary/pkg/lword"
+	"github.com/WizardOfMenlo/LatinDiachronicDatabase/pkg/lword"
 )
 
 // NotFound Sentinel value for values the lemmatizer cannot resolve
