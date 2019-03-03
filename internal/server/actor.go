@@ -212,6 +212,7 @@ var reg = regexp.MustCompile("[^a-zA-Z0-9\\s]+")
 func getLine(data backend.FormMetaData) (string, error) {
 	// Open the file
 	f, err := os.Open(data.Path)
+	defer f.Close()
 	if err != nil {
 		return "", err
 	}

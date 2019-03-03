@@ -23,6 +23,7 @@ func main() {
 
 	serv, err := server.New(folderName, lemmatizerPath, authorFile, len(args) == 5)
 	if err != nil {
+		log.Println(err);
 		log.Fatalln("Error creating server, failing")
 	}
 
