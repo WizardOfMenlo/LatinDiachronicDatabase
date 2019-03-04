@@ -11,7 +11,10 @@ Secondly, the program can be used to detect the words (and/or the word-forms) sh
 This project revolves around allowing for a flexible and easy to use interface to run quantitative queries on the Latin literature. In particular, we focus on providing tool for statistical computational analysis of the Latin language, diachronic frequency analysis and aid for digital intertextual source. 
 
 ## Getting Started
+
 ``` 
+mkdir $GOPATH/src/github.com/WizardOfMenlo
+cd $GOPATH/src/github.com/WizardOfMenlo
 git clone https://github.com/WizardOfMenlo/LatinDiachronicDatabase
 cd LatinDiachronicDatabase
 
@@ -25,7 +28,8 @@ go run cmd/frequential/main.go
 
 ### Prerequisites
 
-Make sure you have ```go``` installed (Tested with version >= 1.10).
+Make sure you have ```go``` installed (Tested with version >= 1.10).  
+Also ensure ```GOPATH``` is set to where you wish the project to be (usual choice ```~/go```).
 The following dependencies must be installed (with ```go get```):
 
  - [ ] github.com/gorilla/mux
