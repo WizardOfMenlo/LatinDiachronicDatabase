@@ -34,6 +34,7 @@ Also ensure ```GOPATH``` is set to where you wish the project to be (usual choic
 The following dependencies must be installed (with ```go get```):
 
  - [ ] github.com/gorilla/mux
+ - [ ] github.com/rs/cors
  - [ ] golang.org/x/text/unicode/norm
  - [ ] golang.org/x/text/transform
 
