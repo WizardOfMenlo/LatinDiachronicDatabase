@@ -5,6 +5,7 @@ import (
 	"net/http/pprof"
 
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 )
 
 type route struct {
@@ -22,7 +23,7 @@ func attachProfiler(r *mux.Router) *mux.Router {
 	return r
 }
 
-func newRouter(s Data) *mux.Router {
+func newRouter(s Data) http.Handler {
 	routes := []route{
 		// Returns the current status of the application
 		route{
@@ -236,5 +237,8 @@ func newRouter(s Data) *mux.Router {
 		attachProfiler(router)
 	}
 
-	return router
+	// Enable cors support
+	h := cors.Default().Handler(router)
+
+	return h
 }

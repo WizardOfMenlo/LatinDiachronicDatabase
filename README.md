@@ -20,6 +20,7 @@ cd LatinDiachronicDatabase
 
 # Install Dependencies
 go get github.com/gorilla/mux
+go get github.com/rs/cors
 go get golang.org/x/text/unicode/norm
 go get golang.org/x/text/transform
 
