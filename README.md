@@ -60,8 +60,8 @@ Once the arguments are specified, the program will start a web server on port ``
 The user can then query the program at the routes specified at [routes.go](https://github.com/WizardOfMenlo/LatinDiachronicDatabase/blob/master/internal/server/routes.go) via standard HTTP requests. The list is also reported here for simplicity, following the convention that ```{x}``` refers to a parameter to the command, and that running a command ```/a/{x}``` should be done via querying ```localhost:8080/a/something``` with, of course, the relevant host-name. Unless specified, all responses are in JSON.  
 In particular: 
 
- 1. ```/``` : Returns a non-JSON status of whether the server is running correctly
- 2. ```/writeFiles```: Writes to disk a dictionary representation of the corpus
+ 1. ```/``` : Returns if the server is running correctly
+ 2. ```/writeFiles```: Writes to disk a dictionary representation of the corpus. Returns a non-JSON message.
  3. ```/lemma/{lemma}```: Returns the numbers of occurrences for ```lemma```, displaying a breakdown of form occurrences
  4. ```/form/{form}```: Returns the numbers of occurrences for ```form```, and shows the ```lemma```s it gets resolved to.
  5. ```/intersection/{authors}```: Given a list of ```authors``` in the form ```A_1, ..., A_K```, it computes ```Intersection(W(A_i)) - Union(Authors - Union(A_i))```
