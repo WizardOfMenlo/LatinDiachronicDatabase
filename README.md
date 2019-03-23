@@ -57,10 +57,10 @@ The program takes three required arguments and one optional one, in the followin
  4. **debug**: an optional flag, if specified a profiler will be attached at ```debug/pprof```
 
 Once the arguments are specified, the program will start a web server on port ```8080```.
-The user can then query the program at the routes specified at [routes.go](https://github.com/WizardOfMenlo/LatinDiachronicDatabase/blob/master/internal/server/routes.go) via standard HTTP requests. The list is also reported here for simplicity, following the convention that ```{x}``` refers to a parameter to the command, and that running a command ```/a/{x}``` should be done via querying ```localhost:8080/a/something``` with, of course, the relevant host-name. 
+The user can then query the program at the routes specified at [routes.go](https://github.com/WizardOfMenlo/LatinDiachronicDatabase/blob/master/internal/server/routes.go) via standard HTTP requests. The list is also reported here for simplicity, following the convention that ```{x}``` refers to a parameter to the command, and that running a command ```/a/{x}``` should be done via querying ```localhost:8080/a/something``` with, of course, the relevant host-name. Unless specified, all responses are in JSON.  
 In particular: 
 
- 1. ```/status```: Returns whether the server is running correctly
+ 1. ```/``` : Returns a non-JSON status of whether the server is running correctly
  2. ```/writeFiles```: Writes to disk a dictionary representation of the corpus
  3. ```/lemma/{lemma}```: Returns the numbers of occurrences for ```lemma```, displaying a breakdown of form occurrences
  4. ```/form/{form}```: Returns the numbers of occurrences for ```form```, and shows the ```lemma```s it gets resolved to.
