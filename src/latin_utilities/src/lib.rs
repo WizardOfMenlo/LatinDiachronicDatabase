@@ -1,9 +1,18 @@
+//! A crate that encompasses various utilities for working with Latin String  
+//! In particular, it aims to standardize latin string representation to a 
+//! format that resembles closely Italian. 
+//! The high level concept is to normalize unicode, remove all non alphabetical 
+//! characters, and to then replace j, v to i, u
+
+
 mod normalized_latin_string;
-
-pub use self::normalized_latin_string::*;
-
+pub use self::normalized_latin_string::NormalizedLatinString;
 use unicode_normalization::UnicodeNormalization;
 
+
+
+/// A converter which can be use to turn a `&str` into a
+///  [`NormalizedLatingString`](struct.NormalizedLatinString.html)
 #[derive(Debug, Clone, Default)]
 pub struct StandardLatinConverter;
 
@@ -11,7 +20,8 @@ impl StandardLatinConverter {
     /// Convert a str to the correctly parsed form, converting j -> i, v -> u
     /// ```
     /// use latin_utilities::StandardLatinConverter;
-    /// StandardLatinConverter::default().convert("dura lex, sed lex");
+    /// let res = StandardLatinConverter::default().convert("dura lex, sed lex");
+    /// assert_eq!(res, "dura lex sed lex");
     /// ```
     pub fn convert(&self, input: &str) -> NormalizedLatinString {
         // Unicode normalisation
@@ -31,7 +41,7 @@ impl StandardLatinConverter {
             res = res.replace(TO_REPLACE[i], REPLACEMENT[i]);
         }
 
-        NormalizedLatinString(res)
+        NormalizedLatinString::instantiate(res)
     }
 }
 

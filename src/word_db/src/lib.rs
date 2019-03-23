@@ -1,5 +1,5 @@
+use hashbrown::HashMap;
 use latin_utilities::NormalizedLatinString;
-use std::collections::HashMap;
 
 #[derive(Debug, Clone, Copy)]
 pub struct SourceId(usize);
@@ -8,7 +8,7 @@ pub struct SourceId(usize);
 pub type Form = NormalizedLatinString;
 pub type Lemma = NormalizedLatinString;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct WordDatabase {
     word_mapping: HashMap<Lemma, Vec<FormData>>,
 }
@@ -32,14 +32,6 @@ impl WordDatabase {
         self.word_mapping
             .get(lemma)
             .map_or(0, |form_v| form_v.iter().map(|f| f.records.len()).sum())
-    }
-}
-
-impl Default for WordDatabase {
-    fn default() -> Self {
-        WordDatabase {
-            word_mapping: HashMap::new(),
-        }
     }
 }
 

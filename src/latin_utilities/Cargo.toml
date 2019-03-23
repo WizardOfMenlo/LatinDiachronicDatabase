@@ -6,3 +6,10 @@ edition = "2018"
 
 [dependencies]
 unicode-normalization = "0.1.7"
+
+[dev-dependencies]
+criterion = "0.2"
+
+[[bench]]
+name = "converter_benchmark"
+harness = false

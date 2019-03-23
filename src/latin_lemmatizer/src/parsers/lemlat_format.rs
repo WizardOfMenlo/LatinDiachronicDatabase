@@ -10,8 +10,6 @@ pub struct LemlatFormatParserImpl {
 
 pub type LemlatFormatParser = ParserWrapper<LemlatFormatParserImpl>;
 
-// END Error handling utilities  ===================================
-
 pub fn new() -> LemlatFormatParser {
     LemlatFormatParser::new()
 }

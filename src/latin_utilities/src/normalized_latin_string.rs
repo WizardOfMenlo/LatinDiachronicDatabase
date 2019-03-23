@@ -1,14 +1,19 @@
 use super::StandardLatinConverter;
 
 /// A checked and normalized string type, which can only
-/// be instantiated by the StandardLatinConverter type
+/// be instantiated by the [`StandardLatinConverter`](struct.StandardLatinConverter.html) type
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
-pub struct NormalizedLatinString(pub(crate) String);
+pub struct NormalizedLatinString(String);
 
 impl NormalizedLatinString {
     /// Accessor method to get the inner value of the nlstring
     pub fn inner(&self) -> &str {
         &self.0
+    }
+
+    // Crate-local way to create nlstring
+    pub(crate) fn instantiate(s: impl Into<String>) -> Self {
+        Self (s.into())
     }
 }
 

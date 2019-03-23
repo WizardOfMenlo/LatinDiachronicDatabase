@@ -5,6 +5,7 @@ pub mod csv_format;
 pub mod lemlat_format;
 
 // START Error handling utilities ===================================
+
 #[derive(Debug)]
 pub enum ParsingError {
     LineFormatError,
@@ -21,6 +22,7 @@ type PResult<T> = Result<T, ParsingError>;
 
 // END Error handling utilities  ===================================
 
+/// A trait that is used to build parser for lemmatizers
 pub trait ParserImpl {
     fn new() -> Self;
     fn read_line_as_str(&mut self, line: &str) -> PResult<()>;
