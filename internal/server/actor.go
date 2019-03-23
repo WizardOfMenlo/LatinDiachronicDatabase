@@ -181,6 +181,22 @@ func (a Actor) getStats(w http.ResponseWriter) {
 	json.NewEncoder(w).Encode(stats)
 }
 
+func (a Actor) getAuthors(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+
+	var list []string
+
+	if a.crit.all {
+		list = a.internal.mapping.GetAuthors()
+	} else {
+		list = a.crit.authors
+	}
+
+	json.NewEncoder(w).Encode(list)
+
+}
+
 // UTILITIES --------------------------------------------------------------------------------
 
 // Reduce duplicates in a list of metadata

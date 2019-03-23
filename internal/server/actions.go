@@ -84,3 +84,9 @@ func (s Data) getStats(w http.ResponseWriter, r *http.Request) {
 	criterion := FromRequest("authorsFilter", "date", vars, s.authorHistoric)
 	NewActor(&s, criterion).getStats(w)
 }
+
+func (s Data) getAuthors(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	criterion := FromRequest("authorsFilter", "date", vars, s.authorHistoric)
+	NewActor(&s, criterion).getAuthors(w)
+}

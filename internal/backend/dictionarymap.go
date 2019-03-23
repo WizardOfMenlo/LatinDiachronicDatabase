@@ -3,6 +3,8 @@ package backend
 // DictionaryMap stores information about distribution of words in the latin language
 type DictionaryMap struct {
 	internal map[string]map[string][]FormMetaData
+
+	authors stringSet
 }
 
 // FormMetaData A struct that empasses the information about a word occurrence
@@ -16,6 +18,7 @@ type FormMetaData struct {
 func newDictionary() DictionaryMap {
 	d := DictionaryMap{}
 	d.internal = make(map[string]map[string][]FormMetaData)
+	d.authors = make(stringSet)
 	return d
 }
 
@@ -32,6 +35,11 @@ func (d *DictionaryMap) addToMap(stem, form string, data FormMetaData) {
 		// Create a new map
 		formMap := map[string][]FormMetaData{form: []FormMetaData{data}}
 		d.internal[stem] = formMap
+	}
+
+	// Add author to list
+	if _, ok := d.authors[data.Author]; !ok {
+		d.authors[data.Author] = struct{}{}
 	}
 }
 
@@ -227,4 +235,12 @@ func JoinDictionaryMaps(maps []DictionaryMap) DictionaryMap {
 	}
 
 	return newMap
+}
+
+func (d DictionaryMap) GetAuthors() []string {
+	authors := make([]string, 0, len(d.authors))
+	for auth := range d.authors {
+		authors = append(authors, auth)
+	}
+	return authors
 }

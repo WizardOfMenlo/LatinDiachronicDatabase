@@ -218,6 +218,20 @@ func newRouter(s Data) http.Handler {
 			"/statsHist/{date}",
 			s.getStats,
 		},
+
+		route{
+			"Authors",
+			"GET",
+			"/authors/",
+			s.getAuthors,
+		},
+
+		route{
+			"Authors Historical",
+			"GET",
+			"/authorsHist/{date}",
+			s.getAuthors,
+		},
 	}
 
 	router := mux.NewRouter().StrictSlash(true)
