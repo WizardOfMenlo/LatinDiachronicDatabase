@@ -68,7 +68,8 @@ In particular:
  6. ```/match/{form}```: Gathers all exact occurrences of ```form``` 
  7. ```/find/{lemma}```: Gathers all occurrences of ```lemma```, including derived forms.
  8. ```/ambig```: Displays all words that the lemmatizer resolve ambiguously
- 9. ```stats```: Displays some relevant statistics about the corpus, e.g number of headwords, total words, ecc.
+ 9. ```/stats```: Displays some relevant statistics about the corpus, e.g number of headwords, total words, ecc.
+ 10. ```/authors```: Returns a list of all authors in the corpus
 
 Furthermore, for each of these routes, say ```/a```, we associate the following:
 
