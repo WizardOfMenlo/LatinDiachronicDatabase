@@ -6,3 +6,6 @@ edition = "2018"
 
 [dependencies]
 latin_utilities = { version = "0.1.0", path = "../latin_utilities"}
+
+[dev-dependencies]
+clap = "2.32"
