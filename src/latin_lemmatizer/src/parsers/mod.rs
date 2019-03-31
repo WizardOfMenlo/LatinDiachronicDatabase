@@ -18,20 +18,19 @@ pub trait ParserBuilder {
     fn new() -> Self;
 
     /// Read a single line
-    fn read_line_as_str(&mut self, line: &str) -> Result<(), Self::ErrorTy>;
+    fn read_line_as_str(&mut self, line: impl AsRef<str>) -> Result<(), Self::ErrorTy>;
 
-    /// Build a [`NaiveLemmatizer`](struct.NaiveLemmatizer.html) 
+    /// Build a [`NaiveLemmatizer`](struct.NaiveLemmatizer.html)
     fn build(self) -> NaiveLemmatizer;
 }
 
-// Auxiliary type 
+// Auxiliary type
 type ErrorTy<T> = CompositeParsingError<<T as ParserBuilder>::ErrorTy>;
 
 #[derive(Debug)]
 pub struct ParserWrapper<T: ParserBuilder>(T);
 
 impl<T: ParserBuilder> ParserWrapper<T> {
-
     /// Create the builder
     pub fn new() -> Self {
         ParserWrapper(T::new())

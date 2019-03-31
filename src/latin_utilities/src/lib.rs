@@ -20,9 +20,10 @@ impl StandardLatinConverter {
     /// let res = StandardLatinConverter::default().convert("dura lex, sed lex");
     /// assert_eq!(res, "dura lex sed lex");
     /// ```
-    pub fn convert(&self, input: &str) -> NormalizedLatinString {
+    pub fn convert(&self, input: impl AsRef<str>) -> NormalizedLatinString {
         // Unicode normalisation
         let mut res: String = input
+            .as_ref()
             .nfd()
             .filter(|c| c.is_whitespace() || (c.is_alphanumeric() && !c.is_digit(10)))
             .collect();

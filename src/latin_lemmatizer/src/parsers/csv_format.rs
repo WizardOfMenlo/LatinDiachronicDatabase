@@ -28,8 +28,8 @@ impl ParserBuilder for CSVFormatParserBuilder {
         }
     }
 
-    fn read_line_as_str(&mut self, line: &str) -> Result<(), Self::ErrorTy> {
-        let segments: Vec<&str> = line.split(',').collect();
+    fn read_line_as_str(&mut self, line: impl AsRef<str>) -> Result<(), Self::ErrorTy> {
+        let segments: Vec<&str> = line.as_ref().split(',').collect();
         if segments.len() < 3 {
             return Err(ParsingError::LineFormatError);
         }

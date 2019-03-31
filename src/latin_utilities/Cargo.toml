@@ -9,6 +9,7 @@ unicode-normalization = "0.1.7"
 
 [dev-dependencies]
 criterion = "0.2"
+clap = "2.32"
 
 [[bench]]
 name = "converter_benchmark"

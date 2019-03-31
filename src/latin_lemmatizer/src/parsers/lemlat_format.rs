@@ -1,6 +1,5 @@
 //! Parser for data in the lemlat format
 
-
 use super::error::ParsingError;
 use super::{ParserBuilder, ParserWrapper};
 use crate::{Mapping, NaiveLemmatizer, StandardLatinConverter};
@@ -30,8 +29,8 @@ impl ParserBuilder for LemlatFormatParserBuilder {
     }
 
     // Used to reduce the cost of calling BufReader::new
-    fn read_line_as_str(&mut self, line: &str) -> Result<(), Self::ErrorTy> {
-        let header_body: Vec<&str> = line.split('\t').collect();
+    fn read_line_as_str(&mut self, line: impl AsRef<str>) -> Result<(), Self::ErrorTy> {
+        let header_body: Vec<&str> = line.as_ref().split('\t').collect();
         if header_body.len() < 2 {
             return Err(ParsingError::LineFormatError);
         }
