@@ -1,25 +1,29 @@
+//! Parser for data in the lemlat format
+
+
 use super::error::ParsingError;
-use super::{ParserImpl, ParserWrapper};
+use super::{ParserBuilder, ParserWrapper};
 use crate::{Mapping, NaiveLemmatizer, StandardLatinConverter};
 use std::collections::HashSet;
 
 #[derive(Debug)]
-pub struct LemlatFormatParserImpl {
+pub struct LemlatFormatParserBuilder {
     mapping: Mapping,
     converter: StandardLatinConverter,
 }
 
-pub type LemlatFormatParser = ParserWrapper<LemlatFormatParserImpl>;
+pub type LemlatFormatParser = ParserWrapper<LemlatFormatParserBuilder>;
 
+/// Instantiate a parser to be used when working with data in the lemlat format
 pub fn new() -> LemlatFormatParser {
     LemlatFormatParser::new()
 }
 
-impl ParserImpl for LemlatFormatParserImpl {
+impl ParserBuilder for LemlatFormatParserBuilder {
     type ErrorTy = ParsingError;
 
     fn new() -> Self {
-        LemlatFormatParserImpl {
+        LemlatFormatParserBuilder {
             mapping: Mapping::new(),
             converter: StandardLatinConverter::default(),
         }

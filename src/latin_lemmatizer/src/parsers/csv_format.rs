@@ -1,25 +1,28 @@
+//! Parser for data in the CSV format
+
 use super::error::ParsingError;
-use super::{ParserImpl, ParserWrapper};
+use super::{ParserBuilder, ParserWrapper};
 use crate::{Mapping, NaiveLemmatizer, StandardLatinConverter};
 use std::collections::HashSet;
 
 #[derive(Debug)]
-pub struct CSVFormatParserImpl {
+pub struct CSVFormatParserBuilder {
     mapping: Mapping,
     converter: StandardLatinConverter,
 }
 
-pub type CSVFormatParser = ParserWrapper<CSVFormatParserImpl>;
+pub type CSVFormatParser = ParserWrapper<CSVFormatParserBuilder>;
 
+/// Instantiate a parser for when working with data in CSV format
 pub fn new() -> CSVFormatParser {
     CSVFormatParser::new()
 }
 
-impl ParserImpl for CSVFormatParserImpl {
+impl ParserBuilder for CSVFormatParserBuilder {
     type ErrorTy = ParsingError;
 
     fn new() -> Self {
-        CSVFormatParserImpl {
+        CSVFormatParserBuilder {
             mapping: Mapping::new(),
             converter: StandardLatinConverter::default(),
         }

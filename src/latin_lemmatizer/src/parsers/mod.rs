@@ -10,25 +10,34 @@ pub mod error;
 pub mod lemlat_format;
 
 /// A trait that is used to build parser for lemmatizers
-pub trait ParserImpl {
+pub trait ParserBuilder {
+    /// A type that is used to communicate errors up the chain
     type ErrorTy;
 
+    /// Initiate the builder
     fn new() -> Self;
+
+    /// Read a single line
     fn read_line_as_str(&mut self, line: &str) -> Result<(), Self::ErrorTy>;
+
+    /// Build a [`NaiveLemmatizer`](struct.NaiveLemmatizer.html) 
     fn build(self) -> NaiveLemmatizer;
 }
 
-/// Auxiliary type 
-type ErrorTy<T> = CompositeParsingError<<T as ParserImpl>::ErrorTy>;
+// Auxiliary type 
+type ErrorTy<T> = CompositeParsingError<<T as ParserBuilder>::ErrorTy>;
 
 #[derive(Debug)]
-pub struct ParserWrapper<T: ParserImpl>(T);
+pub struct ParserWrapper<T: ParserBuilder>(T);
 
-impl<T: ParserImpl> ParserWrapper<T> {
+impl<T: ParserBuilder> ParserWrapper<T> {
+
+    /// Create the builder
     pub fn new() -> Self {
         ParserWrapper(T::new())
     }
 
+    /// Read a line from a general source
     pub fn read_line(&mut self, reader: impl Read) -> Result<(), ErrorTy<T>> {
         let mut reader = BufReader::new(reader);
         let mut s = String::new();
@@ -38,6 +47,7 @@ impl<T: ParserImpl> ParserWrapper<T> {
             .map_err(CompositeParsingError::Inner)
     }
 
+    /// Read a source until completion (i.e. EOF)
     pub fn read_all(mut self, reader: impl Read) -> Result<Self, ErrorTy<T>> {
         let reader = BufReader::new(reader);
         for line in reader.lines() {
@@ -49,12 +59,13 @@ impl<T: ParserImpl> ParserWrapper<T> {
         Ok(self)
     }
 
+    /// Construct the lemmatizer
     pub fn build(self) -> NaiveLemmatizer {
         self.0.build()
     }
 }
 
-impl<T: ParserImpl> Default for ParserWrapper<T> {
+impl<T: ParserBuilder> Default for ParserWrapper<T> {
     fn default() -> Self {
         Self::new()
     }

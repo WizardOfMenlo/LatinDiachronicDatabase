@@ -1,3 +1,5 @@
+//! Common error handling facilities
+
 use std::io::Error;
 
 /// A enum error type communicated by parsers (this could feasibly be substituted)
@@ -15,6 +17,7 @@ impl<T> From<Error> for CompositeParsingError<T>
     }
 }
 
+/// A common ErrorType used for reporting
 #[derive(Debug)]
 pub enum ParsingError {
     LineFormatError,
