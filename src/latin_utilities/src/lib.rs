@@ -1,15 +1,12 @@
 //! A crate that encompasses various utilities for working with Latin String  
-//! In particular, it aims to standardize latin string representation to a 
-//! format that resembles closely Italian. 
-//! The high level concept is to normalize unicode, remove all non alphabetical 
+//! In particular, it aims to standardize latin string representation to a
+//! format that resembles closely Italian.
+//! The high level concept is to normalize unicode, remove all non alphabetical
 //! characters, and to then replace j, v to i, u
-
 
 mod normalized_latin_string;
 pub use self::normalized_latin_string::NormalizedLatinString;
 use unicode_normalization::UnicodeNormalization;
-
-
 
 /// A converter which can be use to turn a `&str` into a
 ///  [`NormalizedLatingString`](struct.NormalizedLatinString.html)

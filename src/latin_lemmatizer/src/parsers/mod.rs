@@ -1,33 +1,25 @@
+//! A module containing various ways to parse a representation of a lemmatizer
+//! In particular, with this we can build a [`NaiveLemmatizer`](struct.NaiveLemmatizer.html)
+
 use super::NaiveLemmatizer;
-use std::io::{self, BufRead};
+use error::CompositeParsingError;
+use std::io::{prelude::*, BufReader};
 
 pub mod csv_format;
+pub mod error;
 pub mod lemlat_format;
-
-// START Error handling utilities ===================================
-
-#[derive(Debug)]
-pub enum ParsingError {
-    LineFormatError,
-    IOError(io::Error),
-}
-
-impl From<io::Error> for ParsingError {
-    fn from(err: io::Error) -> Self {
-        ParsingError::IOError(err)
-    }
-}
-
-type PResult<T> = Result<T, ParsingError>;
-
-// END Error handling utilities  ===================================
 
 /// A trait that is used to build parser for lemmatizers
 pub trait ParserImpl {
+    type ErrorTy;
+
     fn new() -> Self;
-    fn read_line_as_str(&mut self, line: &str) -> PResult<()>;
+    fn read_line_as_str(&mut self, line: &str) -> Result<(), Self::ErrorTy>;
     fn build(self) -> NaiveLemmatizer;
 }
+
+/// Auxiliary type 
+type ErrorTy<T> = CompositeParsingError<<T as ParserImpl>::ErrorTy>;
 
 #[derive(Debug)]
 pub struct ParserWrapper<T: ParserImpl>(T);
@@ -37,18 +29,22 @@ impl<T: ParserImpl> ParserWrapper<T> {
         ParserWrapper(T::new())
     }
 
-    pub fn read_line(&mut self, reader: impl io::Read) -> PResult<()> {
-        let mut reader = io::BufReader::new(reader);
+    pub fn read_line(&mut self, reader: impl Read) -> Result<(), ErrorTy<T>> {
+        let mut reader = BufReader::new(reader);
         let mut s = String::new();
         reader.read_line(&mut s)?;
-        self.0.read_line_as_str(&s)
+        self.0
+            .read_line_as_str(&s)
+            .map_err(CompositeParsingError::Inner)
     }
 
-    pub fn read_all(mut self, reader: impl io::Read) -> PResult<Self> {
-        let reader = io::BufReader::new(reader);
+    pub fn read_all(mut self, reader: impl Read) -> Result<Self, ErrorTy<T>> {
+        let reader = BufReader::new(reader);
         for line in reader.lines() {
             let line = line?;
-            self.0.read_line_as_str(&line)?;
+            self.0
+                .read_line_as_str(&line)
+                .map_err(CompositeParsingError::Inner)?;
         }
         Ok(self)
     }

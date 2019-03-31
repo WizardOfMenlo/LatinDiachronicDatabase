@@ -13,7 +13,7 @@ impl NormalizedLatinString {
 
     // Crate-local way to create nlstring
     pub(crate) fn instantiate(s: impl Into<String>) -> Self {
-        Self (s.into())
+        Self(s.into())
     }
 }
 

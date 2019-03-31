@@ -1,4 +1,5 @@
-use super::{PResult, ParserImpl, ParserWrapper, ParsingError};
+use super::error::ParsingError;
+use super::{ParserImpl, ParserWrapper};
 use crate::{Mapping, NaiveLemmatizer, StandardLatinConverter};
 use std::collections::HashSet;
 
@@ -15,6 +16,8 @@ pub fn new() -> CSVFormatParser {
 }
 
 impl ParserImpl for CSVFormatParserImpl {
+    type ErrorTy = ParsingError;
+
     fn new() -> Self {
         CSVFormatParserImpl {
             mapping: Mapping::new(),
@@ -22,7 +25,7 @@ impl ParserImpl for CSVFormatParserImpl {
         }
     }
 
-    fn read_line_as_str(&mut self, line: &str) -> PResult<()> {
+    fn read_line_as_str(&mut self, line: &str) -> Result<(), Self::ErrorTy> {
         let segments: Vec<&str> = line.split(',').collect();
         if segments.len() < 3 {
             return Err(ParsingError::LineFormatError);

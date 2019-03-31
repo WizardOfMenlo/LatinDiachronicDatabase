@@ -1,4 +1,5 @@
-use super::{PResult, ParserImpl, ParserWrapper, ParsingError};
+use super::error::ParsingError;
+use super::{ParserImpl, ParserWrapper};
 use crate::{Mapping, NaiveLemmatizer, StandardLatinConverter};
 use std::collections::HashSet;
 
@@ -15,6 +16,8 @@ pub fn new() -> LemlatFormatParser {
 }
 
 impl ParserImpl for LemlatFormatParserImpl {
+    type ErrorTy = ParsingError;
+
     fn new() -> Self {
         LemlatFormatParserImpl {
             mapping: Mapping::new(),
@@ -23,7 +26,7 @@ impl ParserImpl for LemlatFormatParserImpl {
     }
 
     // Used to reduce the cost of calling BufReader::new
-    fn read_line_as_str(&mut self, line: &str) -> PResult<()> {
+    fn read_line_as_str(&mut self, line: &str) -> Result<(), Self::ErrorTy> {
         let header_body: Vec<&str> = line.split('\t').collect();
         if header_body.len() < 2 {
             return Err(ParsingError::LineFormatError);

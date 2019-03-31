@@ -15,7 +15,7 @@ fn null_conversion_benchmark(c: &mut Criterion) {
     });
 }
 
-fn conversion_benchmarks(c: &mut Criterion){
+fn conversion_benchmarks(c: &mut Criterion) {
     c.bench_function("uv-replacement", |b| {
         let s = "ivljvs caesar";
         let c = StandardLatinConverter::default();
