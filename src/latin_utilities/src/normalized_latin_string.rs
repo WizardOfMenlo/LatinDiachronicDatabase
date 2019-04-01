@@ -2,7 +2,7 @@ use super::StandardLatinConverter;
 
 /// A checked and normalized string type, which can only
 /// be instantiated by the [`StandardLatinConverter`](struct.StandardLatinConverter.html) type
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, PartialOrd, Ord)]
 pub struct NormalizedLatinString(String);
 
 impl NormalizedLatinString {

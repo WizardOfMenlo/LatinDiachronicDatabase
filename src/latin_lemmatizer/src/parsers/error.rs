@@ -18,5 +18,5 @@ impl<T> From<Error> for CompositeParsingError<T> {
 /// A common ErrorType used for reporting
 #[derive(Debug)]
 pub enum ParsingError {
-    LineFormatError,
+    LineFormatError(String),
 }

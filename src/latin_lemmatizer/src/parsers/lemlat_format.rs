@@ -30,9 +30,10 @@ impl ParserBuilder for LemlatFormatParserBuilder {
 
     // Used to reduce the cost of calling BufReader::new
     fn read_line_as_str(&mut self, line: impl AsRef<str>) -> Result<(), Self::ErrorTy> {
-        let header_body: Vec<&str> = line.as_ref().split('\t').collect();
+        let line = line.as_ref();
+        let header_body: Vec<&str> = line.split('\t').collect();
         if header_body.len() < 2 {
-            return Err(ParsingError::LineFormatError);
+            return Err(ParsingError::LineFormatError(line.to_string()));
         }
 
         // Start from 2 to avoid id field
@@ -43,7 +44,7 @@ impl ParserBuilder for LemlatFormatParserBuilder {
             let form = record
                 .split(' ')
                 .next()
-                .ok_or(ParsingError::LineFormatError)?;
+                .ok_or(ParsingError::LineFormatError(line.to_string()))?;
 
             // Convert to normal form
             let (lemma, form) = (self.converter.convert(lemma), self.converter.convert(form));
