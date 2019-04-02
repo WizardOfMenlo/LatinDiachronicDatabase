@@ -3,7 +3,7 @@ use std::hash::Hash;
 
 /// A simple struct that wraps a integer.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct RawId(u32);
+pub struct RawId(pub u32);
 
 impl From<RawId> for u32 {
     fn from(raw: RawId) -> u32 {

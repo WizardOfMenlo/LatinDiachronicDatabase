@@ -5,7 +5,7 @@ authors = ["Giacomo Fenzi <giacomofenzi@outlook.com>"]
 edition = "2018"
 
 [dependencies]
-unicode-normalization = "0.1.7"
+unicode-normalization = "0.1.8"
 
 [dev-dependencies]
 criterion = "0.2"
