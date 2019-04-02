@@ -6,4 +6,5 @@ edition = "2018"
 
 [dependencies]
 latin_utilities = { version = "0.1.0", path = "../latin_utilities"}
-hashbrown = "0.1"
+hashbrown = "0.2"
+salsa = "0.11"
