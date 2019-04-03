@@ -6,4 +6,7 @@ edition = "2018"
 
 [dependencies]
 latin_utilities = { version = "0.1.0", path = "../latin_utilities"}
+interner = { version = "0.1.0", path = "../interner" }
+sources = { version = "0.1.0", path = "../sources" }
+authors = { version = "0.1.0", path = "../authors" }
 salsa = "0.11"

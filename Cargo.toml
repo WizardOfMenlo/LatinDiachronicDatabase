@@ -3,5 +3,7 @@ members = [
     "src/latin_lemmatizer",
     "src/latin_utilities",
     "src/word_db",
-    "src/interner"
+    "src/interner",
+    "src/authors",
+    "src/sources",
 ]
