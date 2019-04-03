@@ -4,4 +4,5 @@ use interner::{impl_arena_id, RawId};
 pub struct SourceId(RawId);
 impl_arena_id!(SourceId);
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Source {}

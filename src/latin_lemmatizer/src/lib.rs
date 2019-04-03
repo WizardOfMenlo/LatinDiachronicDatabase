@@ -10,6 +10,8 @@ use std::collections::{HashMap, HashSet};
 // TODO Instead of this, could it be worthwile to have a mapping W -> Id?
 type Mapping = HashMap<NormalizedLatinString, HashSet<NormalizedLatinString>>;
 
+// TODO, maybe salsa can help use here as well?
+
 /// A lemmatizer that uses a simple hashmap lookup to resolve lemmas
 #[derive(Debug, Default, Clone)]
 pub struct NaiveLemmatizer {

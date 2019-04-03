@@ -1,9 +1,4 @@
-use latin_utilities::NormalizedLatinString;
-
 pub mod form_data;
-pub mod ids;
+pub mod forms;
 pub mod interner;
-
-// Strong typedefs for more intuitive api
-pub type Form = NormalizedLatinString;
-pub type Lemma = NormalizedLatinString;
+pub mod lemmas;
