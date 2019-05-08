@@ -128,7 +128,7 @@ func writeAlphaMap(path string, mapping DictionaryMap, ambig stringSet) {
 	writeStem(f, NotFound, mapping, true, alphaMode, ambig)
 }
 
-func writeHistoricalInfo(f io.Writer, lemma string, mapping DictionaryMap, historicalData AuthorHistorical) {
+func writeHistoricalInfo(f io.Writer, lemma string, mapping DictionaryMap, historicalData AuthorHistorical, authorsWordCount map[string]int) {
 	forms := mapping.internal[lemma]
 	hist := make(map[TimeDescr]map[string]int)
 	authors := make(map[string]struct{})
@@ -189,7 +189,9 @@ func writeHistoricalInfo(f io.Writer, lemma string, mapping DictionaryMap, histo
 
 		for _, author := range authors {
 			num := hist[date][author]
-			f.Write([]byte(fmt.Sprint(author, ":", num, ", ")))
+			authCount := authorsWordCount[author]
+			ratioPer1000 := float64(num*1000) / float64(authCount)
+			f.Write([]byte(fmt.Sprintf("%s : %d (%.3f), ", author, num, ratioPer1000)))
 		}
 		f.Write([]byte("\n"))
 	}
@@ -215,10 +217,24 @@ func writeHistMap(path string, mapping DictionaryMap, ambig stringSet, hist Auth
 	}
 	sort.Strings(vec)
 
+	authorsCount := make(map[string]int)
+
+	for _, forms := range mapping.internal {
+		for _, metadata := range forms {
+			for _, record := range metadata {
+				auth := record.Author
+				if _, ok := authorsCount[auth]; !ok {
+					authorsCount[auth] = 0
+				}
+				authorsCount[auth]++
+			}
+		}
+	}
+
 	// Write in order
 	for _, stem := range vec {
 		writeStem(f, stem, mapping, false, alphaMode, ambig)
-		writeHistoricalInfo(f, stem, mapping, hist)
+		writeHistoricalInfo(f, stem, mapping, hist, authorsCount)
 	}
 
 }
@@ -264,9 +280,9 @@ func writeFreqMap(path string, mapping DictionaryMap, ambig stringSet) {
 
 	// Write all
 	for _, p := range mappingCount {
-		writeStem(f, p.lemma, mapping, false, freqMode, ambig)
+		writeStem(f, p.lemma, mapping, true, freqMode, ambig)
 	}
 
-	writeStem(f, NotFound, mapping, false, freqMode, ambig)
+	writeStem(f, NotFound, mapping, true, freqMode, ambig)
 
 }
