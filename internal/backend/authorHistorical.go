@@ -160,7 +160,7 @@ func (t TimeSpan) Between() []TimeDescr {
 		}
 
 		// Add 1AC, 2AC, ... 5AC
-		for i := 0; i <= t.end.century; i++ {
+		for i := 1; i <= t.end.century; i++ {
 			result = append(result, TimeDescr{i, AC})
 		}
 	} else if t.beginning.index == AC {

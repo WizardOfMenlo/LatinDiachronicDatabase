@@ -7,8 +7,11 @@ import (
 	"os"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 )
+
+// Note, this file is a bit of monstrousity, thread with caution
 
 // Generate all the needed files
 func Generate(mapping DictionaryMap, hist AuthorHistorical) {
@@ -34,11 +37,15 @@ func Generate(mapping DictionaryMap, hist AuthorHistorical) {
 const alphaMode = false
 const freqMode = true
 
-func writeStem(f io.Writer, key string, mapping DictionaryMap, sortingMode bool, ambig stringSet) {
+func writeStem(f io.Writer, key string, mapping DictionaryMap, includeForms, sortingMode bool, ambig stringSet) {
 	// Write header
 	f.Write([]byte("-------------------------------------"))
 	totalC := 0
 	totalA := 0
+
+	// Remove unwanted apostrophe
+	// TODO, actually take care of this in the infra
+	key = strings.Replace(key, "'", "", -1)
 
 	forms := mapping.GetLemma(key)
 
@@ -77,14 +84,16 @@ func writeStem(f io.Writer, key string, mapping DictionaryMap, sortingMode bool,
 		})
 	}
 
-	// Write each form
-	for _, form := range mappingCount {
+	if includeForms {
+		// Write each form
+		for _, form := range mappingCount {
 
-		// If ambiguos add an asterisk
-		if _, ok := ambig[form.lemma]; ok {
-			f.Write([]byte(fmt.Sprintln("\t", form.lemma, ":", form.value, "(*)")))
-		} else {
-			f.Write([]byte(fmt.Sprintln("\t", form.lemma, ":", form.value)))
+			// If ambiguos add an asterisk
+			if _, ok := ambig[form.lemma]; ok {
+				f.Write([]byte(fmt.Sprintln("\t", form.lemma, ":", form.value, "(*)")))
+			} else {
+				f.Write([]byte(fmt.Sprintln("\t", form.lemma, ":", form.value)))
+			}
 		}
 	}
 
@@ -112,32 +121,47 @@ func writeAlphaMap(path string, mapping DictionaryMap, ambig stringSet) {
 
 	// Write in order
 	for _, stem := range vec {
-		writeStem(f, stem, mapping, alphaMode, ambig)
+		writeStem(f, stem, mapping, true, alphaMode, ambig)
 	}
 
 	// Write the not founds at the end
-	writeStem(f, NotFound, mapping, alphaMode, ambig)
+	writeStem(f, NotFound, mapping, true, alphaMode, ambig)
 }
 
 func writeHistoricalInfo(f io.Writer, lemma string, mapping DictionaryMap, historicalData AuthorHistorical) {
 	forms := mapping.internal[lemma]
-	hist := make(map[TimeDescr]int)
+	hist := make(map[TimeDescr]map[string]int)
 	authors := make(map[string]struct{})
+	// Iterated over all forms
 	for _, metadata := range forms {
+		// For each record in the form
 		for _, record := range metadata {
+
+			// Fetch the author
 			author := record.Author
+
+			// Add it to the mapping
 			authors[author] = struct{}{}
 			dates := historicalData.mapping[author]
+
+			// For each date
 			for _, date := range dates.Between() {
+				// If we already have some mappings
 				if _, ok := hist[date]; ok {
-					hist[date]++
+					if _, ok := hist[date][author]; ok {
+						hist[date][author]++
+					} else {
+						hist[date][author] = 1
+					}
 				} else {
-					hist[date] = 1
+					hist[date] = make(map[string]int)
+					hist[date][author] = 1
 				}
 			}
 		}
 	}
 
+	// Really hope no authors outside that span
 	interestingSpan := TimeSpan{TimeDescr{10, BC}, TimeDescr{10, AC}}
 
 	f.Write([]byte(fmt.Sprintln("\tUsed by", len(authors), "author(s)")))
@@ -146,7 +170,28 @@ func writeHistoricalInfo(f io.Writer, lemma string, mapping DictionaryMap, histo
 		if _, ok := hist[date]; !ok {
 			continue
 		}
-		f.Write([]byte(fmt.Sprintln("\t\t", date.ToString(), ":", hist[date])))
+
+		total := 0
+		for _, t := range hist[date] {
+			total += t
+		}
+
+		f.Write([]byte(fmt.Sprint("\t\t", date.ToString(), ":", total, " | ")))
+
+		authors := make([]string, 0, len(hist[date]))
+		for author := range hist[date] {
+			authors = append(authors, author)
+		}
+
+		sort.Slice(authors, func(i, j int) bool {
+			return authors[i] < authors[j]
+		})
+
+		for _, author := range authors {
+			num := hist[date][author]
+			f.Write([]byte(fmt.Sprint(author, ":", num, ", ")))
+		}
+		f.Write([]byte("\n"))
 	}
 }
 
@@ -172,12 +217,10 @@ func writeHistMap(path string, mapping DictionaryMap, ambig stringSet, hist Auth
 
 	// Write in order
 	for _, stem := range vec {
-		writeStem(f, stem, mapping, alphaMode, ambig)
+		writeStem(f, stem, mapping, false, alphaMode, ambig)
 		writeHistoricalInfo(f, stem, mapping, hist)
 	}
 
-	// Write the not founds at the end
-	writeStem(f, NotFound, mapping, alphaMode, ambig)
 }
 
 func writeFreqMap(path string, mapping DictionaryMap, ambig stringSet) {
@@ -221,9 +264,9 @@ func writeFreqMap(path string, mapping DictionaryMap, ambig stringSet) {
 
 	// Write all
 	for _, p := range mappingCount {
-		writeStem(f, p.lemma, mapping, freqMode, ambig)
+		writeStem(f, p.lemma, mapping, false, freqMode, ambig)
 	}
 
-	writeStem(f, NotFound, mapping, freqMode, ambig)
+	writeStem(f, NotFound, mapping, false, freqMode, ambig)
 
 }
