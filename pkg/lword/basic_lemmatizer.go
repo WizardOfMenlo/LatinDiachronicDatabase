@@ -38,6 +38,7 @@ func NewBasicLemmatizer(f io.Reader) (BasicLemmatizer, error) {
 	return l, nil
 }
 
+// String set would be more efficient
 func contains(forms []string, form string) bool {
 	for _, v := range forms {
 		if v == form {
@@ -61,7 +62,8 @@ func NewLemmatizerFromCSV(f io.Reader) (BasicLemmatizer, error) {
 			continue
 		}
 		form := Convert(line[0])
-		head := Convert(line[2])
+		// Remove accented forms
+		head := strings.Replace(Convert(line[2]), "'", "", -1)
 
 		if heads, ok := mapping[form]; ok {
 			if !contains(heads, head) {

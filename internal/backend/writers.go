@@ -7,7 +7,6 @@ import (
 	"os"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -42,10 +41,6 @@ func writeStem(f io.Writer, key string, mapping DictionaryMap, includeForms, sor
 	f.Write([]byte("-------------------------------------"))
 	totalC := 0
 	totalA := 0
-
-	// Remove unwanted apostrophe
-	// TODO, actually take care of this in the infra
-	key = strings.Replace(key, "'", "", -1)
 
 	forms := mapping.GetLemma(key)
 
