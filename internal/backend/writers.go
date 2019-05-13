@@ -157,7 +157,7 @@ func writeHistoricalInfo(f io.Writer, lemma string, mapping DictionaryMap, histo
 	}
 
 	// Really hope no authors outside that span
-	interestingSpan := TimeSpan{TimeDescr{10, BC}, TimeDescr{10, AC}}
+	interestingSpan := TimeSpan{TimeDescr{10, BC}, TimeDescr{10, AD}}
 
 	f.Write([]byte(fmt.Sprintln("\tUsed by", len(authors), "author(s)")))
 	f.Write([]byte("\tHistorical Data:\n"))

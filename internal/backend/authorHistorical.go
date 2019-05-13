@@ -15,7 +15,7 @@ type status int
 
 const (
 	BC      status = iota
-	AC      status = iota
+	AD      status = iota
 	Unknown status = iota
 )
 
@@ -34,7 +34,7 @@ func (t TimeDescr) ToString() string {
 	if t.index == BC {
 		res += " BC"
 	} else {
-		res += " AC"
+		res += " AD"
 	}
 	return res
 }
@@ -51,7 +51,7 @@ func ParseTime(s string) (TimeDescr, error) {
 		century = BC
 		inner = strings.TrimSuffix(inner, "a")
 	} else if strings.Contains(s, "d") {
-		century = AC
+		century = AD
 		inner = strings.TrimSuffix(inner, "d")
 	}
 	centuryNum, err := strconv.Atoi(inner)
@@ -71,16 +71,16 @@ func before(first, second TimeDescr) bool {
 		return false
 	}
 
-	if first.index == BC && second.index == AC {
+	if first.index == BC && second.index == AD {
 		return true
 	}
 
-	if first.index == AC && second.index == BC {
+	if first.index == AD && second.index == BC {
 		return false
 	}
 
 	// Both are after christ
-	if first.index == AC {
+	if first.index == AD {
 		return first.century <= second.century
 	}
 
@@ -153,19 +153,19 @@ func (t TimeSpan) Between() []TimeDescr {
 
 	result := []TimeDescr{}
 
-	if t.beginning.index == BC && t.end.index == AC {
+	if t.beginning.index == BC && t.end.index == AD {
 		// Add 5BC, 4BC, ... 1BC
 		for i := t.beginning.century; i > 0; i-- {
 			result = append(result, TimeDescr{i, BC})
 		}
 
-		// Add 1AC, 2AC, ... 5AC
+		// Add 1AD, 2AD, ... 5AD
 		for i := 1; i <= t.end.century; i++ {
-			result = append(result, TimeDescr{i, AC})
+			result = append(result, TimeDescr{i, AD})
 		}
-	} else if t.beginning.index == AC {
+	} else if t.beginning.index == AD {
 		for i := t.beginning.century; i <= t.end.century; i++ {
-			result = append(result, TimeDescr{i, AC})
+			result = append(result, TimeDescr{i, AD})
 		}
 	} else if t.end.index == BC {
 		for i := t.end.century; i < t.beginning.century; i++ {
