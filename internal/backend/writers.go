@@ -38,7 +38,7 @@ const freqMode = true
 
 func writeStem(f io.Writer, key string, mapping DictionaryMap, includeForms, sortingMode bool, ambig stringSet) {
 	// Write header
-	f.Write([]byte("-------------------------------------"))
+	f.Write([]byte("\n-------------------------------------\n"))
 	totalC := 0
 	totalA := 0
 
@@ -54,7 +54,7 @@ func writeStem(f io.Writer, key string, mapping DictionaryMap, includeForms, sor
 	}
 
 	// Write the count for the headword
-	f.Write([]byte(fmt.Sprintf("%s count: %d (C:%d, A:%d)\n", key, totalA+totalC, totalC, totalA)))
+	f.Write([]byte(fmt.Sprintf("%s : %d (C:%d, A:%d)\n", key, totalA+totalC, totalC, totalA)))
 
 	type pair struct {
 		lemma string
@@ -85,9 +85,9 @@ func writeStem(f io.Writer, key string, mapping DictionaryMap, includeForms, sor
 
 			// If ambiguos add an asterisk
 			if _, ok := ambig[form.lemma]; ok {
-				f.Write([]byte(fmt.Sprintln("\t", form.lemma, ":", form.value, "(*)")))
+				f.Write([]byte(fmt.Sprintf("%s: %d (*), ", form.lemma, form.value)))
 			} else {
-				f.Write([]byte(fmt.Sprintln("\t", form.lemma, ":", form.value)))
+				f.Write([]byte(fmt.Sprintf("%s : %d, ", form.lemma, form.value)))
 			}
 		}
 	}
