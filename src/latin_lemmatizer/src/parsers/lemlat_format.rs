@@ -44,7 +44,7 @@ impl ParserBuilder for LemlatFormatParserBuilder {
             let form = record
                 .split(' ')
                 .next()
-                .ok_or(ParsingError::LineFormatError(line.to_string()))?;
+                .ok_or_else(|| ParsingError::LineFormatError(line.to_string()))?;
 
             // Convert to normal form
             let (lemma, form) = (self.converter.convert(lemma), self.converter.convert(form));

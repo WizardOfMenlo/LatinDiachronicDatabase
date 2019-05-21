@@ -56,18 +56,22 @@ where
     T: Hash + Eq + Clone,
 {
     /// Get the id for a particular item
-    pub fn into_id(&self, id: &T) -> ID {
-        self.type_to_id[id].clone()
+    pub fn to_id(&self, id: &T) -> ID {
+        self.type_to_id[id]
     }
 
     /// Get the item for a particular id
-    pub fn from_id(&self, id: ID) -> &T {
+    pub fn fetch(&self, id: ID) -> &T {
         &self.id_to_type[&id]
     }
 
     pub fn len(&self) -> usize {
         // Should be equivalent if well constructed
         self.id_to_type.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 }
 
@@ -136,7 +140,7 @@ mod tests {
     fn test_invalid_access_empty() {
         let interner: Interner<TestId, RawId> = InternerBuilder::new().build();
         let id = TestId(RawId(0));
-        interner.from_id(id);
+        interner.fetch(id);
     }
 
     #[test]
@@ -147,8 +151,8 @@ mod tests {
         let interner = InternerBuilder::new().add_mapping(exp_id, exp_val).build();
 
         assert_eq!(interner.len(), 1);
-        assert_eq!(*interner.from_id(exp_id), exp_val);
-        assert_eq!(interner.into_id(&exp_val), exp_id);
+        assert_eq!(*interner.fetch(exp_id), exp_val);
+        assert_eq!(interner.to_id(&exp_val), exp_id);
     }
 
     #[test]
@@ -165,8 +169,8 @@ mod tests {
             let exp_id = TestId(RawId(i));
             let exp_val = RawId(i + 1);
 
-            assert_eq!(*interner.from_id(exp_id), exp_val);
-            assert_eq!(interner.into_id(&exp_val), exp_id);
+            assert_eq!(*interner.fetch(exp_id), exp_val);
+            assert_eq!(interner.to_id(&exp_val), exp_id);
         }
     }
 }

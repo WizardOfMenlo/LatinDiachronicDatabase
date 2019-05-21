@@ -31,17 +31,12 @@ fn form_count(db: &impl FormQueryDatabase, id: FormId) -> usize {
 
 fn lemmas_for_form(db: &impl FormQueryDatabase, id: FormId) -> Arc<Vec<LemmaId>> {
     let int = db.get_interner();
-    let form = int.form_interner.from_id(id);
+    let form = int.form_interner.fetch(id);
     // TODO, we could save one allocation here
     let lemmas = db
         .as_ref()
         .get_possible_lemmas(form)
-        .map(|m| Vec::from_iter(m))
-        .unwrap_or_else(|| Vec::new());
-    Arc::new(
-        lemmas
-            .iter()
-            .map(|l| int.lemma_interner.into_id(l))
-            .collect(),
-    )
+        .map(Vec::from_iter)
+        .unwrap_or_else(Vec::new);
+    Arc::new(lemmas.iter().map(|l| int.lemma_interner.to_id(l)).collect())
 }

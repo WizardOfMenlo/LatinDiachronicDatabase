@@ -15,7 +15,7 @@ fn into_id(c: &mut Criterion) {
             let interner = InternerBuilder::new()
                 .add_all((0..size).map(|i| (TestId(RawId(i)), RawId(i))))
                 .build();
-            b.iter(|| black_box(interner.into_id(&RawId(1))))
+            b.iter(|| black_box(interner.to_id(&RawId(1))))
         },
         vec![KB, 2 * KB, 4 * KB, 8 * KB, 16 * KB],
     );
@@ -30,7 +30,7 @@ fn from_id(c: &mut Criterion) {
                 .add_all((0..size).map(|i| (TestId(RawId(i)), RawId(i))))
                 .build();
 
-            b.iter(|| black_box(interner.from_id(TestId(RawId(1)))))
+            b.iter(|| black_box(interner.fetch(TestId(RawId(1)))))
         },
         vec![KB, 2 * KB, 4 * KB, 8 * KB, 16 * KB],
     );
