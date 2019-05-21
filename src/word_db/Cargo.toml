@@ -10,4 +10,5 @@ latin_lemmatizer = { version = "0.1.0", path = "../latin_lemmatizer"}
 interner = { version = "0.1.0", path = "../interner" }
 sources = { version = "0.1.0", path = "../sources" }
 authors = { version = "0.1.0", path = "../authors" }
-salsa = "0.11"
+salsa = "0.12"
+shrinkwraprs = "0.2.1"

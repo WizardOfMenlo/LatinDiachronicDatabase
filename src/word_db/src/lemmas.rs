@@ -9,7 +9,8 @@ pub struct LemmaId(RawId);
 impl_arena_id!(LemmaId);
 
 // Strong typedefs for more intuitive api
-pub type Lemma = NormalizedLatinString;
+#[derive(shrinkwraprs::Shrinkwrap, Clone, Eq, PartialEq, Hash)]
+pub struct Lemma(pub NormalizedLatinString);
 
 #[salsa::query_group(LemmaQueryStorage)]
 trait LemmaQueryDatabase: salsa::Database {
