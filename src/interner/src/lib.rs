@@ -97,8 +97,8 @@ where
         }
     }
 
-    pub fn add_mapping(mut self, id: ID, t: impl Into<T>) -> Self {
-        let t = t.into();
+    pub fn add_mapping(mut self, id: ID, t: T) -> Self {
+        // TODO, check no overwrites
         self.type_to_id.insert(t.clone(), id);
         self.id_to_type.insert(id, t);
         self
@@ -118,6 +118,51 @@ where
             id_to_type: self.id_to_type,
             type_to_id: self.type_to_id,
         }
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct SequentialInternerBuilder<ID, T>
+where
+    ID: InternerId,
+    T: Hash + Eq + Clone,
+{
+    builder: InternerBuilder<ID, T>,
+    counter: u32,
+}
+
+impl<ID, T> SequentialInternerBuilder<ID, T>
+where
+    ID: InternerId,
+    T: Hash + Eq + Clone,
+{
+    pub fn new() -> Self {
+        Self {
+            builder: InternerBuilder::new(),
+            counter: 0,
+        }
+    }
+
+    pub fn add_mapping(mut self, t: T) -> Self {
+        let id = self.next_id();
+        self.counter += 1;
+        self.builder = self.builder.add_mapping(id, t);
+        self
+    }
+
+    pub fn add_all(mut self, v: impl IntoIterator<Item = T>) -> Self {
+        for value in v {
+            self = self.add_mapping(value);
+        }
+        self
+    }
+
+    pub fn next_id(&self) -> ID {
+        ID::from_raw(self.counter.into())
+    }
+
+    pub fn build(self) -> Interner<ID, T> {
+        self.builder.build()
     }
 }
 
