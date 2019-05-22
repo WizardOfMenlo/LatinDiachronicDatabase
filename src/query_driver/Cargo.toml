@@ -3,6 +3,7 @@ name = "query_driver"
 version = "0.1.0"
 authors = ["Giacomo Fenzi <giacomofenzi@outlook.com>"]
 edition = "2018"
+description = "System in charge of initializing the query system, so that the GraphQL client can operate"
 
 [dependencies]
 query_system = { version = "0.1.0", path = "../query_system"}

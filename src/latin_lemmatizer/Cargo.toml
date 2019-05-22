@@ -3,6 +3,7 @@ name = "latin_lemmatizer"
 version = "0.1.0"
 authors = ["giaco"]
 edition = "2018"
+description = "Tools for building and using lemmatizers"
 
 [dependencies]
 latin_utilities = { version = "0.1.0", path = "../latin_utilities"}

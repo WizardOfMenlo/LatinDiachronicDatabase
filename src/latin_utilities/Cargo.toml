@@ -3,6 +3,7 @@ name = "latin_utilities"
 version = "0.1.0"
 authors = ["Giacomo Fenzi <giacomofenzi@outlook.com>"]
 edition = "2018"
+description = "Low level utilites to work with latin strings"
 
 [dependencies]
 unicode-normalization = "0.1.8"
