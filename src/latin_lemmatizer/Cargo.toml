@@ -8,4 +8,4 @@ edition = "2018"
 latin_utilities = { version = "0.1.0", path = "../latin_utilities"}
 
 [dev-dependencies]
-clap = "2.32"
+clap = "2.33"

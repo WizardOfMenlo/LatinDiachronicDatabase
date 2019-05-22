@@ -73,7 +73,7 @@ mod tests {
     fn test_line() {
         let mut parser = new();
         let res =
-            parser.read_line("Aaron	28308	Aaron (masc nom sg)	Aaroni (masc dat sg)".as_bytes());
+            parser.read_line(b"Aaron	28308	Aaron (masc nom sg)	Aaroni (masc dat sg)" as &[u8]);
         res.unwrap();
 
         let lemmatizer = parser.build();

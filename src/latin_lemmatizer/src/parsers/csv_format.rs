@@ -62,7 +62,7 @@ mod tests {
     #[test]
     fn test_line() {
         let mut parser = new();
-        let res = parser.read_line("iungam,iungam,iungo,V3,i3044,,VmH".as_bytes());
+        let res = parser.read_line(b"iungam,iungam,iungo,V3,i3044,,VmH" as &[u8]);
         res.unwrap();
 
         let lemmatizer = parser.build();
