@@ -2,6 +2,15 @@ use crate::sources::SourceId;
 use salsa::InternId;
 use std::sync::Arc;
 
+#[salsa::query_group(AuthorsQueryGroup)]
+pub trait AuthorsDatabase {
+    #[salsa::interned]
+    fn intern_author(&self, auth: Author) -> AuthorId;
+
+    #[salsa::input]
+    fn associated_sources(&self, author_id: AuthorId) -> Arc<Vec<SourceId>>;
+}
+
 #[derive(Debug, Hash, Eq, Copy, PartialEq, Clone)]
 pub struct AuthorId(InternId);
 
@@ -25,13 +34,4 @@ impl Author {
     pub fn new(name: String) -> Self {
         Self { name }
     }
-}
-
-#[salsa::query_group(AuthorsQueryGroup)]
-pub trait AuthorsDatabase {
-    #[salsa::interned]
-    fn intern_author(&self, auth: Author) -> AuthorId;
-
-    #[salsa::input]
-    fn associated_sources(&self, author_id: AuthorId) -> Arc<Vec<SourceId>>;
 }

@@ -7,3 +7,5 @@ description = "High level description of the queries available"
 
 [dependencies]
 salsa = "0.12"
+shrinkwraprs = "0.2"
+latin_utilities = { version = "0.1", path = "../latin_utilities" }

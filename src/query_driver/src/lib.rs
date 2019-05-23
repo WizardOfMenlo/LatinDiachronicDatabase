@@ -1,5 +1,7 @@
-use query_system::authors::Author;
+use query_system::authors::{Author, AuthorId};
 use query_system::authors::{AuthorsDatabase, AuthorsQueryGroup};
+use query_system::form_data::FormDataQueryGroup;
+use query_system::forms::FormsQueryGroup;
 use query_system::sources::{SourcesDatabase, SourcesQueryGroup};
 use std::collections::HashMap;
 use std::error::Error;
@@ -9,9 +11,16 @@ use std::path::Path;
 use std::sync::Arc;
 use walkdir::WalkDir;
 
-#[salsa::database(SourcesQueryGroup, AuthorsQueryGroup)]
+#[salsa::database(
+    SourcesQueryGroup,
+    AuthorsQueryGroup,
+    FormDataQueryGroup,
+    FormsQueryGroup
+)]
 #[derive(Default, Debug)]
 pub struct MainDatabase {
+    // TODO, just for testing
+    pub authors: Vec<AuthorId>,
     runtime: salsa::Runtime<MainDatabase>,
 }
 
@@ -35,7 +44,7 @@ pub fn driver_init(data_dir: impl AsRef<Path>) -> Result<MainDatabase, Box<Error
     let mut current_author_id = None;
     let mut author_associations = HashMap::new();
 
-    for entry in WalkDir::new(data_dir).max_depth(1) {
+    for entry in WalkDir::new(data_dir).max_depth(2) {
         let entry = entry?;
         let ft = entry.file_type();
         // Branch: Add a new author
@@ -58,6 +67,9 @@ pub fn driver_init(data_dir: impl AsRef<Path>) -> Result<MainDatabase, Box<Error
             db.set_source_text(new_source_id, Arc::new(load_to_string(path)?));
         }
     }
+
+    // Should be copied
+    db.authors = author_associations.keys().cloned().collect();
 
     for (auth_id, sources) in author_associations {
         db.set_associated_sources(auth_id, Arc::new(sources));

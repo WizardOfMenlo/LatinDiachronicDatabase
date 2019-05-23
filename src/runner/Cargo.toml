@@ -7,3 +7,4 @@ description = "Final executable result"
 
 [dependencies]
 query_driver = { version = "0.1.0", path = "../query_driver"}
+query_system = { version = "0.1.0", path = "../query_system"}
