@@ -2,6 +2,7 @@
 //! Use an interner to allow to resolve ids
 
 pub mod authors;
-pub mod forms;
 pub mod form_data;
+pub mod forms;
+pub mod lemmas;
 pub mod sources;

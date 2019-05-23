@@ -9,3 +9,4 @@ description = "High level description of the queries available"
 salsa = "0.12"
 shrinkwraprs = "0.2"
 latin_utilities = { version = "0.1", path = "../latin_utilities" }
+latin_lemmatizer = { version = "0.1", path = "../latin_lemmatizer" }

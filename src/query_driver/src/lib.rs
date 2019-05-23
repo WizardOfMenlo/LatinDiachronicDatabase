@@ -1,7 +1,9 @@
+use latin_lemmatizer::NaiveLemmatizer;
 use query_system::authors::{Author, AuthorId};
 use query_system::authors::{AuthorsDatabase, AuthorsQueryGroup};
 use query_system::form_data::FormDataQueryGroup;
 use query_system::forms::FormsQueryGroup;
+use query_system::lemmas::LemmasQueryGroup;
 use query_system::sources::{SourcesDatabase, SourcesQueryGroup};
 use std::collections::HashMap;
 use std::error::Error;
@@ -15,13 +17,28 @@ use walkdir::WalkDir;
     SourcesQueryGroup,
     AuthorsQueryGroup,
     FormDataQueryGroup,
-    FormsQueryGroup
+    FormsQueryGroup,
+    LemmasQueryGroup
 )]
 #[derive(Default, Debug)]
 pub struct MainDatabase {
-    // TODO, just for testing
-    pub authors: Vec<AuthorId>,
     runtime: salsa::Runtime<MainDatabase>,
+    lemmatizer: NaiveLemmatizer,
+}
+
+impl MainDatabase {
+    fn new(lemmatizer: NaiveLemmatizer) -> Self {
+        Self {
+            runtime: Default::default(),
+            lemmatizer,
+        }
+    }
+}
+
+impl AsRef<NaiveLemmatizer> for MainDatabase {
+    fn as_ref(&self) -> &NaiveLemmatizer {
+        &self.lemmatizer
+    }
 }
 
 impl salsa::Database for MainDatabase {
@@ -39,8 +56,15 @@ fn load_to_string(p: &Path) -> std::io::Result<String> {
 }
 
 // TODO, make async
-pub fn driver_init(data_dir: impl AsRef<Path>) -> Result<MainDatabase, Box<Error>> {
-    let mut db = MainDatabase::default();
+pub fn driver_init(
+    data_dir: impl AsRef<Path>,
+    lemmatizer_path: impl AsRef<Path>,
+) -> Result<MainDatabase, Box<Error>> {
+    let mut db = MainDatabase::new(
+        latin_lemmatizer::parsers::lemlat_format::new()
+            .read_all(File::open(lemmatizer_path)?)?
+            .build(),
+    );
     let mut current_author_id = None;
     let mut author_associations = HashMap::new();
 
@@ -67,9 +91,6 @@ pub fn driver_init(data_dir: impl AsRef<Path>) -> Result<MainDatabase, Box<Error
             db.set_source_text(new_source_id, Arc::new(load_to_string(path)?));
         }
     }
-
-    // Should be copied
-    db.authors = author_associations.keys().cloned().collect();
 
     for (auth_id, sources) in author_associations {
         db.set_associated_sources(auth_id, Arc::new(sources));

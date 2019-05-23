@@ -3,6 +3,7 @@
 
 use super::NaiveLemmatizer;
 use error::CompositeParsingError;
+use std::fmt::Debug;
 use std::io::{prelude::*, BufReader};
 
 pub mod csv_format;
@@ -30,7 +31,10 @@ type ErrorTy<T> = CompositeParsingError<<T as ParserBuilder>::ErrorTy>;
 #[derive(Debug)]
 pub struct ParserWrapper<T: ParserBuilder>(T);
 
-impl<T: ParserBuilder> ParserWrapper<T> {
+impl<T: ParserBuilder> ParserWrapper<T>
+where
+    T::ErrorTy: Debug,
+{
     /// Create the builder
     pub fn new() -> Self {
         ParserWrapper(T::new())
@@ -64,7 +68,10 @@ impl<T: ParserBuilder> ParserWrapper<T> {
     }
 }
 
-impl<T: ParserBuilder> Default for ParserWrapper<T> {
+impl<T: ParserBuilder> Default for ParserWrapper<T>
+where
+    T::ErrorTy: Debug,
+{
     fn default() -> Self {
         Self::new()
     }

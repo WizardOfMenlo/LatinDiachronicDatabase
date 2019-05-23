@@ -8,6 +8,7 @@ use latin_utilities::{NormalizedLatinString, StandardLatinConverter};
 use std::collections::{HashMap, HashSet};
 
 // TODO Instead of this, could it be worthwile to have a mapping W -> Id?
+// TODO Bidirectional mapping!
 type Mapping = HashMap<NormalizedLatinString, HashSet<NormalizedLatinString>>;
 
 // TODO, maybe salsa can help use here as well?
