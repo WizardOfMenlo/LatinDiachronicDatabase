@@ -1,10 +1,19 @@
 use crate::sources::SourceId;
-use interner::{impl_arena_id, RawId};
+use salsa::InternId;
 use std::sync::Arc;
 
 #[derive(Debug, Hash, Eq, Copy, PartialEq, Clone)]
-pub struct AuthorId(RawId);
-impl_arena_id!(AuthorId);
+pub struct AuthorId(InternId);
+
+impl salsa::InternKey for AuthorId {
+    fn from_intern_id(v: InternId) -> Self {
+        AuthorId(v)
+    }
+
+    fn as_intern_id(&self) -> InternId {
+        self.0
+    }
+}
 
 // TODO, might refactor in its own crate, depending on the time involved (chrono)
 #[derive(Debug, Hash, Eq, PartialEq, Clone)]
@@ -20,6 +29,9 @@ impl Author {
 
 #[salsa::query_group(AuthorsQueryGroup)]
 pub trait AuthorsDatabase {
+    #[salsa::interned]
+    fn intern_author(&self, auth: Author) -> AuthorId;
+
     #[salsa::input]
     fn associated_sources(&self, author_id: AuthorId) -> Arc<Vec<SourceId>>;
 }

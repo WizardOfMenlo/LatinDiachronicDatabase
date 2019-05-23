@@ -2,7 +2,6 @@
 members = [
     "src/latin_lemmatizer",
     "src/latin_utilities",
-    "src/interner",
     "src/query_system",
     "src/query_driver",
     "src/runner",

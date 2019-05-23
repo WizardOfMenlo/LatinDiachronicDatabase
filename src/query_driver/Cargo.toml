@@ -7,6 +7,5 @@ description = "System in charge of initializing the query system, so that the Gr
 
 [dependencies]
 query_system = { version = "0.1.0", path = "../query_system"}
-interner = { version = "0.1.0", path = "../interner"}
 salsa = "0.12"
 walkdir = "2"

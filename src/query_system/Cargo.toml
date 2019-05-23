@@ -6,5 +6,4 @@ edition = "2018"
 description = "High level description of the queries available"
 
 [dependencies]
-interner = { version = "0.1.0", path = "../interner"}
 salsa = "0.12"

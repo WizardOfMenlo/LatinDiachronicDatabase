@@ -1,12 +1,25 @@
-use interner::{impl_arena_id, RawId};
+use salsa::InternId;
+use std::path::PathBuf;
 use std::sync::Arc;
 
 #[derive(Debug, Hash, Eq, Copy, PartialEq, Clone)]
-pub struct SourceId(RawId);
-impl_arena_id!(SourceId);
+pub struct SourceId(InternId);
+
+impl salsa::InternKey for SourceId {
+    fn from_intern_id(v: InternId) -> Self {
+        SourceId(v)
+    }
+
+    fn as_intern_id(&self) -> InternId {
+        self.0
+    }
+}
 
 #[salsa::query_group(SourcesQueryGroup)]
 pub trait SourcesDatabase {
+    #[salsa::interned]
+    fn intern_source(&self, p: PathBuf) -> SourceId;
+
     #[salsa::input]
     fn source_text(&self, source_id: SourceId) -> Arc<String>;
 
