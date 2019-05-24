@@ -1,4 +1,5 @@
 use salsa::InternId;
+use salsa::InternKey;
 
 // Convenience, since all of these are repeated almost exactly
 macro_rules! create_ids {
@@ -20,6 +21,12 @@ macro_rules! impl_intern_key {
 
             fn as_intern_id(&self) -> InternId {
                 self.0
+            }
+        }
+
+        impl $name {
+            pub fn from_integer(v: u32) -> Self {
+                $name::from_intern_id(InternId::from(v))
             }
         }
     };

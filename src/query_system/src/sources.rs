@@ -1,18 +1,16 @@
-use crate::form_data::{FormData, FormDataDatabase};
-use crate::forms::{Form, FormsDatabase};
-use crate::ids::{FormDataId, SourceId};
+use crate::ids::{FormDataId, SourceId, AuthorId};
+use crate::types::{Form, FormData, InternDatabase};
 use latin_utilities::StandardLatinConverter;
 
-use std::path::PathBuf;
 use std::sync::Arc;
 
 #[salsa::query_group(SourcesQueryGroup)]
-pub trait SourcesDatabase: FormsDatabase + FormDataDatabase {
-    #[salsa::interned]
-    fn intern_source(&self, p: PathBuf) -> SourceId;
-
+pub trait SourcesDatabase: InternDatabase {
     #[salsa::input]
     fn source_text(&self, source_id: SourceId) -> Arc<String>;
+
+    #[salsa::input]
+    fn associated_sources(&self, author_id: AuthorId) -> Arc<Vec<SourceId>>;
 
     // Low level
     fn num_lines(&self, source_id: SourceId) -> usize;

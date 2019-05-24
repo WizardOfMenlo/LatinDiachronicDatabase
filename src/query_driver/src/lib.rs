@@ -1,28 +1,22 @@
 use latin_lemmatizer::NaiveLemmatizer;
-use query_system::authors::Author;
-use query_system::authors::{AuthorsDatabase, AuthorsQueryGroup};
-use query_system::form_data::FormDataQueryGroup;
-use query_system::forms::FormsQueryGroup;
-use query_system::lemmas::LemmasQueryGroup;
+use query_system::ids::{AuthorId, SourceId};
 use query_system::sources::{SourcesDatabase, SourcesQueryGroup};
+use query_system::types::{Author, InternDatabase, InternersGroup};
 use std::collections::HashMap;
 use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
+use std::path::PathBuf;
 use std::sync::Arc;
 use walkdir::WalkDir;
 
-#[salsa::database(
-    SourcesQueryGroup,
-    AuthorsQueryGroup,
-    FormDataQueryGroup,
-    FormsQueryGroup,
-    LemmasQueryGroup
-)]
+#[salsa::database(SourcesQueryGroup, InternersGroup)]
 #[derive(Default, Debug)]
 pub struct MainDatabase {
     runtime: salsa::Runtime<MainDatabase>,
+    sources: HashMap<PathBuf, SourceId>,
+    authors: HashMap<Author, AuthorId>,
     lemmatizer: NaiveLemmatizer,
 }
 
@@ -30,6 +24,8 @@ impl MainDatabase {
     fn new(lemmatizer: NaiveLemmatizer) -> Self {
         Self {
             runtime: Default::default(),
+            sources: HashMap::new(),
+            authors: HashMap::new(),
             lemmatizer,
         }
     }
@@ -61,34 +57,43 @@ pub fn driver_init(
     lemmatizer_path: impl AsRef<Path>,
 ) -> Result<MainDatabase, Box<Error>> {
     let mut db = MainDatabase::new(
-        latin_lemmatizer::parsers::lemlat_format::new()
+        latin_lemmatizer::parsers::csv_format::new()
             .read_all(File::open(lemmatizer_path)?)?
             .build(),
     );
     let mut current_author_id = None;
     let mut author_associations = HashMap::new();
+    let mut author_counter = 0;
+    let mut source_counter = 0;
 
     for entry in WalkDir::new(data_dir).max_depth(2) {
         let entry = entry?;
         let ft = entry.file_type();
-        // Branch: Add a new author
+        // Branch: Add a new author (maybe check for non folder on 2nd level?)
         if ft.is_dir() {
             // We create authors from file mapping
             let file_name = entry.file_name().to_string_lossy().into_owned();
-            current_author_id = Some(db.intern_author(Author::new(file_name)));
-            db.set_associated_sources(current_author_id.unwrap(), Arc::new(vec![]));
+            let new_id = AuthorId::from_integer(author_counter);
+
+            current_author_id = Some(new_id);
+
+            db.authors.insert(Author::new(file_name), new_id);
+            author_counter += 1;
         }
         // Branch, load into db (skip if no author appeared first)
         else if ft.is_file() && current_author_id.is_some() {
             let path = entry.path();
-            let new_source_id = db.intern_source(path.to_path_buf());
+            let new_id = SourceId::from_integer(source_counter);
+
+            db.sources.insert(path.to_path_buf(), new_id);
             // Add the source to the author
             author_associations
                 .entry(current_author_id.unwrap())
                 .or_insert_with(Vec::new)
-                .push(new_source_id);
+                .push(new_id);
 
-            db.set_source_text(new_source_id, Arc::new(load_to_string(path)?));
+            db.set_source_text(new_id, Arc::new(load_to_string(path)?));
+            source_counter += 1;
         }
     }
 
