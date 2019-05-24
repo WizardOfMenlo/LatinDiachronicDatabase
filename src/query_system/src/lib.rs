@@ -7,5 +7,4 @@ pub mod forms;
 pub mod lemmas;
 pub mod sources;
 
-#[salsa::query_group(MainQG)]
-pub trait QueryDatabase {}
+pub mod ids;

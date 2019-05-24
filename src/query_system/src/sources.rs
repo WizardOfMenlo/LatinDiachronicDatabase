@@ -1,23 +1,10 @@
-use crate::form_data::{FormData, FormDataDatabase, FormDataId};
+use crate::form_data::{FormData, FormDataDatabase};
 use crate::forms::{Form, FormsDatabase};
+use crate::ids::{FormDataId, SourceId};
 use latin_utilities::StandardLatinConverter;
 
-use salsa::InternId;
 use std::path::PathBuf;
 use std::sync::Arc;
-
-#[derive(Debug, Hash, Eq, Copy, PartialEq, Clone)]
-pub struct SourceId(InternId);
-
-impl salsa::InternKey for SourceId {
-    fn from_intern_id(v: InternId) -> Self {
-        SourceId(v)
-    }
-
-    fn as_intern_id(&self) -> InternId {
-        self.0
-    }
-}
 
 #[salsa::query_group(SourcesQueryGroup)]
 pub trait SourcesDatabase: FormsDatabase + FormDataDatabase {

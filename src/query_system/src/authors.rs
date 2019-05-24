@@ -1,5 +1,4 @@
-use crate::sources::SourceId;
-use salsa::InternId;
+use crate::ids::{AuthorId, SourceId};
 use std::collections::HashSet;
 use std::sync::Arc;
 
@@ -23,19 +22,6 @@ fn union_author_sources(
         hs.extend(db.associated_sources(auth).iter());
     }
     Arc::new(hs)
-}
-
-#[derive(Debug, Hash, Eq, Copy, PartialEq, Clone)]
-pub struct AuthorId(InternId);
-
-impl salsa::InternKey for AuthorId {
-    fn from_intern_id(v: InternId) -> Self {
-        AuthorId(v)
-    }
-
-    fn as_intern_id(&self) -> InternId {
-        self.0
-    }
 }
 
 // TODO, might refactor in its own crate, depending on the time involved (chrono)

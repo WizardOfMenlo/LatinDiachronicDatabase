@@ -1,10 +1,9 @@
+use crate::ids::{FormId, LemmaId};
 use latin_lemmatizer::NaiveLemmatizer;
 use latin_utilities::NormalizedLatinString;
-use salsa::InternId;
-use std::collections::HashSet;
 use std::sync::Arc;
 
-use crate::lemmas::{Lemma, LemmaId, LemmasDatabase};
+use crate::lemmas::{Lemma, LemmasDatabase};
 
 #[salsa::query_group(FormsQueryGroup)]
 pub trait FormsDatabase: AsRef<NaiveLemmatizer> + LemmasDatabase {
@@ -32,19 +31,6 @@ fn lemmatize_form(db: &impl FormsDatabase, id: FormId) -> Arc<Vec<LemmaId>> {
             .map(|e| db.intern_lemma(Lemma(e)))
             .collect(),
     )
-}
-
-#[derive(Debug, Hash, Eq, Copy, PartialEq, Clone)]
-pub struct FormId(InternId);
-
-impl salsa::InternKey for FormId {
-    fn from_intern_id(v: InternId) -> Self {
-        FormId(v)
-    }
-
-    fn as_intern_id(&self) -> InternId {
-        self.0
-    }
 }
 
 #[derive(shrinkwraprs::Shrinkwrap, Debug, Hash, Clone, Eq, PartialEq)]
