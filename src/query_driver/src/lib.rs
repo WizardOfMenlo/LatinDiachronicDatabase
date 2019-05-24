@@ -1,5 +1,5 @@
 use latin_lemmatizer::NaiveLemmatizer;
-use query_system::authors::{Author, AuthorId};
+use query_system::authors::Author;
 use query_system::authors::{AuthorsDatabase, AuthorsQueryGroup};
 use query_system::form_data::FormDataQueryGroup;
 use query_system::forms::FormsQueryGroup;
