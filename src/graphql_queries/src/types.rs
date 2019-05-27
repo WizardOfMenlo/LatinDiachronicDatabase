@@ -16,28 +16,29 @@ impl Author {
         Author { id }
     }
 
-    fn author<'a>(&self, context: &'a Context) -> &'a types::Author {
+    fn author(&self, context: &Context) -> types::Author {
         // TODO We could cache this?
         context
-            .as_ref()
+            .get()
             .authors()
             .iter()
             .find(|(_, &v)| v == self.id)
             .map(|(k, _)| k)
+            .cloned()
             .expect("No authorid should be created")
     }
 }
 
 #[juniper::object(Context = Context)]
 impl Author {
-    fn name(&self, context: &Context) -> &str {
-        self.author(context).name()
+    fn name(&self, context: &Context) -> String {
+        self.author(context).name().to_string()
     }
 
     fn sources(&self, context: &Context) -> Vec<Source> {
-        let sources = context.as_ref().associated_sources(self.id);
+        let sources = context.get().associated_sources(self.id);
         context
-            .as_ref()
+            .get()
             .sources()
             .iter()
             .filter(|(_, v)| sources.contains(v))
@@ -66,20 +67,20 @@ pub struct Occurrence {
 #[juniper::object(Context = Context)]
 impl Occurrence {
     fn line(&self, context: &Context) -> String {
-        let fd = context.as_ref().lookup_intern_form_data(self.id);
+        let fd = context.get().lookup_intern_form_data(self.id);
         context
-            .as_ref()
+            .get()
             .get_line(fd.source(), fd.line_no())
             .unwrap()
             .to_string()
     }
 
     fn source(&self, context: &Context) -> Source {
-        let fd = context.as_ref().lookup_intern_form_data(self.id);
+        let fd = context.get().lookup_intern_form_data(self.id);
 
         // TODO, this code is duplicated, extract and refactor
         context
-            .as_ref()
+            .get()
             .sources()
             .iter()
             .find(|(_, &v)| v == fd.source())
@@ -103,7 +104,7 @@ impl Form {
 impl Form {
     fn form(&self, context: &Context) -> String {
         context
-            .as_ref()
+            .get()
             .lookup_intern_form(self.form)
             .0
             .inner()
@@ -111,12 +112,12 @@ impl Form {
     }
 
     fn count(&self, context: &Context) -> i32 {
-        let db = context.as_ref();
+        let db = context.get();
         db.count_form_occurrences_authors(self.form, self.authors.clone()) as i32
     }
 
     fn occurrences(&self, context: &Context) -> Vec<Occurrence> {
-        let db = context.as_ref();
+        let db = context.get();
         db.form_occurrences_authors(self.form, self.authors.clone())
             .iter()
             .map(|s| Occurrence { id: *s })
@@ -139,7 +140,7 @@ impl Lemma {
 impl Lemma {
     fn lemma(&self, context: &Context) -> String {
         context
-            .as_ref()
+            .get()
             .lookup_intern_lemma(self.lemma)
             .0
             .inner()
@@ -147,12 +148,12 @@ impl Lemma {
     }
 
     fn count(&self, context: &Context) -> i32 {
-        let db = context.as_ref();
+        let db = context.get();
         db.count_lemma_occurrences_authors(self.lemma, self.authors.clone()) as i32
     }
 
     fn occurrences(&self, context: &Context) -> Vec<Occurrence> {
-        let db = context.as_ref();
+        let db = context.get();
         db.lemma_occurrences_authors(self.lemma, self.authors.clone())
             .iter()
             .map(|s| Occurrence { id: *s })

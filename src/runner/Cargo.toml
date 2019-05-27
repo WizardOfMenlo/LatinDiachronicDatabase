@@ -8,3 +8,9 @@ description = "Final executable result"
 [dependencies]
 query_driver = { version = "0.1.0", path = "../query_driver"}
 query_system = { version = "0.1.0", path = "../query_system"}
+graphql_queries = { version = "0.1.0", path = "../graphql_queries"}
+warp = "0.1"
+juniper_warp = "0.3"
+log = "0.4.6"
+env_logger = "0.6.1"
+color-backtrace = "0.1"

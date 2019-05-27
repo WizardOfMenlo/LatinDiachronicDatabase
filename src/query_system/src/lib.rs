@@ -6,14 +6,18 @@
 pub mod ids;
 pub mod middle;
 pub mod sources;
-pub mod types;
 pub mod traits;
+pub mod types;
 
 use ids::*;
 
 #[salsa::query_group(MainQueries)]
 pub trait MainDatabase:
-    sources::SourcesDatabase + types::InternDatabase + middle::IntermediateDatabase + salsa::Database + salsa::ParallelDatabase
+    sources::SourcesDatabase
+    + types::InternDatabase
+    + middle::IntermediateDatabase
+    + salsa::Database
+    + salsa::ParallelDatabase
 {
     fn count_lemma_occurrences_sources(&self, id: LemmaId, sources: Vec<SourceId>) -> usize;
     fn count_lemma_occurrences_authors(&self, id: LemmaId, authors: Vec<AuthorId>) -> usize;

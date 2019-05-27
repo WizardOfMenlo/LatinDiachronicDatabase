@@ -24,7 +24,7 @@ impl AuthorsInput {
     // Get the list of authors to apply the query to
     pub fn get_authors(&self, context: &Context) -> Vec<AuthorId> {
         if self.use_all {
-            return context.as_ref().authors().values().cloned().collect();
+            return context.get().authors().values().cloned().collect();
         }
 
         // TODO, this can be probably done better
@@ -36,7 +36,7 @@ impl AuthorsInput {
             .collect();
 
         context
-            .as_ref()
+            .get()
             .authors()
             .iter()
             .filter(|(k, _)| hashset.contains(k.name()))
