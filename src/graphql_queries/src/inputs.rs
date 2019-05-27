@@ -1,0 +1,47 @@
+use crate::context::Context;
+use query_system::ids::AuthorId;
+use std::collections::HashSet;
+
+#[derive(juniper::GraphQLInputObject)]
+#[graphql(
+    name = "Authors",
+    description = "The authors to filter a research with"
+)]
+pub struct AuthorsInput {
+    #[graphql(description = "Use all authors in the database")]
+    useAll: bool,
+    list: Option<Vec<String>>,
+}
+
+impl AuthorsInput {
+    pub fn all() -> Self {
+        Self {
+            useAll: true,
+            list: None,
+        }
+    }
+
+    // Get the list of authors to apply the query to
+    pub fn get_authors(&self, context: &Context) -> Vec<AuthorId> {
+        if self.useAll {
+            return context.as_ref().authors().values().cloned().collect();
+        }
+
+        // TODO, this can be probably done better
+        let hashset: HashSet<String> = self
+            .list
+            .clone()
+            .unwrap_or_else(Vec::new)
+            .into_iter()
+            .collect();
+
+        context
+            .as_ref()
+            .authors()
+            .iter()
+            .filter(|(k, _)| hashset.contains(k.name()))
+            .map(|(_, v)| v)
+            .cloned()
+            .collect()
+    }
+}

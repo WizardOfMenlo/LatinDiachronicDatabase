@@ -9,3 +9,5 @@ salsa = "0.12"
 juniper = "0.12"
 shrinkwraprs = "0.2"
 query_system = { version = "0.1.0", path = "../query_system"}
+query_driver = { version = "0.1.0", path = "../query_driver"}
+latin_utilities = { version = "0.1.0", path = "../latin_utilities"}

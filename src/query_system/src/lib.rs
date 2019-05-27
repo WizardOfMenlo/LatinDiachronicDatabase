@@ -7,6 +7,7 @@ pub mod ids;
 pub mod middle;
 pub mod sources;
 pub mod types;
+pub mod traits;
 
 use ids::*;
 

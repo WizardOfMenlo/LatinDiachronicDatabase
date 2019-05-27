@@ -17,6 +17,7 @@ use walkdir::WalkDir;
 #[derive(Default, Debug)]
 pub struct MainDatabase {
     runtime: salsa::Runtime<MainDatabase>,
+    // TODO, bidirectionaize this? Use the old interner impl
     sources: HashMap<PathBuf, SourceId>,
     authors: HashMap<Author, AuthorId>,
     lemmatizer: NaiveLemmatizer,
@@ -30,6 +31,14 @@ impl MainDatabase {
             authors: HashMap::new(),
             lemmatizer,
         }
+    }
+
+    pub fn authors(&self) -> &HashMap<Author, AuthorId> {
+        &self.authors
+    }
+
+    pub fn sources(&self) -> &HashMap<PathBuf, SourceId> {
+        &self.sources
     }
 }
 
