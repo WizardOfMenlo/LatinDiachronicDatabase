@@ -9,7 +9,7 @@ use warp::{http::Response, Filter};
 fn main() {
     color_backtrace::install();
 
-    std::env::set_var("RUST_LOG", "warp_server");
+    std::env::set_var("RUST_LOG", "warp_server,info");
     std::env::set_var("RUST_BACKTRACE", "1");
     env_logger::init();
 

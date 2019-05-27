@@ -155,6 +155,7 @@ fn form_occurrences_sources(
     id: FormId,
     sources: Vec<SourceId>,
 ) -> Arc<HashSet<FormDataId>> {
+    info!("Looking for form: {:?} in {} sources", id, sources.len());
     Arc::new(
         db.parse_sources(sources)
             .iter()
@@ -169,6 +170,7 @@ fn form_occurrences_authors(
     id: FormId,
     authors: Vec<AuthorId>,
 ) -> Arc<HashSet<FormDataId>> {
+    info!("Looking for form: {:?} in {} authors", id, authors.len());
     Arc::new(
         db.parse_authors(authors)
             .iter()
@@ -183,6 +185,7 @@ fn lemma_occurrences_sources(
     id: LemmaId,
     sources: Vec<SourceId>,
 ) -> Arc<HashSet<FormDataId>> {
+    info!("Looking for lemma: {:?} in {} sources", id, sources.len());
     // TODO, making the lemmatizer bidirectional could save some time here?
     Arc::new(
         db.parse_sources(sources)
@@ -201,6 +204,7 @@ fn lemma_occurrences_authors(
     id: LemmaId,
     authors: Vec<AuthorId>,
 ) -> Arc<HashSet<FormDataId>> {
+    info!("Looking for lemma: {:?} in {} authors", id, authors.len());
     Arc::new(
         db.parse_authors(authors)
             .iter()

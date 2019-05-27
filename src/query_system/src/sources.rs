@@ -32,12 +32,13 @@ fn get_line(db: &impl SourcesDatabase, source_id: SourceId, line: usize) -> Opti
 }
 
 fn parse_source(db: &impl SourcesDatabase, source_id: SourceId) -> Arc<HashSet<FormDataId>> {
-    let num_lines = db.num_lines(source_id);
+    info!("Parsing source {:?}", source_id);
     let converter = StandardLatinConverter::default();
     let mut form_data_ids = HashSet::new();
 
-    for i in 0..num_lines {
-        let line = db.get_line(source_id, i).expect("should always succeed");
+    let text = db.source_text(source_id);
+
+    for (i, line) in text.lines().enumerate() {
         for word in line.split(' ') {
             let lw = converter.convert(word);
             let form = Form(lw);

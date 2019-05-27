@@ -120,16 +120,12 @@ pub fn driver_init(
         }
     }
 
-    dbg!(db.authors.len());
-
     // Ensure no childless authors arise
     db.authors = db
         .authors
         .into_iter()
         .filter(|(_, v)| author_associations.contains_key(v) && !author_associations[v].is_empty())
         .collect();
-
-    dbg!(db.authors.len());
 
     for (auth_id, sources) in author_associations {
         // TODO the conversion is pretty bad
