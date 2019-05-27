@@ -12,7 +12,7 @@ use ids::*;
 
 #[salsa::query_group(MainQueries)]
 pub trait MainDatabase:
-    sources::SourcesDatabase + types::InternDatabase + middle::IntermediateDatabase
+    sources::SourcesDatabase + types::InternDatabase + middle::IntermediateDatabase + salsa::Database + salsa::ParallelDatabase
 {
     fn count_lemma_occurrences_sources(&self, id: LemmaId, sources: Vec<SourceId>) -> usize;
     fn count_lemma_occurrences_authors(&self, id: LemmaId, authors: Vec<AuthorId>) -> usize;

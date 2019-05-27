@@ -45,6 +45,17 @@ impl salsa::Database for MainDatabase {
     }
 }
 
+impl salsa::ParallelDatabase for MainDatabase {
+    fn snapshot(&self) -> salsa::Snapshot<Self> {
+        salsa::Snapshot::new(MainDatabase {
+            runtime: self.runtime.snapshot(self),
+            sources: self.sources.clone(),
+            authors: self.authors.clone(),
+            lemmatizer: self.lemmatizer.clone(),
+        })
+    }
+}
+
 // Helper to load a file to string
 fn load_to_string(p: &Path) -> std::io::Result<String> {
     let mut f = File::open(p)?;
