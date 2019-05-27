@@ -4,8 +4,9 @@ mod types;
 
 use crate::context::Context;
 use crate::inputs::AuthorsInput;
-use crate::types::{Form, Lemma};
-use juniper::{EmptyMutation, FieldResult, RootNode};
+use crate::types::{Author, Form, Lemma};
+use juniper::graphql_value;
+use juniper::{EmptyMutation, FieldError, FieldResult, RootNode};
 use latin_utilities::NormalizedLatinString;
 
 use query_system::traits::InternDatabase;
@@ -22,6 +23,16 @@ pub struct Query;
 impl Query {
     fn apiVersion() -> &str {
         "0.1"
+    }
+
+    fn author(context: &Context, name: String) -> FieldResult<Author> {
+        context
+            .get()
+            .authors()
+            .iter()
+            .find(|(k, _)| k.name() == name)
+            .map(|(_, v)| Author::new(*v))
+            .ok_or_else(|| FieldError::new("Not found", graphql_value!({ "not found": name })))
     }
 
     #[graphql(
