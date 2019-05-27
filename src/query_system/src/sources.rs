@@ -1,7 +1,8 @@
-use crate::ids::{FormDataId, SourceId, AuthorId};
+use crate::ids::{AuthorId, FormDataId, SourceId};
 use crate::types::{Form, FormData, InternDatabase};
 use latin_utilities::StandardLatinConverter;
 
+use std::collections::HashSet;
 use std::sync::Arc;
 
 #[salsa::query_group(SourcesQueryGroup)]
@@ -10,13 +11,14 @@ pub trait SourcesDatabase: InternDatabase {
     fn source_text(&self, source_id: SourceId) -> Arc<String>;
 
     #[salsa::input]
-    fn associated_sources(&self, author_id: AuthorId) -> Arc<Vec<SourceId>>;
+    fn associated_sources(&self, author_id: AuthorId) -> Arc<HashSet<SourceId>>;
 
     // Low level
     fn num_lines(&self, source_id: SourceId) -> usize;
     fn get_line(&self, source_id: SourceId, line: usize) -> Option<Arc<String>>;
 
-    fn parse_source(&self, source_id: SourceId) -> Arc<Vec<FormDataId>>;
+    // TODO, benchmark and see if hashset actually worth it
+    fn parse_source(&self, source_id: SourceId) -> Arc<HashSet<FormDataId>>;
 }
 
 fn num_lines(db: &impl SourcesDatabase, source_id: SourceId) -> usize {
@@ -29,10 +31,10 @@ fn get_line(db: &impl SourcesDatabase, source_id: SourceId, line: usize) -> Opti
     text.lines().nth(line).map(|l| Arc::new(l.to_string()))
 }
 
-fn parse_source(db: &impl SourcesDatabase, source_id: SourceId) -> Arc<Vec<FormDataId>> {
+fn parse_source(db: &impl SourcesDatabase, source_id: SourceId) -> Arc<HashSet<FormDataId>> {
     let num_lines = db.num_lines(source_id);
     let converter = StandardLatinConverter::default();
-    let mut form_data_ids = Vec::new();
+    let mut form_data_ids = HashSet::new();
 
     for i in 0..num_lines {
         let line = db.get_line(source_id, i).expect("should always succeed");
@@ -42,7 +44,7 @@ fn parse_source(db: &impl SourcesDatabase, source_id: SourceId) -> Arc<Vec<FormD
             let form_id = db.intern_form(form);
             let form_data = FormData::new(source_id, i, form_id);
             let form_data_id = db.intern_form_data(form_data);
-            form_data_ids.push(form_data_id);
+            form_data_ids.insert(form_data_id);
         }
     }
 

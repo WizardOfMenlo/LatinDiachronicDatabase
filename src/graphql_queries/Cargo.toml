@@ -1,0 +1,10 @@
+[package]
+name = "graphql_queries"
+version = "0.1.0"
+authors = ["Giacomo Fenzi <giacomofenzi@outlook.com>"]
+edition = "2018"
+
+[dependencies]
+salsa = "0.12"
+query_system = { path = "../query_system", version = "0.1"}
+juniper = "0.12"
