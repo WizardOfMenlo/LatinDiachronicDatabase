@@ -6,17 +6,9 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use warp::{http::Response, Filter};
 
-use query_system::ids::AuthorId;
-use query_system::traits::*;
-
 fn main() {
     color_backtrace::install();
 
-    let db = driver_init("./data/works/", "./data/out.txt").unwrap();
-
-    dbg!(db.associated_sources(AuthorId::from_integer(0)));
-
-    /*
     std::env::set_var("RUST_LOG", "warp_server");
     std::env::set_var("RUST_BACKTRACE", "1");
     env_logger::init();
@@ -50,5 +42,4 @@ fn main() {
             .with(log),
     )
     .run(([127, 0, 0, 1], 8080));
-    */
 }

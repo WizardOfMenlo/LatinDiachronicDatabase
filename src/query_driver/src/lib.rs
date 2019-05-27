@@ -100,8 +100,6 @@ pub fn driver_init(
             current_author_id = Some(new_id);
 
             db.authors.insert(Author::new(file_name), new_id);
-            // Ensure no author is skipped
-            author_associations.insert(new_id, Vec::new());
 
             author_counter += 1;
         }
@@ -121,6 +119,17 @@ pub fn driver_init(
             source_counter += 1;
         }
     }
+
+    dbg!(db.authors.len());
+
+    // Ensure no childless authors arise
+    db.authors = db
+        .authors
+        .into_iter()
+        .filter(|(_, v)| author_associations.contains_key(v) && !author_associations[v].is_empty())
+        .collect();
+
+    dbg!(db.authors.len());
 
     for (auth_id, sources) in author_associations {
         // TODO the conversion is pretty bad
