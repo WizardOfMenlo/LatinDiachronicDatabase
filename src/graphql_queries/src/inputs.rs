@@ -23,8 +23,9 @@ impl AuthorsInput {
 
     // Get the list of authors to apply the query to
     pub fn get_authors(&self, context: &Context) -> Vec<AuthorId> {
+        let db = context.get();
         if self.use_all {
-            return context.get().authors().values().cloned().collect();
+            return db.authors().values().cloned().collect();
         }
 
         // TODO, this can be probably done better
@@ -35,9 +36,7 @@ impl AuthorsInput {
             .into_iter()
             .collect();
 
-        context
-            .get()
-            .authors()
+        db.authors()
             .iter()
             .filter(|(k, _)| hashset.contains(k.name()))
             .map(|(_, v)| v)

@@ -1,5 +1,4 @@
 use crate::context::Context;
-use latin_utilities::NormalizedLatinString;
 use query_system::ids::AuthorId;
 use query_system::ids::FormDataId;
 use query_system::ids::FormId;
@@ -36,10 +35,9 @@ impl Author {
     }
 
     fn sources(&self, context: &Context) -> Vec<Source> {
-        let sources = context.get().associated_sources(self.id);
-        context
-            .get()
-            .sources()
+        let db = context.get();
+        let sources = db.associated_sources(self.id);
+        db.sources()
             .iter()
             .filter(|(_, v)| sources.contains(v))
             .map(|(k, _)| Source::new(k.as_path()))
@@ -67,21 +65,17 @@ pub struct Occurrence {
 #[juniper::object(Context = Context)]
 impl Occurrence {
     fn line(&self, context: &Context) -> String {
-        let fd = context.get().lookup_intern_form_data(self.id);
-        context
-            .get()
-            .get_line(fd.source(), fd.line_no())
-            .unwrap()
-            .to_string()
+        let db = context.get();
+        let fd = db.lookup_intern_form_data(self.id);
+        db.get_line(fd.source(), fd.line_no()).unwrap().to_string()
     }
 
     fn source(&self, context: &Context) -> Source {
-        let fd = context.get().lookup_intern_form_data(self.id);
+        let db = context.get();
+        let fd = db.lookup_intern_form_data(self.id);
 
         // TODO, this code is duplicated, extract and refactor
-        context
-            .get()
-            .sources()
+        db.sources()
             .iter()
             .find(|(_, &v)| v == fd.source())
             .map(|(k, _)| Source::new(k))

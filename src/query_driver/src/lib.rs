@@ -100,6 +100,9 @@ pub fn driver_init(
             current_author_id = Some(new_id);
 
             db.authors.insert(Author::new(file_name), new_id);
+            // Ensure no author is skipped
+            author_associations.insert(new_id, Vec::new());
+
             author_counter += 1;
         }
         // Branch, load into db (skip if no author appeared first)
