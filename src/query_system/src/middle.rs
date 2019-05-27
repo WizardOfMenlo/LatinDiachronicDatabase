@@ -17,8 +17,6 @@ pub trait IntermediateDatabase: SourcesDatabase + InternDatabase + AsRef<NaiveLe
 
     fn authors_sources(&self, authors: Vec<AuthorId>) -> Arc<HashSet<SourceId>>;
 
-    fn lemmatize_form(&self, form_id: FormId) -> Arc<HashSet<LemmaId>>;
-
     // Index all sources for forms ------------------------------------------
     fn forms_in_source(&self, source: SourceId) -> Arc<HashSet<FormId>>;
     fn forms_in_sources(&self, sources: Vec<SourceId>) -> Arc<HashSet<FormId>>;
@@ -70,6 +68,21 @@ fn combine<'a, T: Hash + Eq + Clone + 'a>(
     Arc::new(res)
 }
 
+// Lemmatizes a form, in an interface that works well with above
+fn lemmatize_form(db: &impl IntermediateDatabase, form_id: FormId) -> Arc<HashSet<LemmaId>> {
+    let form = db.lookup_intern_form(form_id).0;
+    let lemm = db.as_ref();
+
+    Arc::new(
+        lemm.get_possible_lemmas(&form)
+            .cloned()
+            .unwrap_or_else(HashSet::new)
+            .into_iter()
+            .map(|l| db.intern_lemma(crate::types::Lemma(l)))
+            .collect(),
+    )
+}
+
 fn parse_sources(
     db: &impl IntermediateDatabase,
     sources: Vec<SourceId>,
@@ -90,20 +103,6 @@ fn parse_authors(
     authors: Vec<AuthorId>,
 ) -> Arc<HashSet<FormDataId>> {
     db.parse_sources(Vec::from_iter(db.authors_sources(authors).iter().cloned()))
-}
-
-fn lemmatize_form(db: &impl IntermediateDatabase, form_id: FormId) -> Arc<HashSet<LemmaId>> {
-    let form = db.lookup_intern_form(form_id).0;
-    let lemm = db.as_ref();
-
-    Arc::new(
-        lemm.get_possible_lemmas(&form)
-            .cloned()
-            .unwrap_or_else(HashSet::new)
-            .into_iter()
-            .map(|l| db.intern_lemma(crate::types::Lemma(l)))
-            .collect(),
-    )
 }
 
 fn forms_in_source(db: &impl IntermediateDatabase, source: SourceId) -> Arc<HashSet<FormId>> {
@@ -132,7 +131,7 @@ fn lemmas_in_source(db: &impl IntermediateDatabase, source: SourceId) -> Arc<Has
     combine(
         db.forms_in_source(source)
             .iter()
-            .map(|&f| db.lemmatize_form(f)),
+            .map(|&f| lemmatize_form(db, f)),
     )
 }
 
@@ -192,7 +191,7 @@ fn lemma_occurrences_sources(
             .iter()
             .filter(|&fd| {
                 let form = db.lookup_intern_form_data(*fd).form();
-                db.lemmatize_form(form).contains(&id)
+                lemmatize_form(db, form).contains(&id)
             })
             .cloned()
             .collect(),
@@ -210,7 +209,7 @@ fn lemma_occurrences_authors(
             .iter()
             .filter(|&fd| {
                 let form = db.lookup_intern_form_data(*fd).form();
-                db.lemmatize_form(form).contains(&id)
+                lemmatize_form(db, form).contains(&id)
             })
             .cloned()
             .collect(),
