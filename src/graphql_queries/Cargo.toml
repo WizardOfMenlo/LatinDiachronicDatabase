@@ -6,5 +6,5 @@ edition = "2018"
 
 [dependencies]
 salsa = "0.12"
-query_system = { path = "../query_system", version = "0.1"}
 juniper = "0.12"
+query_system = { version = "0.1.0", path = "../query_system"}

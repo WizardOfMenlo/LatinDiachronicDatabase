@@ -2,6 +2,7 @@ use latin_lemmatizer::NaiveLemmatizer;
 use query_system::ids::{AuthorId, SourceId};
 use query_system::sources::{SourcesDatabase, SourcesQueryGroup};
 use query_system::types::{Author, InternDatabase, InternersGroup};
+use query_system::MainQueries;
 use std::collections::HashMap;
 use std::error::Error;
 use std::fs::File;
@@ -11,7 +12,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use walkdir::WalkDir;
 
-#[salsa::database(SourcesQueryGroup, InternersGroup)]
+#[salsa::database(MainQueries, SourcesQueryGroup, InternersGroup)]
 #[derive(Default, Debug)]
 pub struct MainDatabase {
     runtime: salsa::Runtime<MainDatabase>,
@@ -98,7 +99,8 @@ pub fn driver_init(
     }
 
     for (auth_id, sources) in author_associations {
-        db.set_associated_sources(auth_id, Arc::new(sources));
+        // TODO the conversion is pretty bad
+        db.set_associated_sources(auth_id, Arc::new(sources.into_iter().collect()));
     }
 
     Ok(db)

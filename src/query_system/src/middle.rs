@@ -9,6 +9,7 @@ use std::hash::Hash;
 use std::iter::FromIterator as _;
 use std::sync::Arc;
 
+/// This trait defines ways to aggregate lemmas and forms based on both authors and sources
 #[salsa::query_group(IntermediateQueries)]
 pub trait IntermediateDatabase: SourcesDatabase + InternDatabase + AsRef<NaiveLemmatizer> {
     fn parse_sources(&self, sources: Vec<SourceId>) -> Arc<HashSet<FormDataId>>;
@@ -16,27 +17,57 @@ pub trait IntermediateDatabase: SourcesDatabase + InternDatabase + AsRef<NaiveLe
 
     fn authors_sources(&self, authors: Vec<AuthorId>) -> Arc<HashSet<SourceId>>;
 
+    fn lemmatize_form(&self, form_id: FormId) -> Arc<HashSet<LemmaId>>;
+
+    // Index all sources for forms ------------------------------------------
     fn forms_in_source(&self, source: SourceId) -> Arc<HashSet<FormId>>;
     fn forms_in_sources(&self, sources: Vec<SourceId>) -> Arc<HashSet<FormId>>;
     fn forms_in_authors(&self, authors: Vec<AuthorId>) -> Arc<HashSet<FormId>>;
+    // -----------------------------------------------------------------------
 
+    // Index all sources for lemmas ------------------------------------------
     fn lemmas_in_source(&self, source: SourceId) -> Arc<HashSet<LemmaId>>;
     fn lemmas_in_sources(&self, sources: Vec<SourceId>) -> Arc<HashSet<LemmaId>>;
     fn lemmas_in_authors(&self, authors: Vec<AuthorId>) -> Arc<HashSet<LemmaId>>;
+    // -----------------------------------------------------------------------
+
+    fn form_occurrences_sources(
+        &self,
+        form_id: FormId,
+        sources: Vec<SourceId>,
+    ) -> Arc<HashSet<FormDataId>>;
+
+    fn form_occurrences_authors(
+        &self,
+        form_id: FormId,
+        sources: Vec<AuthorId>,
+    ) -> Arc<HashSet<FormDataId>>;
+
+    fn lemma_occurrences_sources(
+        &self,
+        lemma_id: LemmaId,
+        sources: Vec<SourceId>,
+    ) -> Arc<HashSet<FormDataId>>;
+
+    fn lemma_occurrences_authors(
+        &self,
+        lemma_id: LemmaId,
+        sources: Vec<AuthorId>,
+    ) -> Arc<HashSet<FormDataId>>;
 }
 
 // Sum sets of sources together
 fn combine<'a, T: Hash + Eq + Clone + 'a>(
-    sets: impl IntoIterator<Item = &'a HashSet<T>>,
-) -> HashSet<T> {
+    sets: impl IntoIterator<Item = Arc<HashSet<T>>>,
+) -> Arc<HashSet<T>> {
     // TODO, most of these constr are then Arc, might be worthwhile to work with it here to remove allocations
-    let res = HashSet::new();
+    let mut res = HashSet::new();
 
     for s in sets.into_iter() {
-        res.extend(s.into_iter().cloned())
+        res.extend(s.iter().cloned())
     }
 
-    res
+    Arc::new(res)
 }
 
 fn parse_sources(
@@ -44,27 +75,39 @@ fn parse_sources(
     sources: Vec<SourceId>,
 ) -> Arc<HashSet<FormDataId>> {
     // TODO, I think this allocates twice?
-    Arc::new(combine(sources.into_iter().map(|s| &*db.parse_source(s))))
+    combine(sources.into_iter().map(|s| db.parse_source(s)))
 }
 
 fn authors_sources(
     db: &impl IntermediateDatabase,
     authors: Vec<AuthorId>,
 ) -> Arc<HashSet<SourceId>> {
-    Arc::new(combine(
-        authors.into_iter().map(|a| &*db.associated_sources(a)),
-    ))
+    combine(authors.into_iter().map(|a| db.associated_sources(a)))
 }
 
 fn parse_authors(
     db: &impl IntermediateDatabase,
     authors: Vec<AuthorId>,
 ) -> Arc<HashSet<FormDataId>> {
-    db.parse_sources(Vec::from_iter(db.authors_sources(authors).into_iter()))
+    db.parse_sources(Vec::from_iter(db.authors_sources(authors).iter().cloned()))
+}
+
+fn lemmatize_form(db: &impl IntermediateDatabase, form_id: FormId) -> Arc<HashSet<LemmaId>> {
+    let form = db.lookup_intern_form(form_id).0;
+    let lemm = db.as_ref();
+
+    Arc::new(
+        lemm.get_possible_lemmas(&form)
+            .cloned()
+            .unwrap_or_else(HashSet::new)
+            .into_iter()
+            .map(|l| db.intern_lemma(crate::types::Lemma(l)))
+            .collect(),
+    )
 }
 
 fn forms_in_source(db: &impl IntermediateDatabase, source: SourceId) -> Arc<HashSet<FormId>> {
-    let res = HashSet::new();
+    let mut res = HashSet::new();
     for fd_id in db.parse_source(source).iter() {
         res.insert(db.lookup_intern_form_data(*fd_id).form());
     }
@@ -75,16 +118,14 @@ fn forms_in_sources(
     db: &impl IntermediateDatabase,
     sources: Vec<SourceId>,
 ) -> Arc<HashSet<FormId>> {
-    Arc::new(combine(
-        sources.into_iter().map(|s| &*db.forms_in_source(s)),
-    ))
+    combine(sources.into_iter().map(|s| db.forms_in_source(s)))
 }
 
 fn forms_in_authors(
     db: &impl IntermediateDatabase,
     authors: Vec<AuthorId>,
 ) -> Arc<HashSet<FormId>> {
-    db.forms_in_sources(Vec::from_iter(db.authors_sources(authors).into_iter()))
+    db.forms_in_sources(Vec::from_iter(db.authors_sources(authors).iter().cloned()))
 }
 
 fn lemmas_in_source(db: &impl IntermediateDatabase, source: SourceId) -> Arc<HashSet<LemmaId>> {
@@ -93,19 +134,7 @@ fn lemmas_in_source(db: &impl IntermediateDatabase, source: SourceId) -> Arc<Has
     let mut res = HashSet::new();
 
     for &fd_id in forms.iter() {
-        let form = db.lookup_intern_form(fd_id).0;
-        let possible_lemmas_o = lemm.get_possible_lemmas(&form);
-        // Skip empty (these could go in not found?)
-        if possible_lemmas_o.is_none() {
-            continue;
-        }
-        let possible_lemmas = possible_lemmas_o.unwrap();
-        res.extend(
-            possible_lemmas
-                .into_iter()
-                .cloned()
-                .map(|e| db.intern_lemma(crate::types::Lemma(e))),
-        )
+        res.extend(db.lemmatize_form(fd_id).iter().cloned())
     }
 
     Arc::new(res)
@@ -115,14 +144,49 @@ fn lemmas_in_sources(
     db: &impl IntermediateDatabase,
     sources: Vec<SourceId>,
 ) -> Arc<HashSet<LemmaId>> {
-    Arc::new(combine(
-        sources.into_iter().map(|s| &*db.lemmas_in_source(s)),
-    ))
+    combine(sources.into_iter().map(|s| db.lemmas_in_source(s)))
 }
 
 fn lemmas_in_authors(
     db: &impl IntermediateDatabase,
     authors: Vec<AuthorId>,
 ) -> Arc<HashSet<LemmaId>> {
-    db.lemmas_in_sources(Vec::from_iter(db.authors_sources(authors).into_iter()))
+    db.lemmas_in_sources(Vec::from_iter(db.authors_sources(authors).iter().cloned()))
+}
+
+fn form_occurrences_sources(
+    db: &impl IntermediateDatabase,
+    id: FormId,
+    sources: Vec<SourceId>,
+) -> Arc<HashSet<FormDataId>> {
+    Arc::new(
+        db.parse_sources(sources)
+            .iter()
+            .filter(|&fd| db.lookup_intern_form_data(*fd).form() == id)
+            .cloned()
+            .collect(),
+    )
+}
+
+fn form_occurrences_authors(
+    db: &impl IntermediateDatabase,
+    id: FormId,
+    authors: Vec<AuthorId>,
+) -> Arc<HashSet<FormDataId>> {
+    Arc::new(
+        db.parse_authors(authors)
+            .iter()
+            .filter(|&fd| db.lookup_intern_form_data(*fd).form() == id)
+            .cloned()
+            .collect(),
+    )
+}
+
+fn lemma_occurrences_sources(
+    db: &impl IntermediateDatabase,
+    id: LemmaId,
+    sources: Vec<SourceId>,
+) -> Arc<HashSet<FormDataId>> {
+    // TODO, making the lemmatizer bidirectional could save some time here?
+    db.lemmas_in_sources(sources).filter(|l| l == id)
 }

@@ -8,10 +8,10 @@ pub mod middle;
 pub mod sources;
 pub mod types;
 
-use latin_lemmatizer::NaiveLemmatizer;
+use std::sync::Arc;
 
 #[salsa::query_group(MainQueries)]
-pub trait MainDatabase:
-    sources::SourcesDatabase + types::InternDatabase + AsRef<NaiveLemmatizer>
-{
+pub trait MainDatabase: sources::SourcesDatabase + types::InternDatabase {
+    #[salsa::input]
+    fn some(&self) -> u32;
 }
