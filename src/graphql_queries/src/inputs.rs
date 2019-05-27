@@ -9,21 +9,21 @@ use std::collections::HashSet;
 )]
 pub struct AuthorsInput {
     #[graphql(description = "Use all authors in the database")]
-    useAll: bool,
+    use_all: bool,
     list: Option<Vec<String>>,
 }
 
 impl AuthorsInput {
     pub fn all() -> Self {
         Self {
-            useAll: true,
+            use_all: true,
             list: None,
         }
     }
 
     // Get the list of authors to apply the query to
     pub fn get_authors(&self, context: &Context) -> Vec<AuthorId> {
-        if self.useAll {
+        if self.use_all {
             return context.as_ref().authors().values().cloned().collect();
         }
 
