@@ -129,15 +129,11 @@ fn forms_in_authors(
 }
 
 fn lemmas_in_source(db: &impl IntermediateDatabase, source: SourceId) -> Arc<HashSet<LemmaId>> {
-    let forms = db.forms_in_source(source);
-    let lemm = db.as_ref();
-    let mut res = HashSet::new();
-
-    for &fd_id in forms.iter() {
-        res.extend(db.lemmatize_form(fd_id).iter().cloned())
-    }
-
-    Arc::new(res)
+    combine(
+        db.forms_in_source(source)
+            .iter()
+            .map(|&f| db.lemmatize_form(f)),
+    )
 }
 
 fn lemmas_in_sources(
@@ -188,5 +184,31 @@ fn lemma_occurrences_sources(
     sources: Vec<SourceId>,
 ) -> Arc<HashSet<FormDataId>> {
     // TODO, making the lemmatizer bidirectional could save some time here?
-    db.lemmas_in_sources(sources).filter(|l| l == id)
+    Arc::new(
+        db.parse_sources(sources)
+            .iter()
+            .filter(|&fd| {
+                let form = db.lookup_intern_form_data(*fd).form();
+                db.lemmatize_form(form).contains(&id)
+            })
+            .cloned()
+            .collect(),
+    )
+}
+
+fn lemma_occurrences_authors(
+    db: &impl IntermediateDatabase,
+    id: LemmaId,
+    authors: Vec<AuthorId>,
+) -> Arc<HashSet<FormDataId>> {
+    Arc::new(
+        db.parse_authors(authors)
+            .iter()
+            .filter(|&fd| {
+                let form = db.lookup_intern_form_data(*fd).form();
+                db.lemmatize_form(form).contains(&id)
+            })
+            .cloned()
+            .collect(),
+    )
 }

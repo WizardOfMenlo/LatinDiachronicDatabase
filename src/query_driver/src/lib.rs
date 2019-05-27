@@ -1,7 +1,8 @@
 use latin_lemmatizer::NaiveLemmatizer;
 use query_system::ids::{AuthorId, SourceId};
+use query_system::middle::IntermediateQueries;
 use query_system::sources::{SourcesDatabase, SourcesQueryGroup};
-use query_system::types::{Author, InternDatabase, InternersGroup};
+use query_system::types::{Author, InternersGroup};
 use query_system::MainQueries;
 use std::collections::HashMap;
 use std::error::Error;
@@ -12,7 +13,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use walkdir::WalkDir;
 
-#[salsa::database(MainQueries, SourcesQueryGroup, InternersGroup)]
+#[salsa::database(MainQueries, SourcesQueryGroup, InternersGroup, IntermediateQueries)]
 #[derive(Default, Debug)]
 pub struct MainDatabase {
     runtime: salsa::Runtime<MainDatabase>,

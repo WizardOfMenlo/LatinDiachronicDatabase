@@ -8,10 +8,47 @@ pub mod middle;
 pub mod sources;
 pub mod types;
 
-use std::sync::Arc;
+use ids::*;
 
 #[salsa::query_group(MainQueries)]
-pub trait MainDatabase: sources::SourcesDatabase + types::InternDatabase {
-    #[salsa::input]
-    fn some(&self) -> u32;
+pub trait MainDatabase:
+    sources::SourcesDatabase + types::InternDatabase + middle::IntermediateDatabase
+{
+    fn count_lemma_occurrences_sources(&self, id: LemmaId, sources: Vec<SourceId>) -> usize;
+    fn count_lemma_occurrences_authors(&self, id: LemmaId, authors: Vec<AuthorId>) -> usize;
+
+    fn count_form_occurrences_sources(&self, id: FormId, sources: Vec<SourceId>) -> usize;
+    fn count_form_occurrences_authors(&self, id: FormId, authors: Vec<AuthorId>) -> usize;
+}
+
+fn count_lemma_occurrences_sources(
+    db: &impl MainDatabase,
+    id: LemmaId,
+    sources: Vec<SourceId>,
+) -> usize {
+    db.lemma_occurrences_sources(id, sources).len()
+}
+
+fn count_lemma_occurrences_authors(
+    db: &impl MainDatabase,
+    id: LemmaId,
+    authors: Vec<AuthorId>,
+) -> usize {
+    db.lemma_occurrences_authors(id, authors).len()
+}
+
+fn count_form_occurrences_sources(
+    db: &impl MainDatabase,
+    id: FormId,
+    sources: Vec<SourceId>,
+) -> usize {
+    db.form_occurrences_sources(id, sources).len()
+}
+
+fn count_form_occurrences_authors(
+    db: &impl MainDatabase,
+    id: FormId,
+    authors: Vec<AuthorId>,
+) -> usize {
+    db.form_occurrences_authors(id, authors).len()
 }
