@@ -1,3 +1,4 @@
+use clap::{load_yaml, App};
 use graphql_queries::context::Context;
 use graphql_queries::schema;
 use query_driver::driver_init;
@@ -7,7 +8,8 @@ use std::sync::Mutex;
 use warp::{http::Response, Filter};
 
 fn main() {
-    // TODO: add arguments
+    let yaml = load_yaml!("cli.yml");
+    let app = App::from_yaml(yaml).get_matches();
 
     // If I fail, I want to see it :)
     color_backtrace::install();
@@ -19,7 +21,11 @@ fn main() {
 
     // Initialize the db
     let db = Arc::new(Mutex::new(
-        driver_init("./data/works/", "./data/out.txt").unwrap(),
+        driver_init(
+            app.value_of("data_path").unwrap(),
+            app.value_of("lemmatizer").unwrap(),
+        )
+        .unwrap(),
     ));
 
     let log = warp::log("warp_server");

@@ -1,0 +1,19 @@
+name: latin_diachronical_db
+version: "0.1"
+author: Giacomo Fenzi <giacomofenzi@outlook.com>
+about: A GraphQL endpoint to query facts about the latin literature
+args:
+    - data_path:
+        short: d
+        long: data 
+        takes_value: true
+        value_name: DIR 
+        help: The folder where the body of literature is located 
+        required: true
+    - lemmatizer:
+        short: l
+        long: lemmatizer
+        takes_value: true
+        value_name: LEMM_FILE
+        help: The csv file used to build the lemmatizer
+        required: true
