@@ -5,7 +5,7 @@ use salsa::InternKey;
 macro_rules! create_ids {
     ($($name:ident),*) => {
         $(
-        #[derive(Debug, Hash, Eq, Copy, PartialEq, Clone)]
+        #[derive(Debug, Hash, Eq, Copy, PartialEq, Clone, PartialOrd, Ord)]
         pub struct $name(InternId);
         impl_intern_key!($name);
         )*

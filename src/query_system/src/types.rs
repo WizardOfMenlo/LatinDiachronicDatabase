@@ -29,10 +29,10 @@ pub struct FormData {
     form: FormId,
 }
 
-#[derive(shrinkwraprs::Shrinkwrap, Debug, Hash, Eq, PartialEq, Clone)]
+#[derive(shrinkwraprs::Shrinkwrap, Debug, Hash, Eq, PartialEq, Clone, Ord, PartialOrd)]
 pub struct Lemma(pub NormalizedLatinString);
 
-#[derive(shrinkwraprs::Shrinkwrap, Debug, Hash, Eq, PartialEq, Clone)]
+#[derive(shrinkwraprs::Shrinkwrap, Debug, Hash, Eq, PartialEq, Clone, Ord, PartialOrd)]
 pub struct Form(pub NormalizedLatinString);
 
 impl Author {

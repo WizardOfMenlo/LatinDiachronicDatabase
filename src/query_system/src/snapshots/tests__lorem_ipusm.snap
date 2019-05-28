@@ -1,10 +1,10 @@
 ---
-created: "2019-05-28T12:49:24.026362600Z"
+created: "2019-05-28T13:34:28.305082900Z"
 creator: insta@0.8.1
 source: src/query_system/src/sources.rs
 expression: form_data
 ---
-[
+{
     (
         Form(
             NormalizedLatinString(
@@ -698,4 +698,4 @@ expression: form_data
         ),
         0
     )
-]
+}

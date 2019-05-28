@@ -5,21 +5,28 @@ use latin_utilities::StandardLatinConverter;
 use std::collections::HashSet;
 use std::sync::Arc;
 
+/// The trait that is used to parse sources
+/// Usage: set the source text, define the relation between sources and authors
 #[salsa::query_group(SourcesQueryGroup)]
 pub trait SourcesDatabase: InternDatabase {
+    /// Get the source text for a specified source
     #[salsa::input]
     fn source_text(&self, source_id: SourceId) -> Arc<String>;
 
+    /// Get the sources for an author
     #[salsa::input]
     fn associated_sources(&self, author_id: AuthorId) -> Arc<HashSet<SourceId>>;
 
     // Low level
+    /// Get a determined line in a source, if possible
     fn get_line(&self, source_id: SourceId, line: usize) -> Option<Arc<String>>;
 
     // TODO, benchmark and see if hashset actually worth it
+    /// Parse a source, returning the FormData that it generates
     fn parse_source(&self, source_id: SourceId) -> Arc<HashSet<FormDataId>>;
 }
 
+// Note, this function is O(line), so it should be used scarcely
 fn get_line(db: &impl SourcesDatabase, source_id: SourceId, line: usize) -> Option<Arc<String>> {
     let text = db.source_text(source_id);
     text.lines().nth(line).map(|l| Arc::new(l.to_string()))
@@ -107,6 +114,7 @@ mod tests {
     }
 
     use insta::assert_debug_snapshot_matches;
+    use std::collections::BTreeSet;
 
     #[test]
     fn parse_lorem_ipsum() {
@@ -115,17 +123,11 @@ mod tests {
         db.set_source_text(source, Arc::new(String::from(
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.")));
         let parse_res = db.parse_source(source);
-        let mut form_data: Vec<_> = parse_res
+        let form_data: BTreeSet<_> = parse_res
             .iter()
             .map(|&fd| db.lookup_intern_form_data(fd))
             .map(|fd| (db.lookup_intern_form(fd.form()), fd.source(), fd.line_no()))
             .collect();
-
-        // Use this to ensure sortedness
-        form_data.sort_by(|a, b| match a.0.cmp(&b.0) {
-            std::cmp::Ordering::Equal => a.2.cmp(&b.2),
-            other => other,
-        });
 
         assert_debug_snapshot_matches!("lorem_ipusm", form_data)
     }
@@ -145,17 +147,11 @@ perlaturus ad te primum liber iste festinet, apud te"#;
         let source = SourceId::from_integer(0);
         db.set_source_text(source, Arc::new(text.to_string()));
         let parse_res = db.parse_source(source);
-        let mut form_data: Vec<_> = parse_res
+        let form_data: BTreeSet<_> = parse_res
             .iter()
             .map(|&fd| db.lookup_intern_form_data(fd))
             .map(|fd| (db.lookup_intern_form(fd.form()), fd.source(), fd.line_no()))
             .collect();
-
-        // Use this to ensure sortedness
-        form_data.sort_by(|a, b| match a.0.cmp(&b.0) {
-            std::cmp::Ordering::Equal => a.2.cmp(&b.2),
-            other => other,
-        });
 
         assert_debug_snapshot_matches!("notum_est_omnibus", form_data)
     }
