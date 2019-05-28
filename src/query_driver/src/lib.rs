@@ -1,17 +1,16 @@
 use latin_lemmatizer::NaiveLemmatizer;
 use query_system::ids::{AuthorId, SourceId};
 use query_system::middle::IntermediateQueries;
-use query_system::sources::{SourcesDatabase, SourcesQueryGroup};
+use query_system::sources::SourcesQueryGroup;
 use query_system::types::{Author, InternersGroup};
+use query_system::utils::load_database;
 use query_system::MainQueries;
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::error::Error;
 use std::fs::File;
 use std::io;
-use std::io::prelude::*;
-use std::path::Path;
 use std::path::PathBuf;
-use std::sync::Arc;
 use walkdir::WalkDir;
 
 #[salsa::database(MainQueries, SourcesQueryGroup, InternersGroup, IntermediateQueries)]
@@ -113,14 +112,6 @@ impl Configuration {
     }
 }
 
-// Helper to load a file to string
-fn load_to_string(p: &Path) -> io::Result<String> {
-    let mut f = File::open(p)?;
-    let mut buf = String::new();
-    f.read_to_string(&mut buf)?;
-    Ok(buf)
-}
-
 // TODO, make async
 pub fn driver_init(config: Configuration) -> Result<MainDatabase, Box<Error>> {
     let mut db = MainDatabase::new(config.make_lemm()?);
@@ -153,10 +144,9 @@ pub fn driver_init(config: Configuration) -> Result<MainDatabase, Box<Error>> {
             // Add the source to the author
             author_associations
                 .entry(current_author_id.unwrap())
-                .or_insert_with(Vec::new)
-                .push(new_id);
+                .or_insert_with(HashSet::new)
+                .insert(new_id);
 
-            db.set_source_text(new_id, Arc::new(load_to_string(path)?));
             source_counter += 1;
         }
     }
@@ -168,10 +158,14 @@ pub fn driver_init(config: Configuration) -> Result<MainDatabase, Box<Error>> {
         .filter(|(_, v)| author_associations.contains_key(v) && !author_associations[v].is_empty())
         .collect();
 
-    for (auth_id, sources) in author_associations {
-        // TODO the conversion is pretty bad
-        db.set_associated_sources(auth_id, Arc::new(sources.into_iter().collect()));
-    }
+    let aux_sources = db.sources.clone();
+
+    load_database(
+        &mut db,
+        author_associations,
+        aux_sources.into_iter().map(|(k, v)| (v, k)),
+        File::open,
+    )?;
 
     Ok(db)
 }
