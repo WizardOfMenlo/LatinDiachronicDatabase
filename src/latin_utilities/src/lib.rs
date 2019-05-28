@@ -46,6 +46,7 @@ impl StandardLatinConverter {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use proptest::prelude::*;
 
     fn make() -> StandardLatinConverter {
         StandardLatinConverter::default()
@@ -103,5 +104,13 @@ mod tests {
     fn test_numbers() {
         let converter = make();
         assert_eq!(converter.convert("123something456"), "something");
+    }
+
+    proptest! {
+        #[test]
+        fn doesnt_crash(s in "\\PC*") {
+            let converter = make();
+            converter.convert(s)
+        }
     }
 }

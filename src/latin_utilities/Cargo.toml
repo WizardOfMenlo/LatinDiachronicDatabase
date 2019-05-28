@@ -11,6 +11,7 @@ unicode-normalization = "0.1.8"
 [dev-dependencies]
 criterion = "0.2"
 clap = "2.33"
+proptest = "0.9.3"
 
 [[bench]]
 name = "converter_benchmark"

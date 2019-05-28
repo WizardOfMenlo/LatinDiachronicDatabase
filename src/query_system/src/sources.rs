@@ -49,9 +49,125 @@ fn parse_source(db: &impl SourcesDatabase, source_id: SourceId) -> Arc<HashSet<F
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::mock::MockDatabase;
+    use proptest::prelude::*;
+    use std::collections::HashMap;
+    use std::iter;
+
+    fn create_mock_database() -> MockDatabase {
+        MockDatabase::new(latin_lemmatizer::NaiveLemmatizer::new(HashMap::new()))
+    }
+
+    fn generate_source_repeated_n_lines(s: &str, n: usize) -> Arc<String> {
+        // TODO, might want to make the string dyn generated
+        Arc::new(iter::repeat(s).take(n).collect::<Vec<&str>>().join("\n"))
+    }
 
     #[test]
-    fn test() {
-
+    #[should_panic]
+    fn test_panic_non_set_source_text() {
+        let db = create_mock_database();
+        db.source_text(SourceId::from_integer(0));
     }
+
+    #[test]
+    #[should_panic]
+    fn test_panic_non_set_author_sources() {
+        let db = create_mock_database();
+        db.associated_sources(AuthorId::from_integer(0));
+    }
+
+    #[test]
+    fn test_empty_source_parsing() {
+        let mut db = create_mock_database();
+        let source = SourceId::from_integer(0);
+        db.set_source_text(source, Arc::new(String::new()));
+        let res = db.parse_source(source);
+
+        assert_eq!(res.len(), 0);
+    }
+
+    #[test]
+    fn test_source_parsing() {
+        let mut db = create_mock_database();
+        let source = SourceId::from_integer(0);
+        db.set_source_text(source, generate_source_repeated_n_lines("puella", 100));
+        let parse_res = db.parse_source(source);
+
+        assert_eq!(parse_res.len(), 100);
+
+        let form_data: Vec<_> = parse_res
+            .iter()
+            .map(|&fd| db.lookup_intern_form_data(fd))
+            .collect();
+        let form_id = form_data[0].form();
+
+        assert!(form_data.iter().all(|fd| fd.source() == source));
+        assert!(form_data.iter().all(|fd| fd.form() == form_id));
+    }
+
+    use insta::assert_debug_snapshot_matches;
+
+    #[test]
+    fn parse_lorem_ipsum() {
+        let mut db = create_mock_database();
+        let source = SourceId::from_integer(0);
+        db.set_source_text(source, Arc::new(String::from(
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.")));
+        let parse_res = db.parse_source(source);
+        let mut form_data: Vec<_> = parse_res
+            .iter()
+            .map(|&fd| db.lookup_intern_form_data(fd))
+            .map(|fd| (db.lookup_intern_form(fd.form()), fd.source(), fd.line_no()))
+            .collect();
+
+        // Use this to ensure sortedness
+        form_data.sort_by(|a, b| match a.0.cmp(&b.0) {
+            std::cmp::Ordering::Equal => a.2.cmp(&b.2),
+            other => other,
+        });
+
+        assert_debug_snapshot_matches!("lorem_ipusm", form_data)
+    }
+
+    #[test]
+    fn parse_segment() {
+        let text = r#"Notum est omnibus, Celse, penes te studiorum
+nostrorum manere summam, ideoque primum sedulitatis meae
+inpendium iudiciis tuis offerre proposui. nam cum sibi
+inter aequales quendam locum deposcat aemulatio,
+neminem magis conatibus nostris profuturum credidi quam
+qui inter eos in hac parte plurimum possit. itaque quo
+cultior in quorundam notitiam ueniat, omnia tibi nota
+perlaturus ad te primum liber iste festinet, apud te"#;
+
+        let mut db = create_mock_database();
+        let source = SourceId::from_integer(0);
+        db.set_source_text(source, Arc::new(text.to_string()));
+        let parse_res = db.parse_source(source);
+        let mut form_data: Vec<_> = parse_res
+            .iter()
+            .map(|&fd| db.lookup_intern_form_data(fd))
+            .map(|fd| (db.lookup_intern_form(fd.form()), fd.source(), fd.line_no()))
+            .collect();
+
+        // Use this to ensure sortedness
+        form_data.sort_by(|a, b| match a.0.cmp(&b.0) {
+            std::cmp::Ordering::Equal => a.2.cmp(&b.2),
+            other => other,
+        });
+
+        assert_debug_snapshot_matches!("notum_est_omnibus", form_data)
+    }
+
+    proptest! {
+        #[test]
+        fn doesnt_crash(s in "\\PC*") {
+            let mut db = create_mock_database();
+            let source = SourceId::from_integer(0);
+            db.set_source_text(source, Arc::new(s));
+            let _parse_res = db.parse_source(source);
+        }
+    }
+
 }

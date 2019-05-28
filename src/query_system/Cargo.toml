@@ -11,3 +11,7 @@ shrinkwraprs = "0.2"
 latin_utilities = { version = "0.1", path = "../latin_utilities" }
 latin_lemmatizer = { version = "0.1", path = "../latin_lemmatizer" }
 log = "0.4.6"
+
+[dev-dependencies]
+proptest = "0.9.3"
+insta = "0.8.1"

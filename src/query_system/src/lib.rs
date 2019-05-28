@@ -8,10 +8,12 @@ extern crate log;
 
 pub mod ids;
 pub mod middle;
-mod mock;
 pub mod sources;
 pub mod traits;
 pub mod types;
+
+#[cfg(test)]
+mod mock;
 
 use ids::*;
 
