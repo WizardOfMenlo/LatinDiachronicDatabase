@@ -11,4 +11,4 @@ WORKDIR /usr/src/app
 
 COPY --from=build /usr/src/app/runner .
 
-CMD [ "runner" ]
+CMD [ "runner", "-d", "data/works/", "-l", "data/lemm.txt" ]
