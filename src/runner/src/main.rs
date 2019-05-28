@@ -27,9 +27,10 @@ fn main() {
             Configuration::new(
                 app.value_of("data_path").unwrap(),
                 app.value_of("lemmatizer").unwrap(),
-                match app.value_of("useLemlat").is_some() {
-                    true => LemmMode::LemlatFormat,
-                    false => LemmMode::CSVFormat,
+                if app.value_of("useLemlat").is_some() {
+                    LemmMode::LemlatFormat
+                } else {
+                    LemmMode::CSVFormat
                 },
             )
             .unwrap(),
