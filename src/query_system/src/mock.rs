@@ -1,9 +1,12 @@
+//! Mocking facilities for testing
+
 use crate::middle::IntermediateQueries;
 use crate::sources::SourcesQueryGroup;
 use crate::types::InternersGroup;
 use crate::MainQueries;
 use latin_lemmatizer::NaiveLemmatizer;
 
+/// A simplified database, which we use for testing
 #[salsa::database(SourcesQueryGroup, InternersGroup, MainQueries, IntermediateQueries)]
 pub(crate) struct MockDatabase {
     runtime: salsa::Runtime<MockDatabase>,

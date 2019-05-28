@@ -17,6 +17,7 @@ mod mock;
 
 use ids::*;
 
+/// The main trait, which any database should implement
 #[salsa::query_group(MainQueries)]
 pub trait MainDatabase:
     sources::SourcesDatabase
@@ -25,10 +26,16 @@ pub trait MainDatabase:
     + salsa::Database
     + salsa::ParallelDatabase
 {
+    /// Count the number of occurrences of lemma in a subset of the literature
     fn count_lemma_occurrences_sources(&self, id: LemmaId, sources: Vec<SourceId>) -> usize;
+
+    /// Count the number of occurrences of lemma in a subset of the literature
     fn count_lemma_occurrences_authors(&self, id: LemmaId, authors: Vec<AuthorId>) -> usize;
 
+    /// Count the number of occurrences of a form in a subset of the literature
     fn count_form_occurrences_sources(&self, id: FormId, sources: Vec<SourceId>) -> usize;
+
+    /// Count the number of occurrences of a form in a subset of the literature
     fn count_form_occurrences_authors(&self, id: FormId, authors: Vec<AuthorId>) -> usize;
 }
 

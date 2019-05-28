@@ -1,3 +1,5 @@
+//! The lowest level interfacing with source files directly
+
 use crate::ids::{AuthorId, FormDataId, SourceId};
 use crate::types::{Form, FormData, InternDatabase};
 use latin_utilities::StandardLatinConverter;

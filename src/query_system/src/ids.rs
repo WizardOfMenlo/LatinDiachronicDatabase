@@ -1,3 +1,6 @@
+//! The mod where all the `ids` live  
+//! This encompasses both the interned ids and the ones used throught, such as `AuthorId` and `SourceId`
+
 use salsa::InternId;
 use salsa::InternKey;
 

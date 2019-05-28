@@ -1,3 +1,6 @@
+//! Probably the most important mod, contains the traits needed to convert from
+//! parsed files to highlevel representations
+
 use crate::ids::{AuthorId, FormDataId, FormId, LemmaId, SourceId};
 use crate::sources::SourcesDatabase;
 use crate::types::InternDatabase;
@@ -9,44 +12,69 @@ use std::hash::Hash;
 use std::iter::FromIterator as _;
 use std::sync::Arc;
 
-/// This trait defines ways to aggregate lemmas and forms based on both authors and sources
+/// This trait defines ways to aggregate lemmas and forms based on both authors and sources  
+/// Usage: Load the source database, then run any query
 #[salsa::query_group(IntermediateQueries)]
 pub trait IntermediateDatabase: SourcesDatabase + InternDatabase + AsRef<NaiveLemmatizer> {
+    // TODO, Vec as a key is probably a bad shout, might want some ordered cheap coll
+
+    /// Parse multiple sources, and combine the result
     fn parse_sources(&self, sources: Vec<SourceId>) -> Arc<HashSet<FormDataId>>;
+
+    /// Parse multiple authors, and combine the result
     fn parse_authors(&self, authors: Vec<AuthorId>) -> Arc<HashSet<FormDataId>>;
 
+    /// Get the sources for some authors, and combine the result
     fn authors_sources(&self, authors: Vec<AuthorId>) -> Arc<HashSet<SourceId>>;
 
     // Index all sources for forms ------------------------------------------
+
+    /// Get all the forms that appear in a source
     fn forms_in_source(&self, source: SourceId) -> Arc<HashSet<FormId>>;
+
+    /// Get all the forms that appear in some sources
     fn forms_in_sources(&self, sources: Vec<SourceId>) -> Arc<HashSet<FormId>>;
+
+    /// Get all the forms that appear in some authors
     fn forms_in_authors(&self, authors: Vec<AuthorId>) -> Arc<HashSet<FormId>>;
+
     // -----------------------------------------------------------------------
 
     // Index all sources for lemmas ------------------------------------------
+
+    /// Get all lemmas that appear in a source
     fn lemmas_in_source(&self, source: SourceId) -> Arc<HashSet<LemmaId>>;
+
+    /// Get all lemmas that appear in some sources
     fn lemmas_in_sources(&self, sources: Vec<SourceId>) -> Arc<HashSet<LemmaId>>;
+
+    /// Get all lemmas that appear in some authors
     fn lemmas_in_authors(&self, authors: Vec<AuthorId>) -> Arc<HashSet<LemmaId>>;
+
     // -----------------------------------------------------------------------
 
+    /// For a form, get all the occurrences in the subset of the literature
     fn form_occurrences_sources(
         &self,
         form_id: FormId,
         sources: Vec<SourceId>,
     ) -> Arc<HashSet<FormDataId>>;
 
+    /// For a form, get all the occurrences in the subset of the literature
     fn form_occurrences_authors(
         &self,
         form_id: FormId,
         sources: Vec<AuthorId>,
     ) -> Arc<HashSet<FormDataId>>;
 
+    /// For a lemma, get all the occurrences in the subset of the literature
     fn lemma_occurrences_sources(
         &self,
         lemma_id: LemmaId,
         sources: Vec<SourceId>,
     ) -> Arc<HashSet<FormDataId>>;
 
+    /// For a lemma, get all the occurrences in the subset of the literature
     fn lemma_occurrences_authors(
         &self,
         lemma_id: LemmaId,
