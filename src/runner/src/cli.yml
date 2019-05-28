@@ -15,5 +15,8 @@ args:
         long: lemmatizer
         takes_value: true
         value_name: LEMM_FILE
-        help: The csv file used to build the lemmatizer
+        help: The file used to build the lemmatizer
         required: true
+    - useLemlat:
+        short: L
+        long: useLemlat

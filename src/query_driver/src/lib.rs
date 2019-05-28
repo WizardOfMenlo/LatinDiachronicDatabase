@@ -7,6 +7,7 @@ use query_system::MainQueries;
 use std::collections::HashMap;
 use std::error::Error;
 use std::fs::File;
+use std::io;
 use std::io::prelude::*;
 use std::path::Path;
 use std::path::PathBuf;
@@ -65,8 +66,55 @@ impl salsa::ParallelDatabase for MainDatabase {
     }
 }
 
+pub enum LemmMode {
+    CSVFormat,
+    LemlatFormat,
+}
+
+pub struct Configuration {
+    data_dir: PathBuf,
+    lemmatizer_path: PathBuf,
+    lemm_mode: LemmMode,
+}
+
+impl Configuration {
+    pub fn new(
+        data_dir: impl Into<PathBuf>,
+        lemmatizer_path: impl Into<PathBuf>,
+        lemm_mode: LemmMode,
+    ) -> io::Result<Self> {
+        let data_dir = data_dir.into();
+        let lemmatizer_path = lemmatizer_path.into();
+
+        if !lemmatizer_path.exists() {
+            return Err(io::Error::from(io::ErrorKind::NotFound));
+        }
+
+        if !(data_dir.exists() && data_dir.is_dir()) {
+            return Err(io::Error::from(io::ErrorKind::NotFound));
+        }
+
+        Ok(Configuration {
+            data_dir,
+            lemmatizer_path,
+            lemm_mode,
+        })
+    }
+
+    pub(crate) fn make_lemm(&self) -> Result<NaiveLemmatizer, Box<Error>> {
+        Ok(match self.lemm_mode {
+            LemmMode::CSVFormat => latin_lemmatizer::parsers::csv_format::new()
+                .read_all(File::open(&self.lemmatizer_path)?)?
+                .build(),
+            LemmMode::LemlatFormat => latin_lemmatizer::parsers::lemlat_format::new()
+                .read_all(File::open(&self.lemmatizer_path)?)?
+                .build(),
+        })
+    }
+}
+
 // Helper to load a file to string
-fn load_to_string(p: &Path) -> std::io::Result<String> {
+fn load_to_string(p: &Path) -> io::Result<String> {
     let mut f = File::open(p)?;
     let mut buf = String::new();
     f.read_to_string(&mut buf)?;
@@ -74,21 +122,14 @@ fn load_to_string(p: &Path) -> std::io::Result<String> {
 }
 
 // TODO, make async
-pub fn driver_init(
-    data_dir: impl AsRef<Path>,
-    lemmatizer_path: impl AsRef<Path>,
-) -> Result<MainDatabase, Box<Error>> {
-    let mut db = MainDatabase::new(
-        latin_lemmatizer::parsers::csv_format::new()
-            .read_all(File::open(lemmatizer_path)?)?
-            .build(),
-    );
+pub fn driver_init(config: Configuration) -> Result<MainDatabase, Box<Error>> {
+    let mut db = MainDatabase::new(config.make_lemm()?);
     let mut current_author_id = None;
     let mut author_associations = HashMap::new();
     let mut author_counter = 0;
     let mut source_counter = 0;
 
-    for entry in WalkDir::new(data_dir).max_depth(2) {
+    for entry in WalkDir::new(config.data_dir).max_depth(2) {
         let entry = entry?;
         let ft = entry.file_type();
         // Branch: Add a new author (maybe check for non folder on 2nd level?)

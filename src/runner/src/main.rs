@@ -2,6 +2,8 @@ use clap::{load_yaml, App};
 use graphql_queries::context::Context;
 use graphql_queries::schema;
 use query_driver::driver_init;
+use query_driver::Configuration;
+use query_driver::LemmMode;
 use salsa::ParallelDatabase;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -22,8 +24,15 @@ fn main() {
     // Initialize the db
     let db = Arc::new(Mutex::new(
         driver_init(
-            app.value_of("data_path").unwrap(),
-            app.value_of("lemmatizer").unwrap(),
+            Configuration::new(
+                app.value_of("data_path").unwrap(),
+                app.value_of("lemmatizer").unwrap(),
+                match app.value_of("useLemlat").is_some() {
+                    true => LemmMode::LemlatFormat,
+                    false => LemmMode::CSVFormat,
+                },
+            )
+            .unwrap(),
         )
         .unwrap(),
     ));
