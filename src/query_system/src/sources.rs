@@ -14,16 +14,10 @@ pub trait SourcesDatabase: InternDatabase {
     fn associated_sources(&self, author_id: AuthorId) -> Arc<HashSet<SourceId>>;
 
     // Low level
-    fn num_lines(&self, source_id: SourceId) -> usize;
     fn get_line(&self, source_id: SourceId, line: usize) -> Option<Arc<String>>;
 
     // TODO, benchmark and see if hashset actually worth it
     fn parse_source(&self, source_id: SourceId) -> Arc<HashSet<FormDataId>>;
-}
-
-fn num_lines(db: &impl SourcesDatabase, source_id: SourceId) -> usize {
-    let text = db.source_text(source_id);
-    text.lines().count()
 }
 
 fn get_line(db: &impl SourcesDatabase, source_id: SourceId, line: usize) -> Option<Arc<String>> {
@@ -50,4 +44,14 @@ fn parse_source(db: &impl SourcesDatabase, source_id: SourceId) -> Arc<HashSet<F
     }
 
     Arc::new(form_data_ids)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test() {
+
+    }
 }

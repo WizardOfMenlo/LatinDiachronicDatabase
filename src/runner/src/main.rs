@@ -7,18 +7,24 @@ use std::sync::Mutex;
 use warp::{http::Response, Filter};
 
 fn main() {
-    color_backtrace::install();
+    // TODO: add arguments
 
-    std::env::set_var("RUST_LOG", "warp_server,info");
+    // If I fail, I want to see it :)
+    color_backtrace::install();
     std::env::set_var("RUST_BACKTRACE", "1");
+
+    // Init logging
+    std::env::set_var("RUST_LOG", "warp_server");
     env_logger::init();
 
+    // Initialize the db
     let db = Arc::new(Mutex::new(
         driver_init("./data/works/", "./data/out.txt").unwrap(),
     ));
 
     let log = warp::log("warp_server");
 
+    // Redirect to graphiql
     let homepage = warp::path::end().map(|| {
         Response::builder()
             .header("content-type", "text/html")
@@ -28,11 +34,16 @@ fn main() {
             )
     });
 
+    // log that we are running!
     log::info!("Listening on 127.0.0.1:8080");
 
+    // This is snapshot of the db
     let state = warp::any().map(move || Context::new(db.clone().lock().unwrap().snapshot()));
+
+    // Create the graphql instance
     let graphql_filter = juniper_warp::make_graphql_filter(schema(), state.boxed());
 
+    // Serve all
     warp::serve(
         warp::get2()
             .and(warp::path("graphiql"))
