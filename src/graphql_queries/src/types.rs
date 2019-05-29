@@ -3,6 +3,7 @@ use query_system::ids::AuthorId;
 use query_system::ids::FormDataId;
 use query_system::ids::FormId;
 use query_system::ids::LemmaId;
+use query_system::lit_subset::LitSubset;
 use query_system::traits::*;
 use query_system::types;
 
@@ -107,15 +108,19 @@ impl Form {
 
     fn count(&self, context: &Context) -> i32 {
         let db = context.get();
-        db.count_form_occurrences_authors(self.form, self.authors.clone()) as i32
+        db.count_form_occurrences_subset(self.form, LitSubset::from_authors(&self.authors, &db))
+            as i32
     }
 
     fn occurrences(&self, context: &Context) -> Vec<Occurrence> {
         let db = context.get();
-        db.form_occurrences_authors(self.form, self.authors.clone())
-            .iter()
-            .map(|s| Occurrence { id: *s })
-            .collect()
+        db.form_occurrences_subset(
+            self.form,
+            LitSubset::from_authors(&self.authors.clone(), &db),
+        )
+        .iter()
+        .map(|s| Occurrence { id: *s })
+        .collect()
     }
 }
 
@@ -143,12 +148,13 @@ impl Lemma {
 
     fn count(&self, context: &Context) -> i32 {
         let db = context.get();
-        db.count_lemma_occurrences_authors(self.lemma, self.authors.clone()) as i32
+        db.count_lemma_occurrences_subset(self.lemma, LitSubset::from_authors(&self.authors, &db))
+            as i32
     }
 
     fn occurrences(&self, context: &Context) -> Vec<Occurrence> {
         let db = context.get();
-        db.lemma_occurrences_authors(self.lemma, self.authors.clone())
+        db.lemma_occurrences_subset(self.lemma, LitSubset::from_authors(&self.authors, &db))
             .iter()
             .map(|s| Occurrence { id: *s })
             .collect()

@@ -1,7 +1,8 @@
 //! Probably the most important mod, contains the traits needed to convert from
 //! parsed files to highlevel representations
 
-use crate::ids::{AuthorId, FormDataId, FormId, LemmaId, SourceId};
+use crate::ids::{FormDataId, FormId, LemmaId, SourceId};
+use crate::lit_subset::LitSubset;
 use crate::sources::SourcesDatabase;
 use crate::types::InternDatabase;
 
@@ -9,7 +10,6 @@ use latin_lemmatizer::NaiveLemmatizer;
 
 use std::collections::HashSet;
 use std::hash::Hash;
-use std::iter::FromIterator as _;
 use std::sync::Arc;
 
 /// This trait defines ways to aggregate lemmas and forms based on both authors and sources  
@@ -19,13 +19,7 @@ pub trait IntermediateDatabase: SourcesDatabase + InternDatabase + AsRef<NaiveLe
     // TODO, Vec as a key is probably a bad shout, might want some ordered cheap coll
 
     /// Parse multiple sources, and combine the result
-    fn parse_sources(&self, sources: Vec<SourceId>) -> Arc<HashSet<FormDataId>>;
-
-    /// Parse multiple authors, and combine the result
-    fn parse_authors(&self, authors: Vec<AuthorId>) -> Arc<HashSet<FormDataId>>;
-
-    /// Get the sources for some authors, and combine the result
-    fn authors_sources(&self, authors: Vec<AuthorId>) -> Arc<HashSet<SourceId>>;
+    fn parse_subset(&self, subset: LitSubset) -> Arc<HashSet<FormDataId>>;
 
     // Index all sources for forms ------------------------------------------
 
@@ -33,10 +27,7 @@ pub trait IntermediateDatabase: SourcesDatabase + InternDatabase + AsRef<NaiveLe
     fn forms_in_source(&self, source: SourceId) -> Arc<HashSet<FormId>>;
 
     /// Get all the forms that appear in some sources
-    fn forms_in_sources(&self, sources: Vec<SourceId>) -> Arc<HashSet<FormId>>;
-
-    /// Get all the forms that appear in some authors
-    fn forms_in_authors(&self, authors: Vec<AuthorId>) -> Arc<HashSet<FormId>>;
+    fn forms_in_subset(&self, subset: LitSubset) -> Arc<HashSet<FormId>>;
 
     // -----------------------------------------------------------------------
 
@@ -46,39 +37,22 @@ pub trait IntermediateDatabase: SourcesDatabase + InternDatabase + AsRef<NaiveLe
     fn lemmas_in_source(&self, source: SourceId) -> Arc<HashSet<LemmaId>>;
 
     /// Get all lemmas that appear in some sources
-    fn lemmas_in_sources(&self, sources: Vec<SourceId>) -> Arc<HashSet<LemmaId>>;
-
-    /// Get all lemmas that appear in some authors
-    fn lemmas_in_authors(&self, authors: Vec<AuthorId>) -> Arc<HashSet<LemmaId>>;
+    fn lemmas_in_subset(&self, subset: LitSubset) -> Arc<HashSet<LemmaId>>;
 
     // -----------------------------------------------------------------------
 
     /// For a form, get all the occurrences in the subset of the literature
-    fn form_occurrences_sources(
+    fn form_occurrences_subset(
         &self,
         form_id: FormId,
-        sources: Vec<SourceId>,
-    ) -> Arc<HashSet<FormDataId>>;
-
-    /// For a form, get all the occurrences in the subset of the literature
-    fn form_occurrences_authors(
-        &self,
-        form_id: FormId,
-        sources: Vec<AuthorId>,
+        subset: LitSubset,
     ) -> Arc<HashSet<FormDataId>>;
 
     /// For a lemma, get all the occurrences in the subset of the literature
-    fn lemma_occurrences_sources(
+    fn lemma_occurrences_subset(
         &self,
         lemma_id: LemmaId,
-        sources: Vec<SourceId>,
-    ) -> Arc<HashSet<FormDataId>>;
-
-    /// For a lemma, get all the occurrences in the subset of the literature
-    fn lemma_occurrences_authors(
-        &self,
-        lemma_id: LemmaId,
-        sources: Vec<AuthorId>,
+        subset: LitSubset,
     ) -> Arc<HashSet<FormDataId>>;
 }
 
@@ -111,26 +85,9 @@ fn lemmatize_form(db: &impl IntermediateDatabase, form_id: FormId) -> Arc<HashSe
     )
 }
 
-fn parse_sources(
-    db: &impl IntermediateDatabase,
-    sources: Vec<SourceId>,
-) -> Arc<HashSet<FormDataId>> {
+fn parse_subset(db: &impl IntermediateDatabase, subset: LitSubset) -> Arc<HashSet<FormDataId>> {
     // TODO, I think this allocates twice?
-    combine(sources.into_iter().map(|s| db.parse_source(s)))
-}
-
-fn authors_sources(
-    db: &impl IntermediateDatabase,
-    authors: Vec<AuthorId>,
-) -> Arc<HashSet<SourceId>> {
-    combine(authors.into_iter().map(|a| db.associated_sources(a)))
-}
-
-fn parse_authors(
-    db: &impl IntermediateDatabase,
-    authors: Vec<AuthorId>,
-) -> Arc<HashSet<FormDataId>> {
-    db.parse_sources(Vec::from_iter(db.authors_sources(authors).iter().cloned()))
+    combine(subset.sources().into_iter().map(|s| db.parse_source(*s)))
 }
 
 fn forms_in_source(db: &impl IntermediateDatabase, source: SourceId) -> Arc<HashSet<FormId>> {
@@ -141,18 +98,8 @@ fn forms_in_source(db: &impl IntermediateDatabase, source: SourceId) -> Arc<Hash
     Arc::new(res)
 }
 
-fn forms_in_sources(
-    db: &impl IntermediateDatabase,
-    sources: Vec<SourceId>,
-) -> Arc<HashSet<FormId>> {
-    combine(sources.into_iter().map(|s| db.forms_in_source(s)))
-}
-
-fn forms_in_authors(
-    db: &impl IntermediateDatabase,
-    authors: Vec<AuthorId>,
-) -> Arc<HashSet<FormId>> {
-    db.forms_in_sources(Vec::from_iter(db.authors_sources(authors).iter().cloned()))
+fn forms_in_subset(db: &impl IntermediateDatabase, subset: LitSubset) -> Arc<HashSet<FormId>> {
+    combine(subset.sources().into_iter().map(|s| db.forms_in_source(*s)))
 }
 
 fn lemmas_in_source(db: &impl IntermediateDatabase, source: SourceId) -> Arc<HashSet<LemmaId>> {
@@ -163,28 +110,27 @@ fn lemmas_in_source(db: &impl IntermediateDatabase, source: SourceId) -> Arc<Has
     )
 }
 
-fn lemmas_in_sources(
-    db: &impl IntermediateDatabase,
-    sources: Vec<SourceId>,
-) -> Arc<HashSet<LemmaId>> {
-    combine(sources.into_iter().map(|s| db.lemmas_in_source(s)))
+fn lemmas_in_subset(db: &impl IntermediateDatabase, subset: LitSubset) -> Arc<HashSet<LemmaId>> {
+    combine(
+        subset
+            .sources()
+            .into_iter()
+            .map(|s| db.lemmas_in_source(*s)),
+    )
 }
 
-fn lemmas_in_authors(
-    db: &impl IntermediateDatabase,
-    authors: Vec<AuthorId>,
-) -> Arc<HashSet<LemmaId>> {
-    db.lemmas_in_sources(Vec::from_iter(db.authors_sources(authors).iter().cloned()))
-}
-
-fn form_occurrences_sources(
+fn form_occurrences_subset(
     db: &impl IntermediateDatabase,
     id: FormId,
-    sources: Vec<SourceId>,
+    subset: LitSubset,
 ) -> Arc<HashSet<FormDataId>> {
-    info!("Looking for form: {:?} in {} sources", id, sources.len());
+    info!(
+        "Looking for form: {:?} in {} sources",
+        id,
+        subset.sources().len()
+    );
     Arc::new(
-        db.parse_sources(sources)
+        db.parse_subset(subset)
             .iter()
             .filter(|&fd| db.lookup_intern_form_data(*fd).form() == id)
             .cloned()
@@ -192,48 +138,19 @@ fn form_occurrences_sources(
     )
 }
 
-fn form_occurrences_authors(
-    db: &impl IntermediateDatabase,
-    id: FormId,
-    authors: Vec<AuthorId>,
-) -> Arc<HashSet<FormDataId>> {
-    info!("Looking for form: {:?} in {} authors", id, authors.len());
-    Arc::new(
-        db.parse_authors(authors)
-            .iter()
-            .filter(|&fd| db.lookup_intern_form_data(*fd).form() == id)
-            .cloned()
-            .collect(),
-    )
-}
-
-fn lemma_occurrences_sources(
+fn lemma_occurrences_subset(
     db: &impl IntermediateDatabase,
     id: LemmaId,
-    sources: Vec<SourceId>,
+    subset: LitSubset,
 ) -> Arc<HashSet<FormDataId>> {
-    info!("Looking for lemma: {:?} in {} sources", id, sources.len());
+    info!(
+        "Looking for lemma: {:?} in {} sources",
+        id,
+        subset.sources().len()
+    );
     // TODO, making the lemmatizer bidirectional could save some time here?
     Arc::new(
-        db.parse_sources(sources)
-            .iter()
-            .filter(|&fd| {
-                let form = db.lookup_intern_form_data(*fd).form();
-                lemmatize_form(db, form).contains(&id)
-            })
-            .cloned()
-            .collect(),
-    )
-}
-
-fn lemma_occurrences_authors(
-    db: &impl IntermediateDatabase,
-    id: LemmaId,
-    authors: Vec<AuthorId>,
-) -> Arc<HashSet<FormDataId>> {
-    info!("Looking for lemma: {:?} in {} authors", id, authors.len());
-    Arc::new(
-        db.parse_authors(authors)
+        db.parse_subset(subset)
             .iter()
             .filter(|&fd| {
                 let form = db.lookup_intern_form_data(*fd).form();

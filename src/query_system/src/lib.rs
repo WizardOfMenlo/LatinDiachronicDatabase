@@ -7,6 +7,7 @@
 extern crate log;
 
 pub mod ids;
+pub mod lit_subset;
 pub mod middle;
 pub mod sources;
 pub mod traits;
@@ -17,6 +18,7 @@ pub mod utils;
 mod mock;
 
 use ids::*;
+use lit_subset::LitSubset;
 
 /// The main trait, which any database should implement
 #[salsa::query_group(MainQueries)]
@@ -28,46 +30,16 @@ pub trait MainDatabase:
     + salsa::ParallelDatabase
 {
     /// Count the number of occurrences of lemma in a subset of the literature
-    fn count_lemma_occurrences_sources(&self, id: LemmaId, sources: Vec<SourceId>) -> usize;
-
-    /// Count the number of occurrences of lemma in a subset of the literature
-    fn count_lemma_occurrences_authors(&self, id: LemmaId, authors: Vec<AuthorId>) -> usize;
+    fn count_lemma_occurrences_subset(&self, id: LemmaId, subset: LitSubset) -> usize;
 
     /// Count the number of occurrences of a form in a subset of the literature
-    fn count_form_occurrences_sources(&self, id: FormId, sources: Vec<SourceId>) -> usize;
-
-    /// Count the number of occurrences of a form in a subset of the literature
-    fn count_form_occurrences_authors(&self, id: FormId, authors: Vec<AuthorId>) -> usize;
+    fn count_form_occurrences_subset(&self, id: FormId, subset: LitSubset) -> usize;
 }
 
-fn count_lemma_occurrences_sources(
-    db: &impl MainDatabase,
-    id: LemmaId,
-    sources: Vec<SourceId>,
-) -> usize {
-    db.lemma_occurrences_sources(id, sources).len()
+fn count_lemma_occurrences_subset(db: &impl MainDatabase, id: LemmaId, subset: LitSubset) -> usize {
+    db.lemma_occurrences_subset(id, subset).len()
 }
 
-fn count_lemma_occurrences_authors(
-    db: &impl MainDatabase,
-    id: LemmaId,
-    authors: Vec<AuthorId>,
-) -> usize {
-    db.lemma_occurrences_authors(id, authors).len()
-}
-
-fn count_form_occurrences_sources(
-    db: &impl MainDatabase,
-    id: FormId,
-    sources: Vec<SourceId>,
-) -> usize {
-    db.form_occurrences_sources(id, sources).len()
-}
-
-fn count_form_occurrences_authors(
-    db: &impl MainDatabase,
-    id: FormId,
-    authors: Vec<AuthorId>,
-) -> usize {
-    db.form_occurrences_authors(id, authors).len()
+fn count_form_occurrences_subset(db: &impl MainDatabase, id: FormId, subset: LitSubset) -> usize {
+    db.form_occurrences_subset(id, subset).len()
 }

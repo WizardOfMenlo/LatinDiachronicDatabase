@@ -5,5 +5,5 @@ members = [
     "src/query_system",
     "src/query_driver",
     "src/runner",
-    "src/graphql_queries"
+    "src/graphql_queries",
 ]
