@@ -25,14 +25,13 @@ impl Query {
         "0.1"
     }
 
-    fn author(context: &Context, name: String) -> FieldResult<Author> {
-        context
+    fn authors(context: &Context) -> FieldResult<Vec<Author>> {
+        Ok(context
             .get()
             .authors()
             .iter()
-            .find(|(k, _)| k.name() == name)
             .map(|(_, v)| Author::new(*v))
-            .ok_or_else(|| FieldError::new("Not found", graphql_value!({ "not found": name })))
+            .collect())
     }
 
     #[graphql(
