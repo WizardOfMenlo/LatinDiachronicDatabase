@@ -5,11 +5,10 @@ mod types;
 use crate::context::Context;
 use crate::inputs::AuthorsInput;
 use crate::types::{Author, Form, Lemma};
-use juniper::graphql_value;
-use juniper::{EmptyMutation, FieldError, FieldResult, RootNode};
+use juniper::{graphql_value, EmptyMutation, FieldError, FieldResult, RootNode};
 use latin_utilities::NormalizedLatinString;
 
-use query_system::traits::InternDatabase;
+use query_system::traits::*;
 
 pub type Schema = RootNode<'static, Query, EmptyMutation<Context>>;
 
@@ -25,11 +24,25 @@ impl Query {
         "0.1"
     }
 
-    fn authors(context: &Context) -> FieldResult<Vec<Author>> {
-        Ok(context
-            .get()
+    fn authors(context: &Context, first: Option<i32>) -> FieldResult<Vec<Author>> {
+        let db = context.get();
+
+        // Limit a number of authors
+        let limit = match first {
+            Some(i) if i >= 0 => i as usize,
+            Some(_) => {
+                return Err(FieldError::new(
+                    "Invalid number of records",
+                    graphql_value!({ "input_error" : "i"}),
+                ))
+            }
+            None => db.authors().len(),
+        };
+
+        Ok(db
             .authors()
             .iter()
+            .take(limit)
             .map(|(_, v)| Author::new(*v))
             .collect())
     }
