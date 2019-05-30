@@ -6,4 +6,5 @@ members = [
     "src/query_driver",
     "src/runner",
     "src/graphql_queries",
+    "src/authors_chrono"
 ]

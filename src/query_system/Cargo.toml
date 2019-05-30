@@ -10,6 +10,7 @@ salsa = "0.12"
 shrinkwraprs = "0.2"
 latin_utilities = { version = "0.1", path = "../latin_utilities" }
 latin_lemmatizer = { version = "0.1", path = "../latin_lemmatizer" }
+authors_chrono = { version = "0.1", path = "../authors_chrono" }
 log = "0.4.6"
 
 [dev-dependencies]

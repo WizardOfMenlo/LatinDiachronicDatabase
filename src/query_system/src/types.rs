@@ -18,11 +18,6 @@ pub trait InternDatabase {
 }
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
-pub struct Author {
-    name: String,
-}
-
-#[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub struct FormData {
     source: SourceId,
     line_no: usize,
@@ -35,17 +30,8 @@ pub struct Lemma(pub NormalizedLatinString);
 #[derive(shrinkwraprs::Shrinkwrap, Debug, Hash, Eq, PartialEq, Clone, Ord, PartialOrd)]
 pub struct Form(pub NormalizedLatinString);
 
-impl Author {
-    pub fn new(name: impl ToString) -> Self {
-        Self {
-            name: name.to_string(),
-        }
-    }
-
-    pub fn name(&self) -> &str {
-        &self.name
-    }
-}
+// TODO, move this rexport and work with deps
+pub use authors_chrono::Author;
 
 impl FormData {
     pub fn new(source: SourceId, line_no: usize, form: FormId) -> Self {
