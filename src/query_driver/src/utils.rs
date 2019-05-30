@@ -1,5 +1,5 @@
-use crate::ids::*;
-use crate::traits::*;
+use query_system::ids::*;
+use query_system::traits::*;
 use std::collections::HashSet;
 use std::io;
 use std::io::prelude::*;

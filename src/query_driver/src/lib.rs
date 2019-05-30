@@ -3,7 +3,6 @@ use query_system::ids::{AuthorId, SourceId};
 use query_system::middle::IntermediateQueries;
 use query_system::sources::SourcesQueryGroup;
 use query_system::types::{Author, InternersGroup};
-use query_system::utils::load_database;
 use query_system::MainQueries;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -12,6 +11,8 @@ use std::fs::File;
 use std::io;
 use std::path::PathBuf;
 use walkdir::WalkDir;
+
+pub mod utils;
 
 #[salsa::database(MainQueries, SourcesQueryGroup, InternersGroup, IntermediateQueries)]
 #[derive(Default, Debug)]
@@ -160,7 +161,7 @@ pub fn driver_init(config: Configuration) -> Result<MainDatabase, Box<Error>> {
 
     let aux_sources = db.sources.clone();
 
-    load_database(
+    utils::load_database(
         &mut db,
         author_associations,
         aux_sources.into_iter().map(|(k, v)| (v, k)),

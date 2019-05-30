@@ -12,7 +12,6 @@ pub mod middle;
 pub mod sources;
 pub mod traits;
 pub mod types;
-pub mod utils;
 
 #[cfg(test)]
 mod mock;

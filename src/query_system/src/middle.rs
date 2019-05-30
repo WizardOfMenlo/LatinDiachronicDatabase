@@ -86,8 +86,7 @@ fn lemmatize_form(db: &impl IntermediateDatabase, form_id: FormId) -> Arc<HashSe
 }
 
 fn parse_subset(db: &impl IntermediateDatabase, subset: LitSubset) -> Arc<HashSet<FormDataId>> {
-    // TODO, I think this allocates twice?
-    combine(subset.sources().into_iter().map(|s| db.parse_source(*s)))
+    combine(subset.sources().iter().map(|s| db.parse_source(*s)))
 }
 
 fn forms_in_source(db: &impl IntermediateDatabase, source: SourceId) -> Arc<HashSet<FormId>> {
@@ -99,7 +98,7 @@ fn forms_in_source(db: &impl IntermediateDatabase, source: SourceId) -> Arc<Hash
 }
 
 fn forms_in_subset(db: &impl IntermediateDatabase, subset: LitSubset) -> Arc<HashSet<FormId>> {
-    combine(subset.sources().into_iter().map(|s| db.forms_in_source(*s)))
+    combine(subset.sources().iter().map(|s| db.forms_in_source(*s)))
 }
 
 fn lemmas_in_source(db: &impl IntermediateDatabase, source: SourceId) -> Arc<HashSet<LemmaId>> {
@@ -111,12 +110,7 @@ fn lemmas_in_source(db: &impl IntermediateDatabase, source: SourceId) -> Arc<Has
 }
 
 fn lemmas_in_subset(db: &impl IntermediateDatabase, subset: LitSubset) -> Arc<HashSet<LemmaId>> {
-    combine(
-        subset
-            .sources()
-            .into_iter()
-            .map(|s| db.lemmas_in_source(*s)),
-    )
+    combine(subset.sources().iter().map(|s| db.lemmas_in_source(*s)))
 }
 
 fn form_occurrences_subset(
