@@ -1,17 +1,56 @@
+use chrono::Date;
+use chrono::Utc;
+
+pub mod parsers;
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct TimeSpan {
+    start: Date<Utc>,
+    end: Date<Utc>,
+}
+
+impl TimeSpan {
+    pub fn new(start: Date<Utc>, end: Date<Utc>) -> Self {
+        assert!(start < end);
+        Self { start, end }
+    }
+
+    pub fn contains(&self, other: &TimeSpan) -> bool {
+        // Note, we consider [a,b] intervals, rather than [a,b)
+        self.start <= other.start && other.end <= self.end
+    }
+}
+
 #[derive(Debug, Clone, Eq)]
 pub struct Author {
     name: String,
+    time_span: Option<TimeSpan>,
 }
 
 impl Author {
     pub fn new(name: impl ToString) -> Self {
         Self {
             name: name.to_string(),
+            time_span: None,
+        }
+    }
+
+    pub fn new_with_tspan(name: impl ToString, time_span: TimeSpan) -> Self {
+        Self {
+            name: name.to_string(),
+            time_span: Some(time_span),
         }
     }
 
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    pub fn in_timespan(&self, time_span: &TimeSpan) -> bool {
+        match &self.time_span {
+            Some(t) => time_span.contains(t),
+            None => false,
+        }
     }
 }
 
