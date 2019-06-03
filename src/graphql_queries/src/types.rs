@@ -108,15 +108,17 @@ impl Form {
 
     fn count(&self, context: &Context) -> i32 {
         let db = context.get();
-        db.count_form_occurrences_subset(self.form, LitSubset::from_authors(&self.authors, &db))
-            as i32
+        db.count_form_occurrences_subset(
+            self.form,
+            LitSubset::from_authors(self.authors.iter().cloned(), &db),
+        ) as i32
     }
 
     fn occurrences(&self, context: &Context) -> Vec<Occurrence> {
         let db = context.get();
         db.form_occurrences_subset(
             self.form,
-            LitSubset::from_authors(&self.authors.clone(), &db),
+            LitSubset::from_authors(self.authors.iter().cloned(), &db),
         )
         .iter()
         .map(|s| Occurrence { id: *s })
@@ -148,15 +150,20 @@ impl Lemma {
 
     fn count(&self, context: &Context) -> i32 {
         let db = context.get();
-        db.count_lemma_occurrences_subset(self.lemma, LitSubset::from_authors(&self.authors, &db))
-            as i32
+        db.count_lemma_occurrences_subset(
+            self.lemma,
+            LitSubset::from_authors(self.authors.iter().cloned(), &db),
+        ) as i32
     }
 
     fn occurrences(&self, context: &Context) -> Vec<Occurrence> {
         let db = context.get();
-        db.lemma_occurrences_subset(self.lemma, LitSubset::from_authors(&self.authors, &db))
-            .iter()
-            .map(|s| Occurrence { id: *s })
-            .collect()
+        db.lemma_occurrences_subset(
+            self.lemma,
+            LitSubset::from_authors(self.authors.iter().cloned(), &db),
+        )
+        .iter()
+        .map(|s| Occurrence { id: *s })
+        .collect()
     }
 }
