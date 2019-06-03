@@ -10,6 +10,12 @@ args:
         value_name: DIR 
         help: The folder where the body of literature is located 
         required: true
+    - authors_path:
+        short: a
+        long: authors
+        takes_value: true
+        value_name: AUTHORS_FILE
+        help: The file where the authors description is
     - lemmatizer:
         short: l
         long: lemmatizer

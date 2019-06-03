@@ -27,6 +27,7 @@ fn main() {
             Configuration::new(
                 app.value_of("data_path").unwrap(),
                 app.value_of("lemmatizer").unwrap(),
+                app.value_of("authors_path"),
                 if app.value_of("useLemlat").is_some() {
                     LemmMode::LemlatFormat
                 } else {

@@ -74,6 +74,7 @@ pub enum LemmMode {
 pub struct Configuration {
     data_dir: PathBuf,
     lemmatizer_path: PathBuf,
+    authors_path: Option<PathBuf>,
     lemm_mode: LemmMode,
 }
 
@@ -81,6 +82,7 @@ impl Configuration {
     pub fn new(
         data_dir: impl Into<PathBuf>,
         lemmatizer_path: impl Into<PathBuf>,
+        authors_path: Option<impl Into<PathBuf>>,
         lemm_mode: LemmMode,
     ) -> io::Result<Self> {
         let data_dir = data_dir.into();
@@ -94,9 +96,16 @@ impl Configuration {
             return Err(io::Error::from(io::ErrorKind::NotFound));
         }
 
+        let authors_path = authors_path.map(Into::into);
+
+        if authors_path.is_some() && !authors_path.as_ref().unwrap().exists() {
+            return Err(io::Error::from(io::ErrorKind::NotFound));
+        }
+
         Ok(Configuration {
             data_dir,
             lemmatizer_path,
+            authors_path,
             lemm_mode,
         })
     }
@@ -158,6 +167,19 @@ pub fn driver_init(config: Configuration) -> Result<MainDatabase, Box<Error>> {
         .into_iter()
         .filter(|(_, v)| author_associations.contains_key(v) && !author_associations[v].is_empty())
         .collect();
+
+    // Update, so that we can get the authors with metadata
+    if let Some(authors_path) = config.authors_path {
+        let mut authors_hist = authors_chrono::parsers::WeirdParser::default();
+        let authors_file = File::open(authors_path)?;
+        authors_hist.read_all(authors_file)?;
+        let authors_list = authors_hist.build();
+        db.authors = db
+            .authors
+            .into_iter()
+            .map(|(a, k)| (authors_list.get(&a).cloned().unwrap_or(a), k))
+            .collect();
+    }
 
     let aux_sources = db.sources.clone();
 

@@ -1,5 +1,6 @@
 use chrono::Date;
 use chrono::Utc;
+use std::cmp::Ordering;
 
 pub mod parsers;
 
@@ -18,6 +19,24 @@ impl TimeSpan {
     pub fn contains(&self, other: &TimeSpan) -> bool {
         // Note, we consider [a,b] intervals, rather than [a,b)
         self.start <= other.start && other.end <= self.end
+    }
+}
+
+impl PartialOrd for TimeSpan {
+    fn partial_cmp(&self, other: &TimeSpan) -> Option<Ordering> {
+        if self.contains(other) && other.contains(self) {
+            return Some(Ordering::Equal);
+        }
+
+        if self.contains(other) {
+            return Some(Ordering::Greater);
+        }
+
+        if other.contains(self) {
+            return Some(Ordering::Less);
+        }
+
+        None
     }
 }
 
@@ -57,6 +76,18 @@ impl Author {
 impl PartialEq for Author {
     fn eq(&self, other: &Author) -> bool {
         self.name().eq(other.name())
+    }
+}
+
+impl PartialOrd for Author {
+    fn partial_cmp(&self, other: &Author) -> Option<Ordering> {
+        Some(self.name().cmp(other.name()))
+    }
+}
+
+impl Ord for Author {
+    fn cmp(&self, other: &Author) -> Ordering {
+        self.name().cmp(other.name())
     }
 }
 

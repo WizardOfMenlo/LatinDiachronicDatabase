@@ -1,16 +1,28 @@
 use crate::{Author, TimeSpan};
 use chrono::{Date, TimeZone, Utc};
 use regex::Regex;
+use std::collections::BTreeSet;
+use std::error::Error;
 use std::io::{self, prelude::*, BufReader};
 
+#[derive(Debug, Default)]
 pub struct WeirdParser {
-    authors: Vec<Author>,
+    authors: BTreeSet<Author>,
 }
 
+#[derive(Debug)]
 pub enum ParsingError {
-    InvalidNumberOfChuncks(usize),
+    InvalidNumberOfChunks(usize),
     InvalidNumberOfDates(usize),
 }
+
+impl std::fmt::Display for ParsingError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl Error for ParsingError {}
 
 fn parse_segment(s: &str) -> Date<Utc> {
     let re = Regex::new("(\\d)(a|d)").unwrap();
@@ -33,21 +45,21 @@ impl WeirdParser {
         Ok(())
     }
 
-    pub fn build(self) -> Vec<Author> {
+    pub fn build(self) -> BTreeSet<Author> {
         self.authors
     }
 
     fn read_line(&mut self, line: &str) -> Result<(), ParsingError> {
         let chunks: Vec<_> = line.split('#').collect();
         if chunks.len() != 2 {
-            return Err(ParsingError::InvalidNumberOfChuncks(chunks.len()));
+            return Err(ParsingError::InvalidNumberOfChunks(chunks.len()));
         }
 
         let author_name = chunks[0].trim();
         let span = chunks[1];
 
         if span.contains('?') {
-            self.authors.push(Author::new(author_name));
+            self.authors.insert(Author::new(author_name));
             return Ok(());
         }
 
@@ -66,7 +78,7 @@ impl WeirdParser {
             start
         };
 
-        self.authors.push(Author::new_with_tspan(
+        self.authors.insert(Author::new_with_tspan(
             author_name,
             TimeSpan::new(start, end),
         ));
