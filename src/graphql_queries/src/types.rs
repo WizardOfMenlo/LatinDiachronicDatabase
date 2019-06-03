@@ -1,4 +1,5 @@
 use crate::context::Context;
+use chrono::prelude::Datelike;
 use query_system::ids::AuthorId;
 use query_system::ids::FormDataId;
 use query_system::ids::FormId;
@@ -9,6 +10,21 @@ use query_system::types;
 
 pub struct Author {
     id: AuthorId,
+}
+
+pub struct TimeSpan {
+    time_span: authors_chrono::TimeSpan,
+}
+
+#[juniper::object]
+impl TimeSpan {
+    fn start(&self) -> i32 {
+        self.time_span.start().year()
+    }
+
+    fn end(&self) -> i32 {
+        self.time_span.end().year()
+    }
 }
 
 impl Author {
@@ -43,6 +59,13 @@ impl Author {
             .filter(|(_, v)| sources.contains(v))
             .map(|(k, _)| Source::new(k.as_path()))
             .collect()
+    }
+
+    fn time_span(&self, context: &Context) -> Option<TimeSpan> {
+        let auth = self.author(context);
+        auth.tspan()
+            .cloned()
+            .map(|time_span| TimeSpan { time_span })
     }
 }
 

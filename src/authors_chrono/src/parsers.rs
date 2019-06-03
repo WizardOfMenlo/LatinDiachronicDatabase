@@ -27,11 +27,12 @@ impl Error for ParsingError {}
 fn parse_segment(s: &str) -> Date<Utc> {
     let re = Regex::new("(\\d)(a|d)").unwrap();
     let captures = re.captures(s).unwrap();
-    let century = captures.get(0).unwrap().as_str().parse::<i32>().unwrap();
-    let avanti_o_dietro = captures.get(1).unwrap().as_str();
+    // Note the first is the whole str
+    let century = captures.get(1).unwrap().as_str().parse::<i32>().unwrap();
+    let avanti_o_dietro = captures.get(2).unwrap().as_str();
     match avanti_o_dietro {
-        "a" => Utc.ymd(century * 100, 1, 1),
-        "d" => Utc.ymd(century * -100, 1, 1),
+        "a" => Utc.ymd(century * -100, 1, 1),
+        "d" => Utc.ymd(century * 100, 1, 1),
         _ => unreachable!(),
     }
 }

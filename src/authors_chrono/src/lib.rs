@@ -12,13 +12,21 @@ pub struct TimeSpan {
 
 impl TimeSpan {
     pub fn new(start: Date<Utc>, end: Date<Utc>) -> Self {
-        assert!(start < end);
+        assert!(start <= end);
         Self { start, end }
     }
 
     pub fn contains(&self, other: &TimeSpan) -> bool {
         // Note, we consider [a,b] intervals, rather than [a,b)
         self.start <= other.start && other.end <= self.end
+    }
+
+    pub fn start(&self) -> &Date<Utc> {
+        &self.start
+    }
+
+    pub fn end(&self) -> &Date<Utc> {
+        &self.end
     }
 }
 
@@ -63,6 +71,10 @@ impl Author {
 
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    pub fn tspan(&self) -> Option<&TimeSpan> {
+        self.time_span.as_ref()
     }
 
     pub fn in_timespan(&self, time_span: &TimeSpan) -> bool {

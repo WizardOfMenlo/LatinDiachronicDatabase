@@ -6,8 +6,13 @@ edition = "2018"
 
 [dependencies]
 salsa = "0.12"
-juniper = "0.12"
 shrinkwraprs = "0.2"
 query_system = { version = "0.1.0", path = "../query_system"}
 query_driver = { version = "0.1.0", path = "../query_driver"}
 latin_utilities = { version = "0.1.0", path = "../latin_utilities"}
+authors_chrono = { version = "0.1.0", path = "../authors_chrono"}
+chrono = "0.4.6"
+ 
+[dependencies.juniper]
+version = "0.12"
+features = ["chrono"]
