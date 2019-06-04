@@ -3,7 +3,7 @@ mod inputs;
 mod types;
 
 use crate::context::Context;
-use crate::inputs::AuthorsInput;
+use crate::inputs::{AuthorsInput, Filter, SpanInput};
 use crate::types::{Author, Form, Lemma};
 use juniper::{graphql_value, EmptyMutation, FieldError, FieldResult, RootNode};
 use latin_utilities::NormalizedLatinString;
@@ -55,12 +55,21 @@ impl Query {
             authors(
                 description = "The authors to query",
                 default = AuthorsInput::all(),
+            ),
+            span(
+                description = "The timespan to search",
+                default = SpanInput::all()
             )
         )
     )]
-    fn lemma(context: &Context, lemma: String, authors: AuthorsInput) -> FieldResult<Lemma> {
+    fn lemma(
+        context: &Context,
+        lemma: String,
+        authors: AuthorsInput,
+        span: SpanInput,
+    ) -> FieldResult<Lemma> {
         let lemma = query_system::types::Lemma(NormalizedLatinString::from(lemma.as_str()));
-        let authors = authors.get_authors(context);
+        let authors = authors.intersect(span).get_authors(context);
 
         Ok(Lemma::new(context.get().intern_lemma(lemma), authors))
     }
@@ -73,12 +82,21 @@ impl Query {
             authors(
                 description = "The authors to query",
                 default = AuthorsInput::all(),
+            ),
+            span(
+                description = "The timespan to search",
+                default = SpanInput::all()
             )
         )
     )]
-    fn form(context: &Context, form: String, authors: AuthorsInput) -> FieldResult<Form> {
+    fn form(
+        context: &Context,
+        form: String,
+        authors: AuthorsInput,
+        span: SpanInput,
+    ) -> FieldResult<Form> {
         let form = query_system::types::Form(NormalizedLatinString::from(form.as_str()));
-        let authors = authors.get_authors(context);
+        let authors = authors.intersect(span).get_authors(context);
 
         Ok(Form::new(context.get().intern_form(form), authors))
     }

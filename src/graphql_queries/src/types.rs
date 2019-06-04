@@ -113,8 +113,11 @@ pub struct Form {
 }
 
 impl Form {
-    pub(crate) fn new(form: FormId, authors: Vec<AuthorId>) -> Self {
-        Form { form, authors }
+    pub(crate) fn new(form: FormId, authors: impl IntoIterator<Item = AuthorId>) -> Self {
+        Form {
+            form,
+            authors: authors.into_iter().collect(),
+        }
     }
 }
 
@@ -155,8 +158,11 @@ pub struct Lemma {
 }
 
 impl Lemma {
-    pub(crate) fn new(lemma: LemmaId, authors: Vec<AuthorId>) -> Self {
-        Lemma { lemma, authors }
+    pub(crate) fn new(lemma: LemmaId, authors: impl IntoIterator<Item = AuthorId>) -> Self {
+        Lemma {
+            lemma,
+            authors: authors.into_iter().collect(),
+        }
     }
 }
 
