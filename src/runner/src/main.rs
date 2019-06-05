@@ -1,43 +1,22 @@
-use clap::{load_yaml, App};
 use graphql_queries::context::Context;
 use graphql_queries::schema;
 use query_driver::driver_init;
-use query_driver::Configuration;
-use query_driver::LemmMode;
 use salsa::ParallelDatabase;
 use std::sync::Arc;
 use std::sync::Mutex;
 use warp::{http::Response, Filter};
 
-fn main() {
-    let yaml = load_yaml!("cli.yml");
-    let app = App::from_yaml(yaml).get_matches();
+use runner::load_configuration;
 
+fn main() {
     // If I fail, I want to see it :)
     color_backtrace::install();
     std::env::set_var("RUST_BACKTRACE", "1");
-
-    // Init logging
     std::env::set_var("RUST_LOG", "warp_server");
     env_logger::init();
 
     // Initialize the db
-    let db = Arc::new(Mutex::new(
-        driver_init(
-            Configuration::new(
-                app.value_of("data_path").unwrap(),
-                app.value_of("lemmatizer").unwrap(),
-                app.value_of("authors_path"),
-                if app.value_of("useLemlat").is_some() {
-                    LemmMode::LemlatFormat
-                } else {
-                    LemmMode::CSVFormat
-                },
-            )
-            .unwrap(),
-        )
-        .unwrap(),
-    ));
+    let db = Arc::new(Mutex::new(driver_init(load_configuration()).unwrap()));
 
     let log = warp::log("warp_server");
 

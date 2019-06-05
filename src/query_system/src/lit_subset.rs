@@ -15,22 +15,22 @@ impl LitSubset {
         }
     }
 
-    pub fn from_authors(
-        authors: impl IntoIterator<Item = AuthorId>,
+    pub fn from_authors<'a>(
+        authors: impl IntoIterator<Item = &'a AuthorId>,
         db: &salsa::Snapshot<impl MainDatabase>,
     ) -> Self {
         let mut sources = BTreeSet::new();
 
-        for src in authors.into_iter().map(|a| db.associated_sources(a)) {
+        for src in authors.into_iter().map(|a| db.associated_sources(*a)) {
             sources.extend(src.iter())
         }
 
         LitSubset { sources }
     }
 
-    pub fn from_timespan(
+    pub fn from_timespan<'a>(
         span: &TimeSpan,
-        authors: impl IntoIterator<Item = (Author, AuthorId)>,
+        authors: impl IntoIterator<Item = &'a (Author, AuthorId)>,
         db: &salsa::Snapshot<impl MainDatabase>,
     ) -> Self {
         LitSubset::from_authors(
