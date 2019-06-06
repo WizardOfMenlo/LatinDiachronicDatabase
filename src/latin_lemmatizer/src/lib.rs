@@ -7,42 +7,68 @@ pub mod parsers;
 use latin_utilities::{NormalizedLatinString, StandardLatinConverter};
 use std::collections::{HashMap, HashSet};
 
-// TODO Instead of this, could it be worthwile to have a mapping W -> Id?
-// TODO Bidirectional mapping!
+// TODO Instead of this, could it be worthwile to have a form_to_lemma W -> Id?
+// TODO Bidirectional form_to_lemma!
 type Mapping = HashMap<NormalizedLatinString, HashSet<NormalizedLatinString>>;
 
 /// A lemmatizer that uses a simple hashmap lookup to resolve lemmas
 #[derive(Debug, Default, Clone)]
 pub struct NaiveLemmatizer {
-    mapping: Mapping,
+    form_to_lemma: Mapping,
+    lemma_to_form: Mapping,
     converter: StandardLatinConverter,
 }
 
 impl NaiveLemmatizer {
-    pub fn new(mapping: Mapping) -> Self {
+    pub fn new(form_to_lemma: Mapping) -> Self {
+        let lemma_to_form_pairs = form_to_lemma
+            .iter()
+            .map(|(k, v)| v.iter().map(|e| (e.clone(), k.clone())).collect::<Vec<_>>())
+            .flatten();
+
+        let mut lemma_to_form = HashMap::new();
+        for (k, v) in lemma_to_form_pairs {
+            lemma_to_form
+                .entry(k)
+                .or_insert_with(HashSet::new)
+                .insert(v);
+        }
+
         NaiveLemmatizer {
-            mapping,
+            form_to_lemma,
+            lemma_to_form,
             converter: StandardLatinConverter::default(),
         }
     }
 
     pub fn num_lemmas(&self) -> usize {
-        self.mapping.iter().map(|(_, v)| v.len()).sum()
+        self.lemma_to_form.len()
     }
 
     pub fn num_forms(&self) -> usize {
-        self.mapping.len()
+        self.form_to_lemma.len()
     }
 
     pub fn has_form(&self, form: &NormalizedLatinString) -> bool {
-        self.mapping.contains_key(form)
+        self.form_to_lemma.contains_key(form)
+    }
+
+    pub fn has_lemma(&self, lemma: &NormalizedLatinString) -> bool {
+        self.lemma_to_form.contains_key(lemma)
     }
 
     pub fn get_possible_lemmas(
         &self,
         key: &NormalizedLatinString,
     ) -> Option<&HashSet<NormalizedLatinString>> {
-        self.mapping.get(key)
+        self.form_to_lemma.get(key)
+    }
+
+    pub fn get_possible_forms(
+        &self,
+        lemma: &NormalizedLatinString,
+    ) -> Option<&HashSet<NormalizedLatinString>> {
+        self.lemma_to_form.get(lemma)
     }
 
     pub fn convert_and_get_possible_lemmas(
@@ -50,6 +76,13 @@ impl NaiveLemmatizer {
         key: &str,
     ) -> Option<&HashSet<NormalizedLatinString>> {
         self.get_possible_lemmas(&self.converter.convert(key))
+    }
+
+    pub fn convert_and_get_possible_forms(
+        &self,
+        key: &str,
+    ) -> Option<&HashSet<NormalizedLatinString>> {
+        self.get_possible_forms(&self.converter.convert(key))
     }
 }
 
@@ -63,17 +96,17 @@ mod tests {
     }
 
     fn default_lemmatizer() -> NaiveLemmatizer {
-        let mut mapping = Mapping::new();
-        mapping.insert(
+        let mut form_to_lemma = Mapping::new();
+        form_to_lemma.insert(
             "first".into(),
             hashset_from_vec(vec!["vaa".into(), "vab".into()]),
         );
-        mapping.insert(
+        form_to_lemma.insert(
             "second".into(),
             hashset_from_vec(vec!["vba".into(), "vbb".into()]),
         );
 
-        NaiveLemmatizer::new(mapping)
+        NaiveLemmatizer::new(form_to_lemma)
     }
 
     #[test]
@@ -82,6 +115,7 @@ mod tests {
         assert_eq!(lemmatizer.num_lemmas(), 0);
         assert_eq!(lemmatizer.num_forms(), 0);
         assert!(lemmatizer.get_possible_lemmas(&"test".into()).is_none());
+        assert!(lemmatizer.get_possible_forms(&"test".into()).is_none());
     }
 
     #[test]
@@ -92,15 +126,29 @@ mod tests {
         assert_eq!(lemmatizer.num_forms(), 2);
 
         let values = ["first", "second"];
-        let results = [
+        let results_lemmas = [
             hashset_from_vec(vec!["vaa".into(), "vab".into()]),
             hashset_from_vec(vec!["vba".into(), "vbb".into()]),
         ];
 
         for (i, &v) in values.iter().enumerate() {
             let query = lemmatizer.get_possible_lemmas(&v.into()).unwrap();
-            assert_eq!(query.len(), results[i].len());
-            assert_eq!(*query, results[i]);
+            assert_eq!(query.len(), results_lemmas[i].len());
+            assert_eq!(*query, results_lemmas[i]);
+        }
+
+        let forms = ["vaa", "vab", "vba", "vbb"];
+        let results_forms = [
+            hashset_from_vec(vec!["first".into()]),
+            hashset_from_vec(vec!["first".into()]),
+            hashset_from_vec(vec!["second".into()]),
+            hashset_from_vec(vec!["second".into()]),
+        ];
+
+        for (i, &v) in forms.iter().enumerate() {
+            let query = lemmatizer.get_possible_forms(&v.into()).unwrap();
+            assert_eq!(query.len(), results_forms[i].len());
+            assert_eq!(*query, results_forms[i]);
         }
     }
 }

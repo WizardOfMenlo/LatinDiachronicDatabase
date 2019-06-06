@@ -8,7 +8,5 @@ edition = "2018"
 latin_utilities = { version = "0.1", path = "../latin_utilities" }
 query_system = { version = "0.1", path = "../query_system" }
 authors_chrono = { version = "0.1", path = "../authors_chrono" }
-
-[dev-dependencies]
 query_driver = { version = "0.1", path = "../query_driver"}
 runner = { version = "0.1", path = "../runner"}
