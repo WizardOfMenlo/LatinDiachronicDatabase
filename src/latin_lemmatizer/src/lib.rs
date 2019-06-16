@@ -84,6 +84,13 @@ impl NaiveLemmatizer {
     ) -> Option<&HashSet<NormalizedLatinString>> {
         self.get_possible_forms(&self.converter.convert(key))
     }
+
+    pub fn is_ambig(&self, form: &NormalizedLatinString) -> bool {
+        match self.get_possible_lemmas(form) {
+            Some(v) => v.len() > 1,
+            None => false,
+        }
+    }
 }
 
 #[cfg(test)]

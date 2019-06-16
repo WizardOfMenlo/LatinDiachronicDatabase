@@ -1,5 +1,5 @@
-use query_driver::{Configuration, LemmMode};
 use clap::{load_yaml, App};
+use query_driver::{Configuration, LemmMode};
 
 pub fn load_configuration() -> Configuration {
     let yaml = load_yaml!("cli.yml");

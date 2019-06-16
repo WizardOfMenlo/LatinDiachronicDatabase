@@ -26,11 +26,46 @@ fn main() -> Result<(), Box<std::error::Error>> {
 struct Entry {
     lemma: LemmaId,
     count: usize,
+    ambig_count: usize,
     forms: Vec<(FormId, Vec<FormDataId>)>,
 }
 
 impl Entry {
-    fn write(&self, )
+    fn write(
+        &self,
+        w: &mut impl Write,
+        db: &impl MainDatabase,
+        other: &Dictionary,
+    ) -> std::io::Result<()> {
+        let corresponding_index = other.ls.iter().position(|l| l.lemma == self.lemma).unwrap();
+        let resolved_lemma = db.lookup_intern_lemma(self.lemma);
+        writeln!(
+            w,
+            "-------{:6}------{} count: {} (C: {}, A: {})",
+            corresponding_index,
+            resolved_lemma.0.inner(),
+            self.count,
+            self.count - self.ambig_count,
+            self.ambig_count
+        )?;
+
+        for (form, count) in self.forms.iter().map(|(k, v)| (k, v.len())) {
+            let resolved_form = db.lookup_intern_form(*form);
+            writeln!(
+                w,
+                "\t{}: {} {}",
+                resolved_form.0.inner(),
+                count,
+                if db.as_ref().is_ambig(&resolved_form.0) {
+                    "(*)"
+                } else {
+                    ""
+                }
+            )?;
+        }
+
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -44,9 +79,15 @@ impl Dictionary {
         let mut ls = Vec::with_capacity(tree.len());
         for (&lemma, forms) in tree.iter() {
             let count = forms.values().map(|v| v.len()).sum();
+            let ambig_count = forms
+                .iter()
+                .filter(|(&k, _)| db.as_ref().is_ambig(&db.lookup_intern_form(k).0))
+                .map(|(_, v)| v.len())
+                .sum();
             ls.push(Entry {
                 lemma,
                 count,
+                ambig_count,
                 forms: forms.iter().map(|(a, b)| (*a, b.clone())).collect(),
             })
         }
@@ -85,8 +126,8 @@ impl Dictionary {
         w: &mut impl Write,
         other: &Dictionary,
     ) -> Result<(), Box<std::error::Error>> {
-        for entry in self.ls {
-            entry.write(w)?;
+        for entry in &self.ls {
+            entry.write(w, db, other)?;
         }
         Ok(())
     }
