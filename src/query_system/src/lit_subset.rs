@@ -2,16 +2,18 @@ use crate::ids::{AuthorId, SourceId};
 use crate::traits::*;
 use authors_chrono::{Author, TimeSpan};
 use std::collections::BTreeSet;
+use std::sync::Arc;
 
 #[derive(Debug, Hash, Clone, Eq, PartialEq)]
 pub struct LitSubset {
-    sources: BTreeSet<SourceId>,
+    // Note, we arc it to make it cheaper to clone
+    sources: Arc<BTreeSet<SourceId>>,
 }
 
 impl LitSubset {
     pub fn from_sources(sources: &[SourceId]) -> Self {
         LitSubset {
-            sources: sources.iter().cloned().collect(),
+            sources: Arc::new(sources.iter().cloned().collect()),
         }
     }
 
@@ -25,7 +27,9 @@ impl LitSubset {
             sources.extend(src.iter())
         }
 
-        LitSubset { sources }
+        LitSubset {
+            sources: Arc::new(sources),
+        }
     }
 
     pub fn from_timespan<'a>(

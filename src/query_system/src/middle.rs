@@ -8,7 +8,7 @@ use crate::types::InternDatabase;
 
 use latin_lemmatizer::NaiveLemmatizer;
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 use std::sync::Arc;
 
@@ -16,10 +16,15 @@ use std::sync::Arc;
 /// Usage: Load the source database, then run any query
 #[salsa::query_group(IntermediateQueries)]
 pub trait IntermediateDatabase: SourcesDatabase + InternDatabase + AsRef<NaiveLemmatizer> {
-    // TODO, Vec as a key is probably a bad shout, might want some ordered cheap coll
-
     /// Parse multiple sources, and combine the result
     fn parse_subset(&self, subset: LitSubset) -> Arc<HashSet<FormDataId>>;
+
+    // TODO, find a better name
+    fn source_tree(&self, id: SourceId) -> Arc<HashMap<LemmaId, HashMap<FormId, Vec<FormDataId>>>>;
+    fn subset_tree(
+        &self,
+        sub: LitSubset,
+    ) -> Arc<HashMap<LemmaId, HashMap<FormId, Vec<FormDataId>>>>;
 
     // Index all sources for forms ------------------------------------------
 
@@ -87,6 +92,49 @@ fn lemmatize_form(db: &impl IntermediateDatabase, form_id: FormId) -> Arc<HashSe
 
 fn parse_subset(db: &impl IntermediateDatabase, subset: LitSubset) -> Arc<HashSet<FormDataId>> {
     combine(subset.sources().iter().map(|s| db.parse_source(*s)))
+}
+
+fn source_tree(
+    db: &impl IntermediateDatabase,
+    id: SourceId,
+) -> Arc<HashMap<LemmaId, HashMap<FormId, Vec<FormDataId>>>> {
+    let data = db.parse_source(id);
+    let mut res = HashMap::new();
+    for fd_id in data.iter() {
+        let form = db.lookup_intern_form_data(*fd_id).form();
+        let lemmas = lemmatize_form(db, form);
+        for lemma in lemmas.iter() {
+            res.entry(*lemma)
+                .or_insert_with(HashMap::new)
+                .entry(form)
+                .or_insert_with(Vec::new)
+                .push(*fd_id);
+        }
+    }
+
+    Arc::new(res)
+}
+
+fn subset_tree(
+    db: &impl IntermediateDatabase,
+    sub: LitSubset,
+) -> Arc<HashMap<LemmaId, HashMap<FormId, Vec<FormDataId>>>> {
+    let mut res = HashMap::new();
+    for source in sub.sources() {
+        let tree = db.source_tree(*source);
+        for (lemma, lemma_tree) in tree.iter() {
+            for (&form, formdata) in lemma_tree {
+                res.entry(*lemma)
+                    .or_insert_with(HashMap::new)
+                    .entry(form)
+                    .or_insert_with(Vec::new)
+                    // Note, since the sources are distinct, no hashsetting is needed
+                    .extend(formdata);
+            }
+        }
+    }
+
+    Arc::new(res)
 }
 
 fn forms_in_source(db: &impl IntermediateDatabase, source: SourceId) -> Arc<HashSet<FormId>> {

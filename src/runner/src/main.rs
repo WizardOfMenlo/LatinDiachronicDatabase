@@ -12,7 +12,7 @@ fn main() {
     // If I fail, I want to see it :)
     color_backtrace::install();
     std::env::set_var("RUST_BACKTRACE", "1");
-    std::env::set_var("RUST_LOG", "warp_server");
+    std::env::set_var("RUST_LOG", "info,warp_server");
     env_logger::init();
 
     // Initialize the db
