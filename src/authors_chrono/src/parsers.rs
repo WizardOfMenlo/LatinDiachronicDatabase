@@ -51,6 +51,11 @@ impl WeirdParser {
     }
 
     fn read_line(&mut self, line: &str) -> Result<(), ParsingError> {
+        // We skip these lines
+        if line.contains('~') {
+            return Ok(());
+        }
+
         let chunks: Vec<_> = line.split('#').collect();
         if chunks.len() != 2 {
             return Err(ParsingError::InvalidNumberOfChunks(chunks.len()));
@@ -85,5 +90,17 @@ impl WeirdParser {
         ));
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_empty() {
+        let parser = WeirdParser::default();
+        let res = parser.build();
+        assert_eq!(res.len(), 0);
     }
 }

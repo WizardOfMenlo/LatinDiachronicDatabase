@@ -39,7 +39,7 @@ impl Filter for AuthorsInput {
     fn get_authors(&self, context: &Context) -> BTreeSet<AuthorId> {
         let db = context.get();
         if self.use_all {
-            return db.authors().values().cloned().collect();
+            return db.authors().right_values().cloned().collect();
         }
 
         // TODO, this can be probably done better
@@ -87,7 +87,7 @@ impl Filter for SpanInput {
     fn get_authors(&self, context: &Context) -> BTreeSet<AuthorId> {
         let db = context.get();
         if self.use_all {
-            return db.authors().values().cloned().collect();
+            return db.authors().right_values().cloned().collect();
         }
         let span = self.span.as_ref().cloned().unwrap();
         let timespan = authors_chrono::TimeSpan::new(

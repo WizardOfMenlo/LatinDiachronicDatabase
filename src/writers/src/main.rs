@@ -1,17 +1,19 @@
-use query_system::ids::{FormDataId, FormId, LemmaId};
+use query_driver::driver_init;
+use query_system::ids::*;
 use query_system::lit_subset::LitSubset;
 use query_system::traits::*;
-
-use query_driver::driver_init;
-use runner::load_configuration;
+use authors_chrono::Author;
 use std::fs::File;
+
+use runner::load_configuration;
+use std::collections::HashSet;
 use std::io::{self, prelude::*};
 
 fn main() -> Result<(), Box<std::error::Error>> {
     std::env::set_var("RUST_LOG", "info");
     env_logger::init();
     let db = driver_init(load_configuration())?;
-    let lit = LitSubset::from_authors(db.authors().values(), &db.snapshot());
+    let lit = LitSubset::from_authors(db.authors().right_values(), &db.snapshot());
     let mut d_a = Dictionary::new(&db, lit.clone());
     d_a.sort_alpha(&db);
     let mut d_b = d_a.clone();
@@ -28,6 +30,7 @@ struct Entry {
     count: usize,
     ambig_count: usize,
     forms: Vec<(FormId, Vec<FormDataId>)>,
+    authors: HashSet<AuthorId>,
 }
 
 impl Entry {
@@ -36,7 +39,7 @@ impl Entry {
         w: &mut impl Write,
         db: &impl MainDatabase,
         other: &Dictionary,
-    ) -> std::io::Result<()> {
+    ) -> io::Result<()> {
         let corresponding_index = other.ls.iter().position(|l| l.lemma == self.lemma).unwrap();
         let resolved_lemma = db.lookup_intern_lemma(self.lemma);
         writeln!(
@@ -64,6 +67,11 @@ impl Entry {
             )?;
         }
 
+        let mut authors : Vec<&Author> = self.authors.iter().map(|e| db.lookup_intern_author(*e)).collect();
+        authors.sort_by(|a, b| a.name().cmp(b.name()));
+
+        writeln!(w, "\t\tUsed by {} authors", authors.len())?;
+
         Ok(())
     }
 }
@@ -89,6 +97,12 @@ impl Dictionary {
                 count,
                 ambig_count,
                 forms: forms.iter().map(|(a, b)| (*a, b.clone())).collect(),
+                // TODO, this is a bit inefficient, as many double lookups
+                authors: forms
+                    .values()
+                    .flatten()
+                    .map(|f| db.lookup_intern_form_data(*f).author(db))
+                    .collect(),
             })
         }
 
@@ -125,7 +139,7 @@ impl Dictionary {
         db: &impl MainDatabase,
         w: &mut impl Write,
         other: &Dictionary,
-    ) -> Result<(), Box<std::error::Error>> {
+    ) -> io::Result<()> {
         for entry in &self.ls {
             entry.write(w, db, other)?;
         }

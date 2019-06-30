@@ -24,6 +24,7 @@ use lit_subset::LitSubset;
 pub trait MainDatabase:
     sources::SourcesDatabase
     + types::InternDatabase
+    + types::AuthorInternDatabase
     + middle::IntermediateDatabase
     + salsa::Database
     + salsa::ParallelDatabase

@@ -85,6 +85,8 @@ impl Author {
     }
 }
 
+// All these impls ensure comparision are only ever done by name
+
 impl PartialEq for Author {
     fn eq(&self, other: &Author) -> bool {
         self.name().eq(other.name())

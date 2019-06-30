@@ -2,6 +2,7 @@
 
 pub use crate::middle::IntermediateDatabase;
 pub use crate::sources::SourcesDatabase;
+pub use crate::types::AuthorInternDatabase;
 pub use crate::types::InternDatabase;
 pub use crate::MainDatabase;
 pub use salsa::Database;

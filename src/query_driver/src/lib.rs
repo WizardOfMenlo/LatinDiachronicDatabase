@@ -1,8 +1,12 @@
+
+use bimap::BiMap;
 use latin_lemmatizer::NaiveLemmatizer;
-use query_system::ids::{AuthorId, SourceId};
 use query_system::middle::IntermediateQueries;
 use query_system::sources::SourcesQueryGroup;
-use query_system::types::{Author, InternersGroup};
+use query_system::traits::AuthorInternDatabase;
+use query_system::types::InternersGroup;
+use authors_chrono::Author;
+use query_system::ids::*;
 use query_system::MainQueries;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -12,6 +16,7 @@ use std::io;
 use std::path::PathBuf;
 use walkdir::WalkDir;
 
+
 pub mod utils;
 
 #[salsa::database(MainQueries, SourcesQueryGroup, InternersGroup, IntermediateQueries)]
@@ -20,7 +25,7 @@ pub struct MainDatabase {
     runtime: salsa::Runtime<MainDatabase>,
     // TODO, bidirectionaize this? Use the old interner impl
     sources: HashMap<PathBuf, SourceId>,
-    authors: HashMap<Author, AuthorId>,
+    authors: BiMap<Author, AuthorId>,
     lemmatizer: NaiveLemmatizer,
 }
 
@@ -29,12 +34,12 @@ impl MainDatabase {
         Self {
             runtime: Default::default(),
             sources: HashMap::new(),
-            authors: HashMap::new(),
+            authors: BiMap::new(),
             lemmatizer,
         }
     }
 
-    pub fn authors(&self) -> &HashMap<Author, AuthorId> {
+    pub fn authors(&self) -> &BiMap<Author, AuthorId> {
         &self.authors
     }
 
@@ -46,6 +51,32 @@ impl MainDatabase {
 impl AsRef<NaiveLemmatizer> for MainDatabase {
     fn as_ref(&self) -> &NaiveLemmatizer {
         &self.lemmatizer
+    }
+}
+
+impl AuthorInternDatabase for MainDatabase {
+    fn intern_author(&mut self, auth: Author) -> AuthorId {
+        let authors = self.authors();
+        if authors.contains_left(&auth) {
+            return *authors.get_by_left(&auth).unwrap();
+        }
+
+        // TODO, we could probably find a better selection
+        let mut new_id = 0;
+        while authors.contains_right(&AuthorId::from_integer(new_id)) {
+            new_id += 1;
+        }
+
+        let id = AuthorId::from_integer(new_id);
+
+        self.authors.insert(auth, id);
+
+        id
+    }
+
+    fn lookup_intern_author(&self, id: AuthorId) -> &Author {
+        // If invalid id, we panic
+        self.authors().get_by_right(&id).unwrap()
     }
 }
 
@@ -177,7 +208,14 @@ pub fn driver_init(config: Configuration) -> Result<MainDatabase, Box<Error>> {
         db.authors = db
             .authors
             .into_iter()
-            .map(|(a, k)| (authors_list.get(&a).cloned().unwrap_or(a), k))
+            // Skip all authors we didn't find
+            .flat_map(|(a, k)| {
+                if let Some(author) = authors_list.get(&a).cloned() {
+                    Some((author, k))
+                } else {
+                    None
+                }
+            })
             .collect();
     }
 

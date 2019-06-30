@@ -2,9 +2,10 @@
 //! In most cases, the types are created by direct computation on
 //! the sources, and are then interned in order to speed up computation
 
-use crate::ids::{FormDataId, FormId, LemmaId, SourceId};
-use latin_utilities::NormalizedLatinString;
+use crate::ids::{AuthorId, FormDataId, FormId, LemmaId, SourceId};
 
+use crate::traits::MainDatabase;
+use latin_utilities::NormalizedLatinString;
 #[salsa::query_group(InternersGroup)]
 pub trait InternDatabase {
     #[salsa::interned]
@@ -15,6 +16,11 @@ pub trait InternDatabase {
 
     #[salsa::interned]
     fn intern_lemma(&self, fd: Lemma) -> LemmaId;
+}
+
+pub trait AuthorInternDatabase {
+    fn intern_author(&mut self, author: Author) -> AuthorId;
+    fn lookup_intern_author(&self, id: AuthorId) -> &Author;
 }
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
@@ -52,5 +58,9 @@ impl FormData {
 
     pub fn form(&self) -> FormId {
         self.form
+    }
+
+    pub fn author(&self, db: &impl MainDatabase) -> AuthorId {
+        db.associated_author(self.source())
     }
 }

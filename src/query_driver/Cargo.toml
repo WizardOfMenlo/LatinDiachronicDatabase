@@ -11,3 +11,4 @@ latin_lemmatizer = { version = "0.1.0", path = "../latin_lemmatizer"}
 authors_chrono = { version = "0.1.0", path = "../authors_chrono"}
 salsa = "0.12"
 walkdir = "2"
+bimap = "0.3"

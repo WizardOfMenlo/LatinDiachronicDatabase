@@ -14,9 +14,10 @@ pub fn load_database<S, T: Read>(
     extractor: impl Fn(S) -> io::Result<T>,
 ) -> io::Result<()> {
     // Load the authors assoc
-    authors
-        .into_iter()
-        .for_each(|(k, v)| db.set_associated_sources(k, Arc::new(v.clone())));
+    authors.into_iter().for_each(|(k, v)| {
+        db.set_associated_sources(k, Arc::new(v.clone()));
+        v.iter().for_each(|&s| db.set_associated_author(s, k))
+    });
 
     for (source, reader) in sources.into_iter() {
         let mut read = BufReader::new(extractor(reader)?);
@@ -26,4 +27,20 @@ pub fn load_database<S, T: Read>(
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use query_system::mock::make_mock;
+
+    #[test]
+    fn empty_load() {
+        let db = make_mock();
+        let authors = vec![];
+        let sources = vec![];
+
+        load_database(&mut db, authors.into_iter(), sources.into_iter(), |s| s);
+    }
 }
