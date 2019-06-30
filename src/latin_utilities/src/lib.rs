@@ -6,12 +6,23 @@
 
 mod normalized_latin_string;
 pub use self::normalized_latin_string::NormalizedLatinString;
+
+use lazy_static::lazy_static;
+use std::collections::HashSet;
 use unicode_normalization::UnicodeNormalization;
 
 /// A converter which can be use to turn a `&str` into a
 ///  [`NormalizedLatingString`](struct.NormalizedLatinString.html)
 #[derive(Debug, Clone, Default)]
 pub struct StandardLatinConverter;
+
+lazy_static! {
+    static ref ALLOWED: HashSet<char> = {
+        let mut m = HashSet::new();
+        m.insert('/');
+        m
+    };
+}
 
 impl StandardLatinConverter {
     /// Convert a str to the correctly parsed form, converting j -> i, v -> u
@@ -25,15 +36,17 @@ impl StandardLatinConverter {
         let mut res: String = input
             .as_ref()
             .nfd()
-            .filter(|c| c.is_whitespace() || (c.is_alphanumeric() && !c.is_digit(10)))
+            .filter(|c| {
+                ALLOWED.contains(c) || c.is_whitespace() || (c.is_alphanumeric() && !c.is_digit(10))
+            })
             .collect();
 
         // Lowercase
         res = res.to_lowercase();
 
         // Last round of replacements
-        const TO_REPLACE: [&str; 11] = ["j", "v", "[", "]", "{", "}", "(", ")", "<", ">", ","];
-        const REPLACEMENT: [&str; 11] = ["i", "u", "", "", "", "", "", "", "", "", " "];
+        const TO_REPLACE: [&str; 10] = ["j", "v", "[", "]", "{", "}", "(", ")", "<", ">"];
+        const REPLACEMENT: [&str; 10] = ["i", "u", "", "", "", "", "", "", "", ""];
 
         for i in 0..TO_REPLACE.len() {
             res = res.replace(TO_REPLACE[i], REPLACEMENT[i]);
@@ -104,6 +117,20 @@ mod tests {
     fn test_numbers() {
         let converter = make();
         assert_eq!(converter.convert("123something456"), "something");
+    }
+
+    #[test]
+    fn test_apostrophe() {
+        let converter = make();
+        assert_eq!(converter.convert("e'do"), "edo");
+        assert_eq!(converter.convert("a'vitus puella"), "auitus puella");
+    }
+
+    #[test]
+    fn test_underscore() {
+        let converter = make();
+        assert_eq!(converter.convert("e-do"), "edo");
+        assert_eq!(converter.convert("a-vitus puella"), "auitus puella");
     }
 
     proptest! {

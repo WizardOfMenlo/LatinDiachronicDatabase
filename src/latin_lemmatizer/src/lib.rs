@@ -21,6 +21,16 @@ pub struct NaiveLemmatizer {
 
 impl NaiveLemmatizer {
     pub fn new(form_to_lemma: Mapping) -> Self {
+        // TODO, deduplicate similar mappings
+        NaiveLemmatizer {
+            lemma_to_form: Self::invert_mapping(&form_to_lemma),
+            form_to_lemma,
+            converter: StandardLatinConverter::default(),
+        }
+    }
+
+    fn invert_mapping(form_to_lemma: &Mapping) -> Mapping {
+        // Invert the mapping
         let lemma_to_form_pairs = form_to_lemma
             .iter()
             .map(|(k, v)| v.iter().map(|e| (e.clone(), k.clone())).collect::<Vec<_>>())
@@ -34,11 +44,7 @@ impl NaiveLemmatizer {
                 .insert(v);
         }
 
-        NaiveLemmatizer {
-            form_to_lemma,
-            lemma_to_form,
-            converter: StandardLatinConverter::default(),
-        }
+        lemma_to_form
     }
 
     pub fn num_lemmas(&self) -> usize {

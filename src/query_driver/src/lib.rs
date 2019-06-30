@@ -1,12 +1,11 @@
-
+use authors_chrono::Author;
 use bimap::BiMap;
 use latin_lemmatizer::NaiveLemmatizer;
+use query_system::ids::*;
 use query_system::middle::IntermediateQueries;
 use query_system::sources::SourcesQueryGroup;
 use query_system::traits::AuthorInternDatabase;
 use query_system::types::InternersGroup;
-use authors_chrono::Author;
-use query_system::ids::*;
 use query_system::MainQueries;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -15,7 +14,6 @@ use std::fs::File;
 use std::io;
 use std::path::PathBuf;
 use walkdir::WalkDir;
-
 
 pub mod utils;
 

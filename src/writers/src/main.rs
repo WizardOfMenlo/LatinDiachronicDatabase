@@ -1,8 +1,9 @@
+use authors_chrono::Author;
 use query_driver::driver_init;
 use query_system::ids::*;
 use query_system::lit_subset::LitSubset;
 use query_system::traits::*;
-use authors_chrono::Author;
+
 use std::fs::File;
 
 use runner::load_configuration;
@@ -11,6 +12,8 @@ use std::io::{self, prelude::*};
 
 fn main() -> Result<(), Box<std::error::Error>> {
     std::env::set_var("RUST_LOG", "info");
+    std::env::set_var("RUST_BACKTRACE", "1");
+    color_backtrace::install();
     env_logger::init();
     let db = driver_init(load_configuration())?;
     let lit = LitSubset::from_authors(db.authors().right_values(), &db.snapshot());
@@ -19,8 +22,8 @@ fn main() -> Result<(), Box<std::error::Error>> {
     let mut d_b = d_a.clone();
     d_b.sort_freq(&db);
 
-    d_a.write(&db, &mut File::create("test1")?, &d_b)?;
-    d_b.write(&db, &mut File::create("test2")?, &d_a)?;
+    d_a.write(&db, &mut File::create("alpha.txt")?, &d_b)?;
+    d_b.write(&db, &mut File::create("freq.txt")?, &d_a)?;
     Ok(())
 }
 
@@ -67,7 +70,11 @@ impl Entry {
             )?;
         }
 
-        let mut authors : Vec<&Author> = self.authors.iter().map(|e| db.lookup_intern_author(*e)).collect();
+        let mut authors: Vec<&Author> = self
+            .authors
+            .iter()
+            .map(|e| db.lookup_intern_author(*e))
+            .collect();
         authors.sort_by(|a, b| a.name().cmp(b.name()));
 
         writeln!(w, "\t\tUsed by {} authors", authors.len())?;

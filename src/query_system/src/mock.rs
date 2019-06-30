@@ -1,21 +1,21 @@
 //! Mocking facilities for testing
 
+use crate::ids::AuthorId;
 use crate::middle::IntermediateQueries;
 use crate::sources::SourcesQueryGroup;
-use crate::types::InternersGroup;
 use crate::traits::AuthorInternDatabase;
+use crate::types::InternersGroup;
 use crate::MainQueries;
+use authors_chrono::Author;
 use latin_lemmatizer::NaiveLemmatizer;
 use std::collections::HashMap;
-use authors_chrono::Author;
-use crate::ids::AuthorId;
 
 /// A simplified database, which we use for testing
 #[salsa::database(SourcesQueryGroup, InternersGroup, MainQueries, IntermediateQueries)]
 pub struct MockDatabase {
     runtime: salsa::Runtime<MockDatabase>,
     lemmatizer: NaiveLemmatizer,
-    mock: Author
+    mock: Author,
 }
 
 /// A mock database to be used for preliminary testing
@@ -29,7 +29,7 @@ impl MockDatabase {
         MockDatabase {
             runtime: salsa::Runtime::default(),
             lemmatizer: lemm,
-            mock: Author::new("Mock")
+            mock: Author::new("Mock"),
         }
     }
 }
@@ -61,7 +61,7 @@ impl salsa::ParallelDatabase for MockDatabase {
         salsa::Snapshot::new(MockDatabase {
             runtime: self.runtime.snapshot(self),
             lemmatizer: self.lemmatizer.clone(),
-            mock: self.mock.clone()
+            mock: self.mock.clone(),
         })
     }
 }

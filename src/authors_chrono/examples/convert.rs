@@ -32,5 +32,5 @@ fn main() -> io::Result<()> {
 
     // TODO add serde deserialization
     unreachable!();
-    -Ok(())
+    Ok(())
 }

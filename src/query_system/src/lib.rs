@@ -14,7 +14,7 @@ pub mod traits;
 pub mod types;
 
 #[cfg(test)]
-mod mock;
+pub mod mock;
 
 use ids::*;
 use lit_subset::LitSubset;

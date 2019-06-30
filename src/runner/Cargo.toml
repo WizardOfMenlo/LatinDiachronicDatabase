@@ -14,5 +14,5 @@ warp = "0.1"
 juniper_warp = "0.3"
 log = "0.4.6"
 env_logger = "0.6.1"
-color-backtrace = "0.1"
+color-backtrace = "0.2.2"
 clap ={features = ["yaml"], version = "2.33.0"}
