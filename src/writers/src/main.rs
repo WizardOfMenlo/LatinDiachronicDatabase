@@ -17,6 +17,7 @@ enum SortingMode {
 }
 
 #[derive(Debug, Clone, Copy)]
+#[allow(dead_code)]
 enum ReferenceMode {
     AlphaLocation,
     FreqLocation,
@@ -24,6 +25,7 @@ enum ReferenceMode {
 }
 
 #[derive(Debug, Clone, Copy)]
+#[allow(dead_code)]
 enum AuthorMode {
     Full,
     NumberOnly,
@@ -84,7 +86,7 @@ impl Entry {
         &self,
         w: &mut impl Write,
         db: &impl MainDatabase,
-        config: &Configuration,
+        config: Configuration,
     ) -> io::Result<()> {
         let resolved_lemma = db.lookup_intern_lemma(self.lemma);
         writeln!(
@@ -230,7 +232,7 @@ impl Dictionary {
 
     fn write(&self, db: &impl MainDatabase, w: &mut impl Write) -> io::Result<()> {
         for entry in &self.ls {
-            entry.write(w, db, &self.config)?;
+            entry.write(w, db, self.config)?;
         }
         Ok(())
     }
