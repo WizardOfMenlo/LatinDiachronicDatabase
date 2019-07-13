@@ -1,6 +1,8 @@
-use chrono::Date;
+use chrono::prelude::*;
 use chrono::Utc;
 use std::cmp::Ordering;
+use std::collections::BTreeMap;
+
 
 pub mod parsers;
 
@@ -27,6 +29,21 @@ impl TimeSpan {
 
     pub fn end(&self) -> &Date<Utc> {
         &self.end
+    }
+
+    pub fn get_century(&self) -> (i32, i32) {
+        (
+            century_helper(self.start().year()),
+            century_helper(self.end().year()),
+        )
+    }
+}
+
+fn century_helper(year: i32) -> i32 {
+    if year >= 0 {
+        (year / 100) + 1
+    } else {
+        (year / 100) - 1
     }
 }
 
@@ -83,6 +100,35 @@ impl Author {
             None => false,
         }
     }
+}
+
+/// Given an iterator over authors, construct a mapping that buckets authors by date
+pub fn split_by_century<'a>(
+    iter: impl Iterator<Item = &'a Author>,
+) -> BTreeMap<i32, Vec<&'a Author>> {
+    let mut res = BTreeMap::new();
+    for author in iter {
+        // Skip null
+        if author.tspan().is_none() {
+            continue;
+        }
+        let span = author.tspan().unwrap();
+        let (s, e) = span.get_century();
+        let mut possible_centuries = Vec::new();
+        for i in s..=e {
+            // Skip 0 since there is no zeroth cent
+            if i == 0 {
+                continue;
+            }
+            possible_centuries.push(i);
+        }
+
+        for cent in possible_centuries {
+            res.entry(cent).or_insert_with(Vec::new).push(author);
+        }
+    }
+
+    res
 }
 
 // All these impls ensure comparision are only ever done by name

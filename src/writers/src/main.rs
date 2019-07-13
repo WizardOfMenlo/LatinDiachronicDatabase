@@ -10,6 +10,33 @@ use runner::load_configuration;
 use std::collections::HashSet;
 use std::io::{self, prelude::*};
 
+#[derive(Debug, Clone, Copy)]
+enum SortingMode {
+    Alphabetical,
+    ByFrequency,
+}
+
+#[derive(Debug, Clone, Copy)]
+enum ReferenceMode {
+    AlphaLocation,
+    FreqLocation,
+    Identity,
+}
+
+#[derive(Debug, Clone, Copy)]
+enum AuthorMode {
+    Full,
+    NumberOnly,
+    Nothing,
+}
+
+#[derive(Debug, Clone, Copy)]
+struct Configuration {
+    sorting_mode: SortingMode,
+    ref_mode: ReferenceMode,
+    author_mode: AuthorMode,
+}
+
 fn main() -> Result<(), Box<std::error::Error>> {
     std::env::set_var("RUST_LOG", "info");
     std::env::set_var("RUST_BACKTRACE", "1");
@@ -17,13 +44,28 @@ fn main() -> Result<(), Box<std::error::Error>> {
     env_logger::init();
     let db = driver_init(load_configuration())?;
     let lit = LitSubset::from_authors(db.authors().right_values(), &db.snapshot());
-    let mut d_a = Dictionary::new(&db, lit.clone());
-    d_a.sort_alpha(&db);
-    let mut d_b = d_a.clone();
-    d_b.sort_freq(&db);
+    let alpha = Dictionary::new(
+        &db,
+        lit.clone(),
+        Configuration {
+            sorting_mode: SortingMode::Alphabetical,
+            ref_mode: ReferenceMode::Identity,
+            author_mode: AuthorMode::Nothing,
+        },
+    );
 
-    d_a.write(&db, &mut File::create("alpha.txt")?, &d_b)?;
-    d_b.write(&db, &mut File::create("freq.txt")?, &d_a)?;
+    let freq = Dictionary::new(
+        &db,
+        lit.clone(),
+        Configuration {
+            sorting_mode: SortingMode::ByFrequency,
+            ref_mode: ReferenceMode::AlphaLocation,
+            author_mode: AuthorMode::Full,
+        },
+    );
+
+    alpha.write(&db, &mut File::create("alpha.txt")?)?;
+    freq.write(&db, &mut File::create("freq.txt")?)?;
     Ok(())
 }
 
@@ -32,6 +74,7 @@ struct Entry {
     lemma: LemmaId,
     count: usize,
     ambig_count: usize,
+    corresponding_index: usize,
     forms: Vec<(FormId, Vec<FormDataId>)>,
     authors: HashSet<AuthorId>,
 }
@@ -41,14 +84,13 @@ impl Entry {
         &self,
         w: &mut impl Write,
         db: &impl MainDatabase,
-        other: &Dictionary,
+        config: &Configuration,
     ) -> io::Result<()> {
-        let corresponding_index = other.ls.iter().position(|l| l.lemma == self.lemma).unwrap();
         let resolved_lemma = db.lookup_intern_lemma(self.lemma);
         writeln!(
             w,
             "-------{:6}------{} count: {} (C: {}, A: {})",
-            corresponding_index,
+            self.corresponding_index,
             resolved_lemma.0.inner(),
             self.count,
             self.count - self.ambig_count,
@@ -77,19 +119,36 @@ impl Entry {
             .collect();
         authors.sort_by(|a, b| a.name().cmp(b.name()));
 
-        writeln!(w, "\t\tUsed by {} authors", authors.len())?;
+        match config.author_mode {
+            AuthorMode::Nothing => (),
+            AuthorMode::Full => {
+                writeln!(w, "\t\tUsed by {} authors", authors.len())?;
+                let buckets = authors_chrono::split_by_century(authors.into_iter());
+                for (cent, size) in buckets.into_iter().map(|(cent, auth)| (cent, auth.len())) {
+                    writeln!(
+                        w,
+                        "\t\t\t{} {}: {}",
+                        cent.abs(),
+                        if cent > 0 { "AC" } else { "BC" },
+                        size
+                    )?;
+                }
+            }
+            AuthorMode::NumberOnly => writeln!(w, "\t\tUsed by {} authors", authors.len())?,
+        }
 
         Ok(())
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 struct Dictionary {
     ls: Vec<Entry>,
+    config: Configuration,
 }
 
 impl Dictionary {
-    fn new(db: &impl MainDatabase, sub: LitSubset) -> Self {
+    fn new(db: &impl MainDatabase, sub: LitSubset, config: Configuration) -> Self {
         let tree = db.subset_tree(sub);
         let mut ls = Vec::with_capacity(tree.len());
         for (&lemma, forms) in tree.iter() {
@@ -110,10 +169,38 @@ impl Dictionary {
                     .flatten()
                     .map(|f| db.lookup_intern_form_data(*f).author(db))
                     .collect(),
+
+                // Will be set later on
+                corresponding_index: 0,
             })
         }
 
-        Dictionary { ls }
+        let mut res = Dictionary {
+            ls: ls.clone(),
+            config,
+        };
+        let mut aux = Dictionary { ls, config };
+
+        match config.sorting_mode {
+            SortingMode::Alphabetical => res.sort_alpha(db),
+            SortingMode::ByFrequency => res.sort_freq(db),
+        };
+
+        match config.ref_mode {
+            ReferenceMode::AlphaLocation => aux.sort_alpha(db),
+            ReferenceMode::FreqLocation => aux.sort_freq(db),
+            ReferenceMode::Identity => match config.sorting_mode {
+                SortingMode::Alphabetical => aux.sort_alpha(db),
+                SortingMode::ByFrequency => aux.sort_freq(db),
+            },
+        };
+
+        // Set the index accordingly
+        for entry in &mut res.ls {
+            entry.corresponding_index = aux.ls.iter().position(|l| l.lemma == entry.lemma).unwrap();
+        }
+
+        res
     }
 
     fn sort_alpha(&mut self, db: &impl MainDatabase) {
@@ -141,14 +228,9 @@ impl Dictionary {
         }
     }
 
-    fn write(
-        &self,
-        db: &impl MainDatabase,
-        w: &mut impl Write,
-        other: &Dictionary,
-    ) -> io::Result<()> {
+    fn write(&self, db: &impl MainDatabase, w: &mut impl Write) -> io::Result<()> {
         for entry in &self.ls {
-            entry.write(w, db, other)?;
+            entry.write(w, db, &self.config)?;
         }
         Ok(())
     }
