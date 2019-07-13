@@ -18,6 +18,13 @@ enum SortingMode {
 
 #[derive(Debug, Clone, Copy)]
 #[allow(dead_code)]
+enum FormMode {
+    IncludeForms,
+    HideForms,
+}
+
+#[derive(Debug, Clone, Copy)]
+#[allow(dead_code)]
 enum ReferenceMode {
     AlphaLocation,
     FreqLocation,
@@ -37,6 +44,7 @@ struct Configuration {
     sorting_mode: SortingMode,
     ref_mode: ReferenceMode,
     author_mode: AuthorMode,
+    form_mode: FormMode,
 }
 
 fn main() -> Result<(), Box<std::error::Error>> {
@@ -51,8 +59,9 @@ fn main() -> Result<(), Box<std::error::Error>> {
         lit.clone(),
         Configuration {
             sorting_mode: SortingMode::Alphabetical,
-            ref_mode: ReferenceMode::Identity,
+            ref_mode: ReferenceMode::FreqLocation,
             author_mode: AuthorMode::Nothing,
+            form_mode: FormMode::IncludeForms,
         },
     );
 
@@ -61,8 +70,9 @@ fn main() -> Result<(), Box<std::error::Error>> {
         lit.clone(),
         Configuration {
             sorting_mode: SortingMode::ByFrequency,
-            ref_mode: ReferenceMode::AlphaLocation,
+            ref_mode: ReferenceMode::Identity,
             author_mode: AuthorMode::Full,
+            form_mode: FormMode::IncludeForms,
         },
     );
 
@@ -99,19 +109,21 @@ impl Entry {
             self.ambig_count
         )?;
 
-        for (form, count) in self.forms.iter().map(|(k, v)| (k, v.len())) {
-            let resolved_form = db.lookup_intern_form(*form);
-            writeln!(
-                w,
-                "\t{}: {} {}",
-                resolved_form.0.inner(),
-                count,
-                if db.as_ref().is_ambig(&resolved_form.0) {
-                    "(*)"
-                } else {
-                    ""
-                }
-            )?;
+        if let FormMode::IncludeForms = config.form_mode {
+            for (form, count) in self.forms.iter().map(|(k, v)| (k, v.len())) {
+                let resolved_form = db.lookup_intern_form(*form);
+                writeln!(
+                    w,
+                    "\t{}: {} {}",
+                    resolved_form.0.inner(),
+                    count,
+                    if db.as_ref().is_ambig(&resolved_form.0) {
+                        "(*)"
+                    } else {
+                        ""
+                    }
+                )?;
+            }
         }
 
         let mut authors: Vec<&Author> = self
@@ -131,7 +143,7 @@ impl Entry {
                         w,
                         "\t\t\t{} {}: {}",
                         cent.abs(),
-                        if cent > 0 { "AC" } else { "BC" },
+                        if cent > 0 { "BCE" } else { "ACE" },
                         size
                     )?;
                 }
