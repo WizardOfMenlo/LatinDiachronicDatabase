@@ -1,10 +1,13 @@
+use latin_lemmatizer::NaiveLemmatizer;
+
 use query_system::ids::*;
 use query_system::traits::*;
 use std::collections::HashSet;
+
 use std::io;
 use std::io::prelude::*;
-use std::io::BufReader;
 use std::sync::Arc;
+
 
 /// Load database given a list of authors and some sources
 pub fn load_database<S, T: Read>(
@@ -12,6 +15,7 @@ pub fn load_database<S, T: Read>(
     authors: impl IntoIterator<Item = (AuthorId, HashSet<SourceId>)>,
     sources: impl IntoIterator<Item = (SourceId, S)>,
     extractor: impl Fn(S) -> io::Result<T>,
+    lemma: NaiveLemmatizer,
 ) -> io::Result<()> {
     // Load the authors assoc
     authors.into_iter().for_each(|(k, v)| {
@@ -26,6 +30,8 @@ pub fn load_database<S, T: Read>(
         db.set_source_text(source, Arc::new(s));
     }
 
+    db.set_lemmatizer(Arc::new(lemma));
+
     Ok(())
 }
 
@@ -37,10 +43,17 @@ mod tests {
 
     #[test]
     fn empty_load() {
-        let db = make_mock();
+        let mut db = make_mock();
         let authors = vec![];
         let sources = vec![];
 
-        load_database(&mut db, authors.into_iter(), sources.into_iter(), |s| s);
+        load_database(
+            &mut db,
+            authors.into_iter(),
+            sources.into_iter(),
+            |s: &[u8]| Ok(s),
+            NaiveLemmatizer::default(),
+        )
+        .unwrap();
     }
 }

@@ -15,7 +15,12 @@ use std::sync::Arc;
 /// This trait defines ways to aggregate lemmas and forms based on both authors and sources  
 /// Usage: Load the source database, then run any query
 #[salsa::query_group(IntermediateQueries)]
-pub trait IntermediateDatabase: SourcesDatabase + InternDatabase + AsRef<NaiveLemmatizer> {
+pub trait IntermediateDatabase: SourcesDatabase + InternDatabase {
+    /// The lemmatizer that is used
+    #[salsa::input]
+    fn lemmatizer(&self) -> Arc<NaiveLemmatizer>;
+
+
     /// Parse multiple sources, and combine the result
     fn parse_subset(&self, subset: LitSubset) -> Arc<HashSet<FormDataId>>;
 
@@ -78,7 +83,7 @@ fn combine<'a, T: Hash + Eq + Clone + 'a>(
 // Lemmatizes a form, in an interface that works well with above
 fn lemmatize_form(db: &impl IntermediateDatabase, form_id: FormId) -> Arc<HashSet<LemmaId>> {
     let form = db.lookup_intern_form(form_id).0;
-    let lemm = db.as_ref();
+    let lemm = db.lemmatizer();
 
     Arc::new(
         lemm.get_possible_lemmas(&form)

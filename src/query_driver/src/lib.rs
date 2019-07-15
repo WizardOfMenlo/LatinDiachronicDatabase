@@ -24,16 +24,14 @@ pub struct MainDatabase {
     // TODO, bidirectionaize this? Use the old interner impl
     sources: HashMap<PathBuf, SourceId>,
     authors: BiMap<Author, AuthorId>,
-    lemmatizer: NaiveLemmatizer,
 }
 
 impl MainDatabase {
-    fn new(lemmatizer: NaiveLemmatizer) -> Self {
+    fn new() -> Self {
         Self {
             runtime: Default::default(),
             sources: HashMap::new(),
             authors: BiMap::new(),
-            lemmatizer,
         }
     }
 
@@ -43,12 +41,6 @@ impl MainDatabase {
 
     pub fn sources(&self) -> &HashMap<PathBuf, SourceId> {
         &self.sources
-    }
-}
-
-impl AsRef<NaiveLemmatizer> for MainDatabase {
-    fn as_ref(&self) -> &NaiveLemmatizer {
-        &self.lemmatizer
     }
 }
 
@@ -90,7 +82,6 @@ impl salsa::ParallelDatabase for MainDatabase {
             runtime: self.runtime.snapshot(self),
             sources: self.sources.clone(),
             authors: self.authors.clone(),
-            lemmatizer: self.lemmatizer.clone(),
         })
     }
 }
@@ -153,11 +144,15 @@ impl Configuration {
 
 // TODO, make async
 pub fn driver_init(config: Configuration) -> Result<MainDatabase, Box<Error>> {
-    let mut db = MainDatabase::new(config.make_lemm()?);
+    let mut db = MainDatabase::new();
     let mut current_author_id = None;
     let mut author_associations = HashMap::new();
     let mut author_counter = 0;
     let mut source_counter = 0;
+
+    // First, load lemmatizer
+    let lemm = config.make_lemm()?;
+
 
     for entry in WalkDir::new(config.data_dir).max_depth(2) {
         let entry = entry?;
@@ -217,6 +212,7 @@ pub fn driver_init(config: Configuration) -> Result<MainDatabase, Box<Error>> {
             .collect();
     }
 
+
     let aux_sources = db.sources.clone();
 
     utils::load_database(
@@ -224,6 +220,7 @@ pub fn driver_init(config: Configuration) -> Result<MainDatabase, Box<Error>> {
         author_associations,
         aux_sources.into_iter().map(|(k, v)| (v, k)),
         File::open,
+        lemm,
     )?;
 
     Ok(db)

@@ -117,7 +117,7 @@ impl Entry {
                     "\t{}: {} {}",
                     resolved_form.0.inner(),
                     count,
-                    if db.as_ref().is_ambig(&resolved_form.0) {
+                    if db.lemmatizer().is_ambig(&resolved_form.0) {
                         "(*)"
                     } else {
                         ""
@@ -169,7 +169,7 @@ impl Dictionary {
             let count = forms.values().map(|v| v.len()).sum();
             let ambig_count = forms
                 .iter()
-                .filter(|(&k, _)| db.as_ref().is_ambig(&db.lookup_intern_form(k).0))
+                .filter(|(&k, _)| db.lemmatizer().is_ambig(&db.lookup_intern_form(k).0))
                 .map(|(_, v)| v.len())
                 .sum();
             ls.push(Entry {
@@ -200,17 +200,34 @@ impl Dictionary {
             SortingMode::ByFrequency => res.sort_freq(db),
         };
 
-        match config.ref_mode {
-            ReferenceMode::AlphaLocation => aux.sort_alpha(db),
-            ReferenceMode::FreqLocation => aux.sort_freq(db),
-            ReferenceMode::Identity => match config.sorting_mode {
-                SortingMode::Alphabetical => aux.sort_alpha(db),
-                SortingMode::ByFrequency => aux.sort_freq(db),
-            },
+        match (config.ref_mode, config.sorting_mode) {
+            (ReferenceMode::AlphaLocation, _) => aux.sort_alpha(db),
+            (ReferenceMode::FreqLocation, _) => aux.sort_freq(db),
+            (ReferenceMode::Identity, SortingMode::Alphabetical) => aux.sort_alpha(db),
+            (ReferenceMode::Identity, SortingMode::ByFrequency) => aux.sort_freq(db),
         };
 
         // Set the index accordingly
         for entry in &mut res.ls {
+            /*
+            entry.corresponding_index = match (config.ref_mode, config.sorting_mode) {
+                (ReferenceMode::AlphaLocation, _)
+                | (ReferenceMode::Identity, SortingMode::Alphabetical) => {
+                    let entry_lemma = db.lookup_intern_lemma(entry.lemma);
+                    aux.ls.binary_search_by(|probe| {
+                        let probe_lemma = db.lookup_intern_lemma(probe.lemma);
+                        probe_lemma.cmp(&entry_lemma)
+                    })
+                }
+                (ReferenceMode::FreqLocation, _)
+                | (ReferenceMode::Identity, SortingMode::ByFrequency) => aux
+                    .ls
+                    .binary_search_by(|probe| probe.count.cmp(&entry.count)),
+            }
+            .unwrap();
+            */
+
+            // This is simpler, but the above is probably more efficient
             entry.corresponding_index = aux.ls.iter().position(|l| l.lemma == entry.lemma).unwrap();
         }
 

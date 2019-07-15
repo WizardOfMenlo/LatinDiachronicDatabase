@@ -19,7 +19,9 @@ pub struct StandardLatinConverter;
 lazy_static! {
     static ref ALLOWED: HashSet<char> = {
         let mut m = HashSet::new();
+        // We use this to disambiguate
         m.insert('/');
+        m.insert('#');
         m
     };
 }

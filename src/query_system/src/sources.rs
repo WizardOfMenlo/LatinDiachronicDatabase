@@ -64,11 +64,10 @@ mod tests {
     use super::*;
     use crate::mock::MockDatabase;
     use proptest::prelude::*;
-    use std::collections::HashMap;
     use std::iter;
 
     fn create_mock_database() -> MockDatabase {
-        MockDatabase::new(latin_lemmatizer::NaiveLemmatizer::new(HashMap::new()))
+        MockDatabase::new()
     }
 
     fn generate_source_repeated_n_lines(s: &str, n: usize) -> Arc<String> {

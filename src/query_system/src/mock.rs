@@ -3,32 +3,33 @@
 use crate::ids::AuthorId;
 use crate::middle::IntermediateQueries;
 use crate::sources::SourcesQueryGroup;
-use crate::traits::AuthorInternDatabase;
+use crate::traits::{AuthorInternDatabase, IntermediateDatabase};
 use crate::types::InternersGroup;
 use crate::MainQueries;
 use authors_chrono::Author;
 use latin_lemmatizer::NaiveLemmatizer;
 use std::collections::HashMap;
+use std::sync::Arc;
 
 /// A simplified database, which we use for testing
 #[salsa::database(SourcesQueryGroup, InternersGroup, MainQueries, IntermediateQueries)]
 pub struct MockDatabase {
     runtime: salsa::Runtime<MockDatabase>,
-    lemmatizer: NaiveLemmatizer,
     mock: Author,
 }
 
 /// A mock database to be used for preliminary testing
 /// Note, we have empty lemm, so this will fail complex queries
 pub fn make_mock() -> MockDatabase {
-    MockDatabase::new(NaiveLemmatizer::new(HashMap::new()))
+    let mut res = MockDatabase::new();
+    res.set_lemmatizer(Arc::new(NaiveLemmatizer::new(HashMap::new())));
+    res
 }
 
 impl MockDatabase {
-    pub fn new(lemm: NaiveLemmatizer) -> Self {
+    pub fn new() -> Self {
         MockDatabase {
             runtime: salsa::Runtime::default(),
-            lemmatizer: lemm,
             mock: Author::new("Mock"),
         }
     }
@@ -44,11 +45,12 @@ impl AuthorInternDatabase for MockDatabase {
     }
 }
 
-impl AsRef<NaiveLemmatizer> for MockDatabase {
-    fn as_ref(&self) -> &NaiveLemmatizer {
-        &self.lemmatizer
+impl Default for MockDatabase {
+    fn default() -> Self {
+        Self::new()
     }
 }
+
 
 impl salsa::Database for MockDatabase {
     fn salsa_runtime(&self) -> &salsa::Runtime<Self> {
@@ -60,7 +62,6 @@ impl salsa::ParallelDatabase for MockDatabase {
     fn snapshot(&self) -> salsa::Snapshot<Self> {
         salsa::Snapshot::new(MockDatabase {
             runtime: self.runtime.snapshot(self),
-            lemmatizer: self.lemmatizer.clone(),
             mock: self.mock.clone(),
         })
     }
