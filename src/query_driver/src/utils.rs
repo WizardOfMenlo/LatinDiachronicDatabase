@@ -6,6 +6,7 @@ use std::collections::HashSet;
 
 use std::io;
 use std::io::prelude::*;
+use std::io::BufReader;
 use std::sync::Arc;
 
 
@@ -39,14 +40,17 @@ pub fn load_database<S, T: Read>(
 mod tests {
     use super::*;
 
-    use query_system::mock::make_mock;
 
+    use latin_lemmatizer::NaiveLemmatizer;
+    use query_system::mock::make_mock;
     #[test]
     fn empty_load() {
         let mut db = make_mock();
         let authors = vec![];
         let sources = vec![];
 
+        // Note, needed to allow for gap in type inf
+        #[allow(clippy::redundant_closure)]
         load_database(
             &mut db,
             authors.into_iter(),
