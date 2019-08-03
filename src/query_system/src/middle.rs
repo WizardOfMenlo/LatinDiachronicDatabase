@@ -20,7 +20,6 @@ pub trait IntermediateDatabase: SourcesDatabase + InternDatabase {
     #[salsa::input]
     fn lemmatizer(&self) -> Arc<NaiveLemmatizer>;
 
-
     /// Parse multiple sources, and combine the result
     fn parse_subset(&self, subset: LitSubset) -> Arc<HashSet<FormDataId>>;
 

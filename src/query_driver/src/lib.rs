@@ -153,7 +153,6 @@ pub fn driver_init(config: Configuration) -> Result<MainDatabase, Box<Error>> {
     // First, load lemmatizer
     let lemm = config.make_lemm()?;
 
-
     for entry in WalkDir::new(config.data_dir).max_depth(2) {
         let entry = entry?;
         let ft = entry.file_type();
@@ -211,7 +210,6 @@ pub fn driver_init(config: Configuration) -> Result<MainDatabase, Box<Error>> {
             })
             .collect();
     }
-
 
     let aux_sources = db.sources.clone();
 

@@ -9,7 +9,6 @@ use std::io::prelude::*;
 use std::io::BufReader;
 use std::sync::Arc;
 
-
 /// Load database given a list of authors and some sources
 pub fn load_database<S, T: Read>(
     db: &mut impl MainDatabase,
@@ -39,7 +38,6 @@ pub fn load_database<S, T: Read>(
 #[cfg(test)]
 mod tests {
     use super::*;
-
 
     use latin_lemmatizer::NaiveLemmatizer;
     use query_system::mock::make_mock;

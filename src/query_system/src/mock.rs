@@ -51,7 +51,6 @@ impl Default for MockDatabase {
     }
 }
 
-
 impl salsa::Database for MockDatabase {
     fn salsa_runtime(&self) -> &salsa::Runtime<Self> {
         &self.runtime

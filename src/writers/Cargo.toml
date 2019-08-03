@@ -13,3 +13,4 @@ runner = { version = "0.1", path = "../runner"}
 log = "0.4.6"
 env_logger = "0.6.1"
 color-backtrace = "0.2.2"
+Inflector = "0.11.4"

@@ -1,14 +1,15 @@
-use authors_chrono::Author;
 use query_driver::driver_init;
 use query_system::ids::*;
 use query_system::lit_subset::LitSubset;
 use query_system::traits::*;
+use runner::load_configuration;
 
 use std::fs::File;
 
-use runner::load_configuration;
-use std::collections::HashSet;
+use inflector::Inflector;
+use std::collections::{HashMap, HashSet};
 use std::io::{self, prelude::*};
+
 
 #[derive(Debug, Clone, Copy)]
 enum SortingMode {
@@ -34,8 +35,22 @@ enum ReferenceMode {
 #[derive(Debug, Clone, Copy)]
 #[allow(dead_code)]
 enum AuthorMode {
-    Full,
-    NumberOnly,
+    Full(AuthorConfig),
+    Nothing,
+}
+
+
+#[derive(Debug, Clone, Copy)]
+struct AuthorConfig {
+    include_header: bool,
+    include_authors: (bool, usize),
+    include_centuries: (bool, CenturySettings, usize),
+}
+
+#[derive(Debug, Clone, Copy)]
+#[allow(dead_code)]
+enum CenturySettings {
+    IncludeAuthors(usize),
     Nothing,
 }
 
@@ -46,6 +61,9 @@ struct Configuration {
     author_mode: AuthorMode,
     form_mode: FormMode,
 }
+
+const AUTHOR_SCALE_FACTOR: usize = 1_000;
+const HISTORIC_SCALE_FACTOR: usize = 1_000;
 
 fn main() -> Result<(), Box<std::error::Error>> {
     std::env::set_var("RUST_LOG", "info");
@@ -60,8 +78,16 @@ fn main() -> Result<(), Box<std::error::Error>> {
         Configuration {
             sorting_mode: SortingMode::Alphabetical,
             ref_mode: ReferenceMode::FreqLocation,
-            author_mode: AuthorMode::Nothing,
-            form_mode: FormMode::IncludeForms,
+            author_mode: AuthorMode::Full(AuthorConfig {
+                include_header: true,
+                include_authors: (false, AUTHOR_SCALE_FACTOR),
+                include_centuries: (
+                    true,
+                    CenturySettings::IncludeAuthors(AUTHOR_SCALE_FACTOR),
+                    HISTORIC_SCALE_FACTOR,
+                ),
+            }),
+            form_mode: FormMode::HideForms,
         },
     );
 
@@ -71,13 +97,15 @@ fn main() -> Result<(), Box<std::error::Error>> {
         Configuration {
             sorting_mode: SortingMode::ByFrequency,
             ref_mode: ReferenceMode::Identity,
-            author_mode: AuthorMode::Full,
+            author_mode: AuthorMode::Nothing,
             form_mode: FormMode::IncludeForms,
         },
     );
 
-    alpha.write(&db, &mut File::create("alpha.txt")?)?;
-    freq.write(&db, &mut File::create("freq.txt")?)?;
+    let author_count = author_count(&db, lit);
+
+    alpha.write(&db, &mut File::create("alpha.txt")?, &author_count)?;
+    freq.write(&db, &mut File::create("freq.txt")?, &author_count)?;
     Ok(())
 }
 
@@ -97,13 +125,14 @@ impl Entry {
         w: &mut impl Write,
         db: &impl MainDatabase,
         config: Configuration,
+        global_authors_count: &HashMap<AuthorId, usize>,
     ) -> io::Result<()> {
         let resolved_lemma = db.lookup_intern_lemma(self.lemma);
         writeln!(
             w,
             "-------{:6}------{} count: {} (C: {}, A: {})",
             self.corresponding_index,
-            resolved_lemma.0.inner(),
+            resolved_lemma.0.inner().to_sentence_case(),
             self.count,
             self.count - self.ambig_count,
             self.ambig_count
@@ -126,29 +155,89 @@ impl Entry {
             }
         }
 
-        let mut authors: Vec<&Author> = self
+        let mut authors: Vec<_> = self
             .authors
             .iter()
-            .map(|e| db.lookup_intern_author(*e))
+            .map(|e| (e, db.lookup_intern_author(*e)))
             .collect();
-        authors.sort_by(|a, b| a.name().cmp(b.name()));
+        authors.sort_by(|(_, a), (_, b)| a.name().cmp(b.name()));
+
+        // How many times was it used by an author
+        let mut authors_count = HashMap::new();
+        for &fd in self.forms.iter().map(|(_, fds)| fds).flatten() {
+            let auth_id = db.lookup_intern_form_data(fd).author(db);
+            *authors_count
+                .entry(db.lookup_intern_author(auth_id))
+                .or_insert(0usize) += 1;
+        }
 
         match config.author_mode {
             AuthorMode::Nothing => (),
-            AuthorMode::Full => {
-                writeln!(w, "\t\tUsed by {} authors", authors.len())?;
-                let buckets = authors_chrono::split_by_century(authors.into_iter());
-                for (cent, size) in buckets.into_iter().map(|(cent, auth)| (cent, auth.len())) {
-                    writeln!(
-                        w,
-                        "\t\t\t{} {}: {}",
-                        cent.abs(),
-                        if cent > 0 { "BCE" } else { "ACE" },
-                        size
-                    )?;
+            AuthorMode::Full(config) => {
+                if config.include_header {
+                    writeln!(w, "\t\tUsed by {} authors", authors.len())?;
+                }
+
+                if config.include_authors.0 {
+                    let scale = config.include_authors.1;
+                    write!(w, "\t\t")?;
+                    for (id, author) in &authors {
+                        let relative_freq = (authors_count.get(author).unwrap() * scale) as f64
+                            / *global_authors_count.get(&id).unwrap() as f64;
+                        write!(w, "{} ({:.2}) ", author.name(), relative_freq)?;
+                    }
+                    writeln!(w)?;
+                }
+
+                if config.include_centuries.0 {
+                    let scale = config.include_centuries.2;
+
+                    let buckets =
+                        authors_chrono::split_by_century(authors.iter().map(|(_, a)| a).cloned());
+                    for (cent, mut authors_b) in buckets.into_iter() {
+                        let aggregated = authors_b
+                            .iter()
+                            .flat_map(|&a| authors_count.get(&a))
+                            .sum::<usize>();
+                        let relative_freq = (aggregated * scale) as f64 / self.count as f64;
+
+                        write!(
+                            w,
+                            "\t\t\t{} {}: {} ({:.2}) ",
+                            cent.abs(),
+                            if cent > 0 { "CE" } else { "BCE" },
+                            authors_b.len(),
+                            relative_freq
+                        )?;
+
+                        match config.include_centuries.1 {
+                            CenturySettings::IncludeAuthors(scale) => {
+                                authors_b.sort_by(|a, b| a.name().cmp(b.name()));
+                                for author in authors_b {
+                                    let count = authors_count.get(author).unwrap();
+                                    let id = authors
+                                        .iter()
+                                        .find(|(_, a)| a == &author)
+                                        .map(|(id, _)| id)
+                                        .unwrap();
+                                    let global_count = *global_authors_count.get(id).unwrap();
+                                    let relative_freq =
+                                        (count * scale) as f64 / global_count as f64;
+                                    write!(
+                                        w,
+                                        "{} {} ({:.2}) ",
+                                        author.name(),
+                                        count,
+                                        relative_freq
+                                    )?;
+                                }
+                            }
+                            CenturySettings::Nothing => (),
+                        }
+                        writeln!(w)?;
+                    }
                 }
             }
-            AuthorMode::NumberOnly => writeln!(w, "\t\tUsed by {} authors", authors.len())?,
         }
 
         Ok(())
@@ -159,6 +248,20 @@ impl Entry {
 struct Dictionary {
     ls: Vec<Entry>,
     config: Configuration,
+}
+
+// TODO: Move to DB
+fn author_count(db: &impl MainDatabase, sub: LitSubset) -> HashMap<AuthorId, usize> {
+    let tree = db.subset_tree(sub);
+    let mut res = HashMap::new();
+    for author in tree
+        .iter()
+        .flat_map(|(_, forms)| forms.values().flatten())
+        .map(|fd_id| db.lookup_intern_form_data(*fd_id).author(db))
+    {
+        *res.entry(author).or_insert(0) += 1;
+    }
+    res
 }
 
 impl Dictionary {
@@ -172,6 +275,7 @@ impl Dictionary {
                 .filter(|(&k, _)| db.lemmatizer().is_ambig(&db.lookup_intern_form(k).0))
                 .map(|(_, v)| v.len())
                 .sum();
+
             ls.push(Entry {
                 lemma,
                 count,
@@ -259,9 +363,14 @@ impl Dictionary {
         }
     }
 
-    fn write(&self, db: &impl MainDatabase, w: &mut impl Write) -> io::Result<()> {
+    fn write(
+        &self,
+        db: &impl MainDatabase,
+        w: &mut impl Write,
+        author_count: &HashMap<AuthorId, usize>,
+    ) -> io::Result<()> {
         for entry in &self.ls {
-            entry.write(w, db, self.config)?;
+            entry.write(w, db, self.config, author_count)?;
         }
         Ok(())
     }
