@@ -31,18 +31,7 @@ impl TimeSpan {
     }
 
     pub fn get_century(&self) -> (i32, i32) {
-        (
-            century_helper(self.start().year()),
-            century_helper(self.end().year()),
-        )
-    }
-}
-
-fn century_helper(year: i32) -> i32 {
-    if year >= 0 {
-        (year / 100) + 1
-    } else {
-        (year / 100) - 1
+        (self.start().year() / 100, self.end().year() / 100)
     }
 }
 

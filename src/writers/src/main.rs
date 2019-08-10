@@ -6,7 +6,6 @@ use runner::load_configuration;
 
 use std::fs::File;
 
-use inflector::Inflector;
 use std::collections::{HashMap, HashSet};
 use std::io::{self, prelude::*};
 
@@ -132,7 +131,7 @@ impl Entry {
             w,
             "-------{:6}------{} count: {} (C: {}, A: {})",
             self.corresponding_index,
-            resolved_lemma.0.inner().to_sentence_case(),
+            resolved_lemma.0.inner().to_uppercase(),
             self.count,
             self.count - self.ambig_count,
             self.ambig_count
