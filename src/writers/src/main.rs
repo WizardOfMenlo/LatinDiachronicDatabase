@@ -9,7 +9,6 @@ use std::fs::File;
 use std::collections::{HashMap, HashSet};
 use std::io::{self, prelude::*};
 
-
 #[derive(Debug, Clone, Copy)]
 enum SortingMode {
     Alphabetical,
@@ -38,7 +37,6 @@ enum AuthorMode {
     Nothing,
 }
 
-
 #[derive(Debug, Clone, Copy)]
 struct AuthorConfig {
     include_header: bool,
@@ -64,7 +62,7 @@ struct Configuration {
 const AUTHOR_SCALE_FACTOR: usize = 1_000;
 const HISTORIC_SCALE_FACTOR: usize = 1_000;
 
-fn main() -> Result<(), Box<std::error::Error>> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     std::env::set_var("RUST_LOG", "info");
     std::env::set_var("RUST_BACKTRACE", "1");
     color_backtrace::install();

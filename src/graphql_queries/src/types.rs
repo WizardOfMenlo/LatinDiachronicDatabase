@@ -33,13 +33,10 @@ impl Author {
     }
 
     fn author(&self, context: &Context) -> types::Author {
-        // TODO We could cache this?
         context
             .get()
             .authors()
-            .iter()
-            .find(|(_, &v)| v == self.id)
-            .map(|(k, _)| k)
+            .get_by_right(&self.id)
             .cloned()
             .expect("No authorid should be created")
     }

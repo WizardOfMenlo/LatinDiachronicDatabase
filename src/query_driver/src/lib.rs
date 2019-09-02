@@ -22,7 +22,7 @@ pub mod utils;
 pub struct MainDatabase {
     runtime: salsa::Runtime<MainDatabase>,
     // TODO, bidirectionaize this? Use the old interner impl
-    sources: HashMap<PathBuf, SourceId>,
+    sources: BiMap<PathBuf, SourceId>,
     authors: BiMap<Author, AuthorId>,
 }
 
@@ -30,7 +30,7 @@ impl MainDatabase {
     fn new() -> Self {
         Self {
             runtime: Default::default(),
-            sources: HashMap::new(),
+            sources: BiMap::new(),
             authors: BiMap::new(),
         }
     }
@@ -39,7 +39,7 @@ impl MainDatabase {
         &self.authors
     }
 
-    pub fn sources(&self) -> &HashMap<PathBuf, SourceId> {
+    pub fn sources(&self) -> &BiMap<PathBuf, SourceId> {
         &self.sources
     }
 }
@@ -130,7 +130,7 @@ impl Configuration {
         })
     }
 
-    pub(crate) fn make_lemm(&self) -> Result<NaiveLemmatizer, Box<Error>> {
+    pub(crate) fn make_lemm(&self) -> Result<NaiveLemmatizer, Box<dyn Error>> {
         Ok(match self.lemm_mode {
             LemmMode::CSVFormat => latin_lemmatizer::parsers::csv_format::new()
                 .read_all(File::open(&self.lemmatizer_path)?)?
@@ -143,7 +143,7 @@ impl Configuration {
 }
 
 // TODO, make async
-pub fn driver_init(config: Configuration) -> Result<MainDatabase, Box<Error>> {
+pub fn driver_init(config: Configuration) -> Result<MainDatabase, Box<dyn Error>> {
     let mut db = MainDatabase::new();
     let mut current_author_id = None;
     let mut author_associations = HashMap::new();

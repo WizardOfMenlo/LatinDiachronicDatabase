@@ -7,8 +7,6 @@ pub mod parsers;
 use latin_utilities::{NormalizedLatinString, StandardLatinConverter};
 use std::collections::{HashMap, HashSet};
 
-// TODO Instead of this, could it be worthwile to have a form_to_lemma W -> Id?
-// TODO Bidirectional form_to_lemma!
 type Mapping = HashMap<NormalizedLatinString, HashSet<NormalizedLatinString>>;
 
 /// A lemmatizer that uses a simple hashmap lookup to resolve lemmas

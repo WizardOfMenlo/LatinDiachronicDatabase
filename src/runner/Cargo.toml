@@ -9,10 +9,10 @@ description = "Final executable result"
 query_driver = { version = "0.1.0", path = "../query_driver"}
 query_system = { version = "0.1.0", path = "../query_system"}
 graphql_queries = { version = "0.1.0", path = "../graphql_queries"}
-salsa = "0.12"
+salsa = "0.13"
 warp = "0.1"
-juniper_warp = "0.3"
-log = "0.4.6"
-env_logger = "0.6.1"
-color-backtrace = "0.2.2"
+juniper_warp = "0.4.1"
+log = "0.4.8"
+env_logger = "0.6.2"
+color-backtrace = "0.2.3"
 clap ={features = ["yaml"], version = "2.33.0"}

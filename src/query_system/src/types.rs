@@ -36,7 +36,6 @@ pub struct Lemma(pub NormalizedLatinString);
 #[derive(shrinkwraprs::Shrinkwrap, Debug, Hash, Eq, PartialEq, Clone, Ord, PartialOrd)]
 pub struct Form(pub NormalizedLatinString);
 
-// TODO, move this rexport and work with deps
 pub use authors_chrono::Author;
 
 impl FormData {

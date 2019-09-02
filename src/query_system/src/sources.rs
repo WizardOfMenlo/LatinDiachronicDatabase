@@ -19,7 +19,7 @@ pub trait SourcesDatabase: InternDatabase {
     #[salsa::input]
     fn associated_sources(&self, author_id: AuthorId) -> Arc<HashSet<SourceId>>;
 
-    /// Get the author for a source (TODO: is this necessary?)
+    /// Get the author for a source
     #[salsa::input]
     fn associated_author(&self, source_id: SourceId) -> AuthorId;
 

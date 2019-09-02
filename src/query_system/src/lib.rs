@@ -28,7 +28,7 @@ pub trait MainDatabase:
     + salsa::Database
     + salsa::ParallelDatabase
 {
-    // TODO, this is really slow (I think?)
+    // TODO, this is really slow (I think? It is)
 
     /// Count the number of occurrences of lemma in a subset of the literature
     fn count_lemma_occurrences_subset(&self, id: LemmaId, subset: LitSubset) -> usize;

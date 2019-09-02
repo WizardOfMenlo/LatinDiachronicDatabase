@@ -5,15 +5,24 @@ use std::collections::BTreeSet;
 use std::error::Error;
 use std::io::{self, prelude::*, BufReader};
 
+/// A parser for our homemade and well loved format
 #[derive(Debug, Default)]
 pub struct WeirdParser {
     authors: BTreeSet<Author>,
 }
 
+
+/// The line where the parsing failed
+#[derive(Debug)]
+pub struct LineNo(usize);
+
+/// The various way the parsing can fail
 #[derive(Debug)]
 pub enum ParsingError {
-    InvalidNumberOfChunks(usize),
-    InvalidNumberOfDates(usize),
+    /// Too many hashtags chars in the line specified
+    InvalidNumberOfChunks(usize, LineNo),
+    /// Either 0, or 3+ dates in the line
+    InvalidNumberOfDates(usize, LineNo),
 }
 
 impl std::fmt::Display for ParsingError {
@@ -38,19 +47,21 @@ fn parse_segment(s: &str) -> Date<Utc> {
 }
 
 impl WeirdParser {
+    /// Read the source to completion
     pub fn read_all(&mut self, read: impl io::Read) -> Result<(), ParsingError> {
         let bufreader = BufReader::new(read);
-        for line in bufreader.lines() {
-            self.read_line(&line.unwrap())?;
+        for (i, line) in bufreader.lines().enumerate() {
+            self.read_line(&line.unwrap(), LineNo(i))?;
         }
         Ok(())
     }
 
+    /// Get the resulting representation
     pub fn build(self) -> BTreeSet<Author> {
         self.authors
     }
 
-    fn read_line(&mut self, line: &str) -> Result<(), ParsingError> {
+    fn read_line(&mut self, line: &str, num : LineNo) -> Result<(), ParsingError> {
         // We skip these lines
         if line.contains('~') {
             return Ok(());
@@ -58,12 +69,13 @@ impl WeirdParser {
 
         let chunks: Vec<_> = line.split('#').collect();
         if chunks.len() != 2 {
-            return Err(ParsingError::InvalidNumberOfChunks(chunks.len()));
+            return Err(ParsingError::InvalidNumberOfChunks(chunks.len(), num));
         }
 
         let author_name = chunks[0].trim();
         let span = chunks[1];
 
+        // No hist info
         if span.contains('?') {
             self.authors.insert(Author::new(author_name));
             return Ok(());
@@ -74,7 +86,7 @@ impl WeirdParser {
         let segments: Vec<_> = inner.split(',').collect();
 
         if segments.is_empty() || segments.len() > 2 {
-            return Err(ParsingError::InvalidNumberOfDates(segments.len()));
+            return Err(ParsingError::InvalidNumberOfDates(segments.len(), num));
         }
 
         let start = parse_segment(segments[0]);

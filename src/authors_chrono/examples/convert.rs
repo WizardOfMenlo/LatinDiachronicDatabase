@@ -2,6 +2,7 @@ use authors_chrono::parsers::WeirdParser;
 use clap::{App, Arg};
 use std::fs::File;
 use std::io;
+use std::io::prelude::*;
 
 fn main() -> io::Result<()> {
     let matches = App::new("Author Converter")
@@ -15,6 +16,14 @@ fn main() -> io::Result<()> {
                 .takes_value(true)
                 .value_name("INPUTFILE")
                 .help("The input file provided"),
+        )
+        .arg(
+            Arg::with_name("output")
+                .required(false)
+                .short("o")
+                .takes_value(true)
+                .value_name("OUTPUT")
+                .help("The output file to write to"),
         )
         .get_matches();
 
@@ -30,7 +39,16 @@ fn main() -> io::Result<()> {
     println!("Authors correctly parsed");
     println!("Num authors {}", authors.len());
 
-    // TODO add serde deserialization
-    unreachable!();
+    /*
+    let json = serde_json::to_string(&authors)?;
+
+    if let Some(filename) = matches.value_of("output") {
+        let f = File::open(filename)?;
+        write!(f, "{}", json);
+    } else {
+        println!("{}", json);
+    }
+    */
+
     Ok(())
 }

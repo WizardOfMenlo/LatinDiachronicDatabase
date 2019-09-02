@@ -5,8 +5,10 @@ authors = ["Giacomo Fenzi <giacomofenzi@outlook.com>"]
 edition = "2018"
 
 [dependencies]
-chrono = "0.4.6"
-regex = "1.1.6"
+serde = { version = "1.0", features = ["derive"] }
+chrono = { version = "0.4.8", features = ["serde"] }
+regex = "1.2.1"
 
 [dev-dependencies]
 clap = "2.33"
+serde_json = "1.0"

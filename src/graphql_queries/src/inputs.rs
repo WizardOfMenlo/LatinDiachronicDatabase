@@ -5,8 +5,13 @@ use std::collections::BTreeSet;
 use std::collections::HashSet;
 
 pub trait Filter {
+    /// Return a filter which matches everything
     fn all() -> Self;
+
+    /// Get the authors that the filters restricts to
     fn get_authors(&self, context: &Context) -> BTreeSet<AuthorId>;
+
+    /// Given filters with author sets A B, make a filter which computes A intersect B
     fn intersect<T>(self, other: T) -> FilterIntersect<Self, T>
     where
         T: Filter,
