@@ -16,12 +16,3 @@ jobs:
       run: cargo build --verbose
     - name: Run tests
       run: cargo test --verbose
-    - name: Generate coverage
-      run: |
-        cargo install cargo-kcov
-        cargo kcov
-    - name: Upload coverage
-      uses: codecov/codecov-action@v1.0.2
-      with:
-        token: ${{secrets.CODECOV_TOKEN}} #required
-        file: ./target/cov/index.html #optional
