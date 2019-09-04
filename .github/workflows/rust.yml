@@ -20,7 +20,8 @@ jobs:
       run: |
         cargo install cargo-kcov
         cargo kcov
-    - uses: codecov/codecov-action@v1.0.2
+    - name: Upload coverage
+      uses: codecov/codecov-action@v1.0.2
       with:
       token: ${{secrets.CODECOV_TOKEN}} #required
       file: ./target/cov/index.html #optional
