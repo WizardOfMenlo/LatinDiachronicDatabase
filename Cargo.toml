@@ -7,5 +7,6 @@ members = [
     "src/runner",
     "src/graphql_queries",
     "src/authors_chrono",
-    "src/writers"
+    "src/writers",
+    "src/exporter",
 ]
