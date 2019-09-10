@@ -11,7 +11,6 @@ pub struct WeirdParser {
     authors: BTreeSet<Author>,
 }
 
-
 /// The line where the parsing failed
 #[derive(Debug)]
 pub struct LineNo(usize);
@@ -61,7 +60,7 @@ impl WeirdParser {
         self.authors
     }
 
-    fn read_line(&mut self, line: &str, num : LineNo) -> Result<(), ParsingError> {
+    fn read_line(&mut self, line: &str, num: LineNo) -> Result<(), ParsingError> {
         // We skip these lines
         if line.contains('~') {
             return Ok(());

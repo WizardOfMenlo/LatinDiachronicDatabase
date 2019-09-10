@@ -60,7 +60,7 @@ impl PartialOrd for TimeSpan {
     }
 }
 
-/// Our representation of an Author 
+/// Our representation of an Author
 #[derive(Debug, Clone, Eq)]
 pub struct Author {
     name: String,
@@ -162,14 +162,14 @@ impl std::hash::Hash for Author {
 mod tests {
     use super::*;
 
-    fn make_century(century : i32) -> Date<Utc> {
+    fn make_century(century: i32) -> Date<Utc> {
         Utc.ymd(century * 100, 1, 1)
     }
 
     #[test]
     fn contains() {
-        let firsts = [(1, 4), (1,1), (-4, -1), (-1, 1), (2,3), (2,3)];
-        let seconds = [(2, 3), (1,1), (-3, -2), (0, 0), (4,5), (1,3)];
+        let firsts = [(1, 4), (1, 1), (-4, -1), (-1, 1), (2, 3), (2, 3)];
+        let seconds = [(2, 3), (1, 1), (-3, -2), (0, 0), (4, 5), (1, 3)];
         let exp = [true, true, true, true, false, false];
 
         assert_eq!(firsts.len(), seconds.len());
@@ -186,7 +186,10 @@ mod tests {
     fn get_century() {
         for i in -10..10 {
             for j in i..10 {
-                assert_eq!(TimeSpan::new(make_century(i), make_century(j)).get_century(), (i, j))
+                assert_eq!(
+                    TimeSpan::new(make_century(i), make_century(j)).get_century(),
+                    (i, j)
+                )
             }
         }
     }
@@ -204,6 +207,5 @@ mod tests {
 
         assert_eq!(first_cen.len(), 1);
         assert_eq!(first_cen[0].name(), "first");
-
     }
 }

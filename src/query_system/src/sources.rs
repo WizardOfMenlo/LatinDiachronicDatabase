@@ -118,7 +118,7 @@ mod tests {
         assert!(form_data.iter().all(|fd| fd.form() == form_id));
     }
 
-    use insta::assert_debug_snapshot_matches;
+    use insta::assert_debug_snapshot;
     use std::collections::BTreeSet;
 
     #[test]
@@ -134,7 +134,7 @@ mod tests {
             .map(|fd| (db.lookup_intern_form(fd.form()), fd.source(), fd.line_no()))
             .collect();
 
-        assert_debug_snapshot_matches!("lorem_ipusm", form_data)
+        assert_debug_snapshot!("lorem_ipusm", form_data)
     }
 
     #[test]
@@ -158,7 +158,7 @@ perlaturus ad te primum liber iste festinet, apud te"#;
             .map(|fd| (db.lookup_intern_form(fd.form()), fd.source(), fd.line_no()))
             .collect();
 
-        assert_debug_snapshot_matches!("notum_est_omnibus", form_data)
+        assert_debug_snapshot!("notum_est_omnibus", form_data)
     }
 
     proptest! {
