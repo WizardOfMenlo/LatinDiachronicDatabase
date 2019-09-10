@@ -1,8 +1,7 @@
 # Latin Diachronic Database
-[![DOI](https://zenodo.org/badge/170006633.svg)](https://zenodo.org/badge/latestdoi/170006633)
 
 #NOTE:
-The DOI above and instruction below refer to the old Go version, which still lives in the ```go``` branch of the repo. I will update this ASAP.
+The instruction below refer to the old Go version, which still lives in the ```go``` branch of the repo. I will update this ASAP.
 
 The **Latin Diachronic Database** is a project of Digital Humanities invented by **Tommaso Spinelli** (Ph.D. candidate, Classics, St. Andrews University) and co-developed with **Giacomo Fenzi** (Computer Science and Mathematics student, St. Andrews University). This project aims to create an innovative toolkit for the quantitative computational analysis of the Latin language as well as to support and further enhance the digital study of ancient intertextuality.
 
