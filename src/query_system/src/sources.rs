@@ -62,36 +62,41 @@ fn parse_source(db: &impl SourcesDatabase, source_id: SourceId) -> Arc<HashSet<F
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::mock::MockDatabase;
+    use crate::mock::{make_mock, MockDatabase};
     use proptest::prelude::*;
     use std::iter;
 
-    fn create_mock_database() -> MockDatabase {
-        MockDatabase::new()
-    }
-
-    fn generate_source_repeated_n_lines(s: &str, n: usize) -> Arc<String> {
-        // TODO, might want to make the string dyn generated
-        Arc::new(iter::repeat(s).take(n).collect::<Vec<&str>>().join("\n"))
+    fn generate_source_repeated_n_lines<T: ToString>(
+        gen: impl Fn(usize) -> T,
+        n: usize,
+    ) -> Arc<String> {
+        Arc::new(
+            iter::repeat(())
+                .enumerate()
+                .map(|(i, ())| gen(i).to_string())
+                .take(n)
+                .collect::<Vec<_>>()
+                .join("\n"),
+        )
     }
 
     #[test]
     #[should_panic]
     fn test_panic_non_set_source_text() {
-        let db = create_mock_database();
+        let db = make_mock();
         db.source_text(SourceId::from_integer(0));
     }
 
     #[test]
     #[should_panic]
     fn test_panic_non_set_author_sources() {
-        let db = create_mock_database();
+        let db = make_mock();
         db.associated_sources(AuthorId::from_integer(0));
     }
 
     #[test]
     fn test_empty_source_parsing() {
-        let mut db = create_mock_database();
+        let mut db = make_mock();
         let source = SourceId::from_integer(0);
         db.set_source_text(source, Arc::new(String::new()));
         let res = db.parse_source(source);
@@ -101,9 +106,9 @@ mod tests {
 
     #[test]
     fn test_source_parsing() {
-        let mut db = create_mock_database();
+        let mut db = make_mock();
         let source = SourceId::from_integer(0);
-        db.set_source_text(source, generate_source_repeated_n_lines("puella", 100));
+        db.set_source_text(source, generate_source_repeated_n_lines(|_| "puella", 100));
         let parse_res = db.parse_source(source);
 
         assert_eq!(parse_res.len(), 100);
@@ -118,12 +123,24 @@ mod tests {
         assert!(form_data.iter().all(|fd| fd.form() == form_id));
     }
 
+    #[test]
+    fn test_get_line() {
+        let mut db = make_mock();
+        let source = SourceId::from_integer(0);
+        db.set_source_text(source, generate_source_repeated_n_lines(|i| i, 100));
+        for i in 0..100 {
+            let line = db.get_line(source, i).expect("Line should have been set");
+            // Note, since the line is stored as string, not as a normalized one, this should always succeed.
+            assert_eq!(*line, i.to_string());
+        }
+    }
+
     use insta::assert_debug_snapshot;
     use std::collections::BTreeSet;
 
     #[test]
     fn parse_lorem_ipsum() {
-        let mut db = create_mock_database();
+        let mut db = make_mock();
         let source = SourceId::from_integer(0);
         db.set_source_text(source, Arc::new(String::from(
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.")));
@@ -148,7 +165,7 @@ qui inter eos in hac parte plurimum possit. itaque quo
 cultior in quorundam notitiam ueniat, omnia tibi nota
 perlaturus ad te primum liber iste festinet, apud te"#;
 
-        let mut db = create_mock_database();
+        let mut db = make_mock();
         let source = SourceId::from_integer(0);
         db.set_source_text(source, Arc::new(text.to_string()));
         let parse_res = db.parse_source(source);
@@ -164,7 +181,7 @@ perlaturus ad te primum liber iste festinet, apud te"#;
     proptest! {
         #[test]
         fn doesnt_crash(s in "\\PC*") {
-            let mut db = create_mock_database();
+            let mut db = make_mock();
             let source = SourceId::from_integer(0);
             db.set_source_text(source, Arc::new(s));
             let _parse_res = db.parse_source(source);
