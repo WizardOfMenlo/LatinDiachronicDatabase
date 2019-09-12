@@ -50,8 +50,11 @@ impl StandardLatinConverter {
         const TO_REPLACE: [&str; 10] = ["j", "v", "[", "]", "{", "}", "(", ")", "<", ">"];
         const REPLACEMENT: [&str; 10] = ["i", "u", "", "", "", "", "", "", "", ""];
 
-        for i in 0..TO_REPLACE.len() {
-            res = res.replace(TO_REPLACE[i], REPLACEMENT[i]);
+        // Make sure we never have mismatches
+        assert_eq!(TO_REPLACE.len(), REPLACEMENT.len());
+
+        for (to_replace, replacement) in TO_REPLACE.iter().zip(&REPLACEMENT) {
+            res = res.replace(to_replace, replacement);
         }
 
         NormalizedLatinString::instantiate(res)
