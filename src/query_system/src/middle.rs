@@ -80,18 +80,16 @@ fn combine<'a, T: Hash + Eq + Clone + 'a>(
 }
 
 // Lemmatizes a form, in an interface that works well with above
-fn lemmatize_form(db: &impl IntermediateDatabase, form_id: FormId) -> Arc<HashSet<LemmaId>> {
+fn lemmatize_form(db: &impl IntermediateDatabase, form_id: FormId) -> HashSet<LemmaId> {
     let form = db.lookup_intern_form(form_id).0;
     let lemm = db.lemmatizer();
 
-    Arc::new(
-        lemm.get_possible_lemmas(&form)
-            .cloned()
-            .unwrap_or_else(HashSet::new)
-            .into_iter()
-            .map(|l| db.intern_lemma(crate::types::Lemma(l)))
-            .collect(),
-    )
+    lemm.get_possible_lemmas(&form)
+        .cloned()
+        .unwrap_or_else(HashSet::new)
+        .into_iter()
+        .map(|l| db.intern_lemma(crate::types::Lemma(l)))
+        .collect()
 }
 
 fn get_forms_lemma(db: &impl IntermediateDatabase, lemma_id: LemmaId) -> HashSet<FormId> {
@@ -169,7 +167,8 @@ fn lemmas_in_source(db: &impl IntermediateDatabase, source: SourceId) -> Arc<Has
     combine(
         db.forms_in_source(source)
             .iter()
-            .map(|&f| lemmatize_form(db, f)),
+            .map(|&f| lemmatize_form(db, f))
+            .map(Arc::new),
     )
 }
 
