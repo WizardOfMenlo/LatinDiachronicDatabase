@@ -94,6 +94,18 @@ fn lemmatize_form(db: &impl IntermediateDatabase, form_id: FormId) -> Arc<HashSe
     )
 }
 
+fn get_forms_lemma(db: &impl IntermediateDatabase, lemma_id: LemmaId) -> HashSet<FormId> {
+    let lemma = db.lookup_intern_lemma(lemma_id).0;
+    let lemm = db.lemmatizer();
+
+    lemm.get_possible_forms(&lemma)
+        .cloned()
+        .unwrap_or_else(HashSet::new)
+        .into_iter()
+        .map(|l| db.intern_form(crate::types::Form(l)))
+        .collect()
+}
+
 fn parse_subset(db: &impl IntermediateDatabase, subset: LitSubset) -> Arc<HashSet<FormDataId>> {
     combine(subset.sources().iter().map(|s| db.parse_source(*s)))
 }
@@ -194,13 +206,15 @@ fn lemma_occurrences_subset(
         id,
         subset.sources().len()
     );
-    // TODO, making the lemmatizer bidirectional could save some time here?
+
+    let forms = get_forms_lemma(db, id);
+
     Arc::new(
         db.parse_subset(subset)
             .iter()
             .filter(|&fd| {
                 let form = db.lookup_intern_form_data(*fd).form();
-                lemmatize_form(db, form).contains(&id)
+                forms.contains(&form)
             })
             .cloned()
             .collect(),
