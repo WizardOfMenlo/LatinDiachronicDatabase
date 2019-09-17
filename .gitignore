@@ -16,3 +16,8 @@ Cargo.lock
 alpha.txt
 freq.txt
 short.txt
+
+#Performance stuff
+perf.data
+perf.data.old
+flamegraph.svg

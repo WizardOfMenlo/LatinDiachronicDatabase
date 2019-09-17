@@ -1,0 +1,15 @@
+[package]
+name = "single_query_bin"
+version = "0.1.0"
+authors = ["WizardOfMenlo <giacomofenzi@outlook.com>"]
+edition = "2018"
+
+[dependencies]
+latin_utilities = { version = "0.1", path = "../latin_utilities" }
+query_system = { version = "0.1", path = "../query_system" }
+authors_chrono = { version = "0.1", path = "../authors_chrono" }
+query_driver = { version = "0.1", path = "../query_driver"}
+runner = { version = "0.1", path = "../runner"}
+log = "0.4.8"
+env_logger = "0.6.2"
+color-backtrace = "0.2.3"

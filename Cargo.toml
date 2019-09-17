@@ -9,4 +9,8 @@ members = [
     "src/authors_chrono",
     "src/writers",
     "src/exporter",
+    "src/single_query_bin",
 ]
+
+[profile.release]
+debug = true
