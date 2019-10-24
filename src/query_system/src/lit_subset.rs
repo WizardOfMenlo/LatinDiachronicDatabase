@@ -49,4 +49,10 @@ impl LitSubset {
     pub fn sources(&self) -> &BTreeSet<SourceId> {
         &self.sources
     }
+
+    pub fn difference(self, other: &LitSubset) -> LitSubset {
+        LitSubset {
+            sources: Arc::new(self.sources.difference(&*other.sources).cloned().collect()),
+        }
+    }
 }

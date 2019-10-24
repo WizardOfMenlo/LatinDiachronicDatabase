@@ -68,8 +68,7 @@ fn intersect_sources(
     }
 
     // Compute the rest of the literature
-    let rest_of_literature =
-        LitSubset::from_sources(subset.sources().difference(sources.sources()));
+    let rest_of_literature = subset.difference(&sources);
 
     // Get all the lemmas for each author
     let lemma_lists: Vec<_> = authors
