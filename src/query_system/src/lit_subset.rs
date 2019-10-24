@@ -32,9 +32,9 @@ impl LitSubset {
         }
     }
 
-    pub fn from_timespan<'a>(
+    pub fn from_timespan<'a, 'b>(
         span: &TimeSpan,
-        authors: impl IntoIterator<Item = &'a (Author, AuthorId)>,
+        authors: impl IntoIterator<Item = (&'a Author, &'b AuthorId)>,
         db: &salsa::Snapshot<impl MainDatabase>,
     ) -> Self {
         LitSubset::from_authors(

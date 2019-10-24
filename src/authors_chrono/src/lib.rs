@@ -19,6 +19,11 @@ impl TimeSpan {
         Self { start, end }
     }
 
+    /// Time span from century
+    pub fn new_cent(start: i32, end: i32) -> Self {
+        Self::new(Utc.ymd(100 * start, 1, 1), Utc.ymd(100 * end, 1, 1))
+    }
+
     /// Does `self` contain `other`? Note that contains is only a partial order, resembling set inclusion
     /// where  `not contains a b` does not necessarily imply `contains b a`
     pub fn contains(&self, other: &TimeSpan) -> bool {
