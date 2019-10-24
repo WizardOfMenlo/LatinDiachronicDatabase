@@ -62,7 +62,7 @@ fn parse_source(db: &impl SourcesDatabase, source_id: SourceId) -> Arc<HashSet<F
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::mock::{make_mock, MockDatabase};
+    use crate::mock::make_mock;
     use proptest::prelude::*;
     use std::iter;
 

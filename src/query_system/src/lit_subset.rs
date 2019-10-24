@@ -11,9 +11,9 @@ pub struct LitSubset {
 }
 
 impl LitSubset {
-    pub fn from_sources(sources: &[SourceId]) -> Self {
+    pub fn from_sources<'a>(sources: impl IntoIterator<Item = &'a SourceId>) -> Self {
         LitSubset {
-            sources: Arc::new(sources.iter().cloned().collect()),
+            sources: Arc::new(sources.into_iter().cloned().collect()),
         }
     }
 

@@ -9,4 +9,5 @@ members = [
     "src/authors_chrono",
     "src/writers",
     "src/exporter",
+    "src/intersection"
 ]
