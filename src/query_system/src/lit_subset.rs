@@ -11,9 +11,9 @@ pub struct LitSubset {
 }
 
 impl LitSubset {
-    pub fn from_sources(sources: &[SourceId]) -> Self {
+    pub fn from_sources<'a>(sources: impl IntoIterator<Item = &'a SourceId>) -> Self {
         LitSubset {
-            sources: Arc::new(sources.iter().cloned().collect()),
+            sources: Arc::new(sources.into_iter().cloned().collect()),
         }
     }
 
@@ -32,9 +32,9 @@ impl LitSubset {
         }
     }
 
-    pub fn from_timespan<'a>(
+    pub fn from_timespan<'a, 'b>(
         span: &TimeSpan,
-        authors: impl IntoIterator<Item = &'a (Author, AuthorId)>,
+        authors: impl IntoIterator<Item = (&'a Author, &'b AuthorId)>,
         db: &salsa::Snapshot<impl MainDatabase>,
     ) -> Self {
         LitSubset::from_authors(
@@ -48,5 +48,11 @@ impl LitSubset {
 
     pub fn sources(&self) -> &BTreeSet<SourceId> {
         &self.sources
+    }
+
+    pub fn difference(self, other: &LitSubset) -> LitSubset {
+        LitSubset {
+            sources: Arc::new(self.sources.difference(&*other.sources).cloned().collect()),
+        }
     }
 }
