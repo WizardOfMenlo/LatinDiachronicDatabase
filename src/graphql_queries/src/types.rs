@@ -4,6 +4,7 @@ use query_system::ids::AuthorId;
 use query_system::ids::FormDataId;
 use query_system::ids::FormId;
 use query_system::ids::LemmaId;
+use query_system::ids::SourceId;
 use query_system::lit_subset::LitSubset;
 use query_system::traits::*;
 use query_system::types;
@@ -51,11 +52,7 @@ impl Author {
     fn sources(&self, context: &Context) -> Vec<Source> {
         let db = context.get();
         let sources = db.associated_sources(self.id);
-        db.sources()
-            .iter()
-            .filter(|(_, v)| sources.contains(v))
-            .map(|(k, _)| Source::new(k.as_path()))
-            .collect()
+        db.sources().iter().map(|(_, v)| Source::new(*v)).collect()
     }
 
     fn time_span(&self, context: &Context) -> Option<TimeSpan> {
@@ -66,16 +63,35 @@ impl Author {
     }
 }
 
-#[derive(juniper::GraphQLObject)]
 pub struct Source {
-    name: String,
+    source_id: SourceId,
 }
 
 impl Source {
-    fn new(p: &std::path::Path) -> Self {
-        Source {
-            name: p.file_name().unwrap().to_string_lossy().to_string(),
-        }
+    fn new(p: SourceId) -> Self {
+        Source { source_id: p }
+    }
+}
+
+#[juniper::object(Context = Context)]
+impl Source {
+    fn name(&self, context: &Context) -> String {
+        let db = context.get();
+
+        let p = db
+            .sources()
+            .get_by_right(&self.source_id)
+            .expect("Invalid source file");
+
+        p.file_name().unwrap().to_string_lossy().to_string()
+    }
+
+    fn author(&self, context: &Context) -> Author {
+        let db = context.get();
+
+        let author_id = db.associated_author(self.source_id);
+
+        Author::new(author_id)
     }
 }
 
@@ -94,13 +110,7 @@ impl Occurrence {
     fn source(&self, context: &Context) -> Source {
         let db = context.get();
         let fd = db.lookup_intern_form_data(self.id);
-
-        // TODO, this code is duplicated, extract and refactor
-        db.sources()
-            .iter()
-            .find(|(_, &v)| v == fd.source())
-            .map(|(k, _)| Source::new(k))
-            .unwrap()
+        Source::new(fd.source())
     }
 }
 
