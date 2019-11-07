@@ -4,6 +4,7 @@
 //! The high level concept is to normalize unicode, remove all non alphabetical
 //! characters, and to then replace j, v to i, u
 
+pub mod ipa;
 mod normalized_latin_string;
 pub use self::normalized_latin_string::NormalizedLatinString;
 
