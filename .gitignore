@@ -16,3 +16,4 @@ Cargo.lock
 alpha.txt
 freq.txt
 short.txt
+*.csv
