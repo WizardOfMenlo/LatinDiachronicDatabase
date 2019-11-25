@@ -24,7 +24,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         lit.clone(),
     );
 
-    let author_count = author_count(&db, lit);
+    let author_count = db.authors_count(lit);
     let author_names : BTreeMap<_, _> = author_count.keys().map(|a| (db.lookup_intern_author(*a).name(), *a)).collect();
 
     let file = &mut File::create("export.csv")?;
@@ -126,19 +126,7 @@ struct Dictionary {
     ls: Vec<Entry>,
 }
 
-// TODO: Move to DB
-fn author_count(db: &impl MainDatabase, sub: LitSubset) -> HashMap<AuthorId, usize> {
-    let tree = db.subset_tree(sub);
-    let mut res = HashMap::new();
-    for author in tree
-        .iter()
-        .flat_map(|(_, forms)| forms.values().flatten())
-        .map(|fd_id| db.lookup_intern_form_data(*fd_id).author(db))
-    {
-        *res.entry(author).or_insert(0) += 1;
-    }
-    res
-}
+
 
 impl Dictionary {
     fn new(db: &impl MainDatabase, sub: LitSubset) -> Self {

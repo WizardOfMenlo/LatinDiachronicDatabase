@@ -39,6 +39,8 @@ pub trait MainDatabase:
     fn count_form_occurrences_subset(&self, id: FormId, subset: LitSubset) -> usize;
 
     fn intersect_sources(&self, sources: LitSubset, subset: LitSubset) -> Arc<HashSet<LemmaId>>;
+
+    fn authors_count(&self, sub: LitSubset) -> Arc<HashMap<AuthorId, usize>>;
 }
 
 fn count_lemma_occurrences_subset(db: &impl MainDatabase, id: LemmaId, subset: LitSubset) -> usize {
@@ -97,4 +99,18 @@ fn intersect_sources(
             .cloned()
             .collect(),
     )
+}
+
+fn authors_count(db: &impl MainDatabase, sub: LitSubset) -> Arc<HashMap<AuthorId, usize>> {
+    let tree = db.subset_tree(sub);
+    let mut res = HashMap::new();
+    for author in tree
+        .iter()
+        .flat_map(|(_, forms)| forms.values().flatten())
+        .map(|fd_id| db.lookup_intern_form_data(*fd_id).author(db))
+    {
+        *res.entry(author).or_insert(0) += 1;
+    }
+    
+    Arc::new(res)
 }
