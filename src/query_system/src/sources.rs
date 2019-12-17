@@ -66,10 +66,7 @@ mod tests {
     use proptest::prelude::*;
     use std::iter;
 
-    fn generate_source_repeated_n_lines<T: ToString>(
-        gen: impl Fn(usize) -> T,
-        n: usize,
-    ) -> Arc<String> {
+    fn generate_source_n_lines<T: ToString>(gen: impl Fn(usize) -> T, n: usize) -> Arc<String> {
         Arc::new(
             iter::repeat(())
                 .enumerate()
@@ -108,7 +105,7 @@ mod tests {
     fn test_source_parsing() {
         let mut db = make_mock();
         let source = SourceId::from_integer(0);
-        db.set_source_text(source, generate_source_repeated_n_lines(|_| "puella", 100));
+        db.set_source_text(source, generate_source_n_lines(|_| "puella", 100));
         let parse_res = db.parse_source(source);
 
         assert_eq!(parse_res.len(), 100);
@@ -127,7 +124,7 @@ mod tests {
     fn test_get_line() {
         let mut db = make_mock();
         let source = SourceId::from_integer(0);
-        db.set_source_text(source, generate_source_repeated_n_lines(|i| i, 100));
+        db.set_source_text(source, generate_source_n_lines(|i| i, 100));
         for i in 0..100 {
             let line = db.get_line(source, i).expect("Line should have been set");
             // Note, since the line is stored as string, not as a normalized one, this should always succeed.
@@ -187,5 +184,4 @@ perlaturus ad te primum liber iste festinet, apud te"#;
             let _parse_res = db.parse_source(source);
         }
     }
-
 }
