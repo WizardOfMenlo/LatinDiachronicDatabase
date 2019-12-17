@@ -13,6 +13,7 @@ lazy_static = "1.3.0"
 criterion = "0.2"
 clap = "2.33"
 proptest = "0.9.3"
+color-backtrace = "0.2.3"
 
 [[bench]]
 name = "converter_benchmark"

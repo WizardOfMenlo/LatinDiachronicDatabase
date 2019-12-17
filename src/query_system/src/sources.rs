@@ -66,10 +66,7 @@ mod tests {
     use proptest::prelude::*;
     use std::iter;
 
-    fn generate_source_n_lines<T: ToString>(
-        gen: impl Fn(usize) -> T,
-        n: usize,
-    ) -> Arc<String> {
+    fn generate_source_n_lines<T: ToString>(gen: impl Fn(usize) -> T, n: usize) -> Arc<String> {
         Arc::new(
             iter::repeat(())
                 .enumerate()
@@ -187,5 +184,4 @@ perlaturus ad te primum liber iste festinet, apud te"#;
             let _parse_res = db.parse_source(source);
         }
     }
-
 }

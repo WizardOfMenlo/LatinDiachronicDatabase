@@ -76,5 +76,4 @@ mod tests {
         let s: NormalizedLatinString = "some".into();
         assert_eq!(s, "some");
     }
-
 }
