@@ -58,7 +58,3 @@ fn uniquely_his(
 
     Some(intersection)
 }
-
-fn lemma_id_to_string(db: &impl IntermediateDatabase, lemma: query_system::ids::LemmaId) -> String {
-    db.lookup_intern_lemma(lemma).0.inner().to_string()
-}

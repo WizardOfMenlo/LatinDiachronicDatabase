@@ -11,7 +11,7 @@ query_system = { version = "0.1.0", path = "../query_system"}
 graphql_queries = { version = "0.1.0", path = "../graphql_queries"}
 salsa = "0.13"
 warp = "0.1"
-juniper_warp = "0.4.1"
+juniper_warp = "0.5.2"
 log = "0.4.8"
 env_logger = "0.7.1"
 color-backtrace = "0.3.0"

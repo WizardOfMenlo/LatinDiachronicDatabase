@@ -14,5 +14,6 @@ authors_chrono = { version = "0.1.0", path = "../authors_chrono"}
 chrono = { version = "0.4", features = ["serde"] }
  
 [dependencies.juniper]
-version = "0.13.1"
-features = ["chrono"]
+version = "0.14.2"
+default-features = true
+features = ["serde_json", "chrono"]
