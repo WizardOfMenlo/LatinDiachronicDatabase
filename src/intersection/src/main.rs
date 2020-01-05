@@ -44,11 +44,9 @@ fn uniquely_his(
     id: AuthorId,
     db: &query_driver::MainDatabase,
 ) -> Option<Arc<HashSet<LemmaId>>> {
-    if auth.tspan().is_none() {
-        return None;
-    }
+    auth.tspan()?;
 
-    let tspan = auth.tspan().clone().unwrap();
+    let tspan = auth.tspan().unwrap();
     let (_, end) = tspan.get_century();
     let rest_of_lit =
         LitSubset::from_timespan(&TimeSpan::new_cent(-10, end), db.authors(), &db.snapshot());

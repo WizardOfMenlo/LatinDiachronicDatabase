@@ -6,7 +6,7 @@ use runner::load_configuration;
 
 use std::fs::File;
 
-use std::collections::{HashMap, HashSet, BTreeMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::io::{self, prelude::*};
 
 const AUTHOR_SCALE_FACTOR: usize = 1_000;
@@ -19,29 +19,28 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
     let db = driver_init(load_configuration())?;
     let lit = LitSubset::from_authors(db.authors().right_values(), &db.snapshot());
-    let alpha = Dictionary::new(
-        &db,
-        lit.clone(),
-    );
+    let alpha = Dictionary::new(&db, lit.clone());
 
     let author_count = db.authors_count(lit);
-    let author_names : BTreeMap<_, _> = author_count.keys().map(|a| (db.lookup_intern_author(*a).name(), *a)).collect();
+    let author_names: BTreeMap<_, _> = author_count
+        .keys()
+        .map(|a| (db.lookup_intern_author(*a).name(), *a))
+        .collect();
 
     let file = &mut File::create("export.csv")?;
     write!(file, "lemma,count,certain,ambigous,")?;
-    for (name, _) in &author_names {
+    for name in author_names.keys() {
         write!(file, "{},", name)?;
         write!(file, "{} Freq,", name)?;
     }
-
 
     for cent in -6..=6 {
         write!(file, "{} cent,{} cent rel,", cent, cent)?;
     }
 
-    writeln!(file, "")?;
+    writeln!(file)?;
 
-    alpha.write(&db, file , &author_count, &author_names)?;
+    alpha.write(&db, file, &author_count, &author_names)?;
     Ok(())
 }
 
@@ -60,7 +59,7 @@ impl Entry {
         w: &mut impl Write,
         db: &impl MainDatabase,
         global_authors_count: &HashMap<AuthorId, usize>,
-        authors_names : &BTreeMap<&str, AuthorId>,
+        authors_names: &BTreeMap<&str, AuthorId>,
     ) -> io::Result<()> {
         let resolved_lemma = db.lookup_intern_lemma(self.lemma);
         write!(
@@ -89,22 +88,23 @@ impl Entry {
         }
 
         // For each author, compute the count and the relative freq
-        for (_, id) in authors_names {
-            let count = *authors_count.get(db.lookup_intern_author(*id)).unwrap_or(&0);
+        for id in authors_names.values() {
+            let count = *authors_count
+                .get(db.lookup_intern_author(*id))
+                .unwrap_or(&0);
             let relative_count = *global_authors_count.get(id).unwrap_or(&1);
             let freq = ((count * AUTHOR_SCALE_FACTOR) as f64) / relative_count as f64;
             write!(w, "{},{:.2},", count, freq)?;
         }
-        
         // Split the authors by century
         let buckets = authors_chrono::split_by_century(authors.iter().map(|(_, a)| a).cloned());
-        let mut centuries : BTreeMap<_, _> = (-6..=6_i32).map(|i| (i, (0, 0.0))).collect();
+        let mut centuries: BTreeMap<_, _> = (-6..=6_i32).map(|i| (i, (0, 0.0))).collect();
         for (cent, authors_b) in buckets.into_iter() {
             // How many we had for each century
             let aggregated = authors_b
-                            .iter()
-                            .flat_map(|&a| authors_count.get(&a))
-                            .sum::<usize>();
+                .iter()
+                .flat_map(|&a| authors_count.get(&a))
+                .sum::<usize>();
             let relative_freq = (aggregated * HISTORIC_SCALE_FACTOR) as f64 / self.count as f64;
 
             centuries.insert(cent, (aggregated, relative_freq));
@@ -114,8 +114,7 @@ impl Entry {
             write!(w, "{},{:.2},", aggr, relative)?;
         }
 
-
-        writeln!(w, "")?;
+        writeln!(w)?;
 
         Ok(())
     }
@@ -125,8 +124,6 @@ impl Entry {
 struct Dictionary {
     ls: Vec<Entry>,
 }
-
-
 
 impl Dictionary {
     fn new(db: &impl MainDatabase, sub: LitSubset) -> Self {
@@ -151,13 +148,10 @@ impl Dictionary {
                     .flatten()
                     .map(|f| db.lookup_intern_form_data(*f).author(db))
                     .collect(),
-
             })
         }
 
-        let mut res = Dictionary {
-            ls: ls.clone(),
-        };
+        let mut res = Dictionary { ls: ls.clone() };
 
         res.sort_alpha(db);
 

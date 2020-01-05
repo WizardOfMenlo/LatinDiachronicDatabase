@@ -13,6 +13,6 @@ salsa = "0.13"
 warp = "0.1"
 juniper_warp = "0.4.1"
 log = "0.4.8"
-env_logger = "0.6.2"
-color-backtrace = "0.2.3"
+env_logger = "0.7.1"
+color-backtrace = "0.3.0"
 clap ={features = ["yaml"], version = "2.33.0"}
