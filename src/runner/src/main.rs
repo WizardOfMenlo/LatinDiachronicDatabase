@@ -37,7 +37,10 @@ fn main() {
     let state = warp::any().map(move || Context::new(db.clone().lock().unwrap().snapshot()));
 
     // Set up cors. TODO, this is most likely insecure
-    let cors = warp::cors().allow_any_origin();
+    let cors = warp::cors()
+        .allow_any_origin()
+        .allow_methods(vec!["GET", "POST", "DELETE", "PUT", "OPTIONS"])
+        .allow_headers(vec!["origin", "content-type", "accept"]);
 
     // Create the graphql instance
     let graphql_filter = juniper_warp::make_graphql_filter(schema(), state.boxed());
