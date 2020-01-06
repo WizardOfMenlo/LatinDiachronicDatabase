@@ -31,7 +31,7 @@ fn main() {
     });
 
     // log that we are running!
-    log::info!("Listening on 127.0.0.1");
+    log::info!("Listening on 0.0.0.8088");
 
     // This is snapshot of the db
     let state = warp::any().map(move || Context::new(db.clone().lock().unwrap().snapshot()));
@@ -45,12 +45,15 @@ fn main() {
     // Serve all
     warp::serve(
         warp::get2()
-            .and(warp::path("graphiql"))
-            .and(juniper_warp::graphiql_filter("/graphql"))
-            .or(homepage)
-            .or(warp::path("graphql").and(graphql_filter))
-            .with(log)
-            .with(cors),
+            .and(warp::path("health"))
+            .map(|| warp::http::StatusCode::OK)
+            .or(warp::get2()
+                .and(warp::path("graphiql"))
+                .and(juniper_warp::graphiql_filter("/graphql"))
+                .or(homepage)
+                .or(warp::path("graphql").and(graphql_filter))
+                .with(log)
+                .with(cors)),
     )
-    .run(([0, 0, 0, 0], 8088));
+    .run(([127, 0, 0, 1], 8088));
 }
