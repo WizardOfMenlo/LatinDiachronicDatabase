@@ -48,15 +48,14 @@ fn main() {
     // Serve all
     warp::serve(
         warp::get2()
-            .and(warp::path("health"))
+            .and(warp::path("healthz"))
             .map(|| warp::http::StatusCode::OK)
-            .or(warp::get2()
-                .and(warp::path("graphiql"))
+            .or(warp::path("graphiql")
                 .and(juniper_warp::graphiql_filter("/graphql"))
                 .or(homepage)
-                .or(warp::path("graphql").and(graphql_filter))
+                .or(warp::path("graphql").and(graphql_filter)))
                 .with(log)
-                .with(cors)),
+                .with(cors),
     )
     .run(([0, 0, 0, 0], 8088));
 }
