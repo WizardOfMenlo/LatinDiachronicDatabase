@@ -42,9 +42,9 @@ impl Query {
 
         Ok(db
             .authors()
-            .iter()
+            .right_values()
+            .map(|v| Author::new(*v))
             .take(limit)
-            .map(|(_, v)| Author::new(*v))
             .collect())
     }
 

@@ -103,8 +103,8 @@ fn authors_count(db: &impl MainDatabase, sub: LitSubset) -> Arc<HashMap<AuthorId
     let tree = db.subset_tree(sub);
     let mut res = HashMap::new();
     for author in tree
-        .iter()
-        .flat_map(|(_, forms)| forms.values().flatten())
+        .values()
+        .flat_map(|forms| forms.values().flatten())
         .map(|fd_id| db.lookup_intern_form_data(*fd_id).author(db))
     {
         *res.entry(author).or_insert(0) += 1;
