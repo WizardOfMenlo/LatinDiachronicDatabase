@@ -41,7 +41,7 @@ fn main() {
     });
 
     // log that we are running!
-    log::info!("Listening on 0.0.0.8088");
+    log::info!("Listening on 0.0.0.0.8088");
 
     // This is snapshot of the db
     let state = warp::any().map(move || Context::new(db.clone().lock().unwrap().snapshot()));
@@ -67,5 +67,5 @@ fn main() {
             .with(log)
             .with(cors),
     )
-    .run(([127, 0, 0, 1], 8088));
+    .run(([0, 0, 0, 0], 8088));
 }
