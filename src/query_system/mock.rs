@@ -1,5 +1,6 @@
 //! Mocking facilities for testing
 
+use super::gc::GCollectable;
 use super::ids::AuthorId;
 use super::middle::IntermediateQueries;
 use super::sources::SourcesQueryGroup;
@@ -51,6 +52,10 @@ impl Default for MockDatabase {
     fn default() -> Self {
         Self::new()
     }
+}
+
+impl GCollectable for MockDatabase {
+    fn garbage_sweep(&self) {}
 }
 
 impl salsa::Database for MockDatabase {

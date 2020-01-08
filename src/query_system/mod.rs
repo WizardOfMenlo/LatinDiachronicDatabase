@@ -9,6 +9,7 @@ pub mod middle;
 pub mod sources;
 pub mod traits;
 pub mod types;
+pub mod gc;
 
 pub mod mock;
 
@@ -17,7 +18,6 @@ use lit_subset::LitSubset;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
-
 /// The main trait, which any database should implement
 #[salsa::query_group(MainQueries)]
 pub trait MainDatabase:
@@ -25,6 +25,7 @@ pub trait MainDatabase:
     + types::InternDatabase
     + types::AuthorInternDatabase
     + middle::IntermediateDatabase
+    + gc::GCollectable
     + salsa::Database
     + salsa::ParallelDatabase
 {

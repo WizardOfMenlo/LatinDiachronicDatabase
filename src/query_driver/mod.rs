@@ -4,6 +4,7 @@ use crate::query_system::ids::*;
 use crate::query_system::middle::IntermediateQueries;
 use crate::query_system::sources::SourcesQueryGroup;
 use crate::query_system::traits::AuthorInternDatabase;
+use crate::query_system::gc::GCollectable;
 use crate::query_system::types::InternersGroup;
 use crate::query_system::MainQueries;
 
@@ -14,8 +15,10 @@ use std::error::Error;
 use std::fs::File;
 use std::io;
 use std::path::PathBuf;
+use salsa::{SweepStrategy, Database};
 use walkdir::WalkDir;
 use bimap::BiMap;
+use log::info;
 
 pub mod utils;
 
@@ -69,6 +72,33 @@ impl AuthorInternDatabase for MainDatabase {
     fn lookup_intern_author(&self, id: AuthorId) -> &Author {
         // If invalid id, we panic
         self.authors().get_by_right(&id).unwrap()
+    }
+}
+
+impl GCollectable for MainDatabase {
+    fn garbage_sweep(&self) {
+        use crate::query_system::{
+            sources::GetLineQuery,
+            middle::{
+                ParseSubsetQuery,
+                FormsInSubsetQuery,
+                LemmasInSubsetQuery,
+                FormOccurrencesSubsetQuery,
+                LemmaOccurrencesSubsetQuery,
+            },
+
+        };
+
+        info!("Sweeping garbage");
+
+        let sweep = SweepStrategy::default().discard_values().sweep_all_revisions();
+
+        self.query(GetLineQuery).sweep(sweep);
+        self.query(ParseSubsetQuery).sweep(sweep);
+        self.query(FormsInSubsetQuery).sweep(sweep);
+        self.query(LemmasInSubsetQuery).sweep(sweep);
+        self.query(FormOccurrencesSubsetQuery).sweep(sweep);
+        self.query(LemmaOccurrencesSubsetQuery).sweep(sweep);
     }
 }
 

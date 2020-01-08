@@ -1,8 +1,11 @@
 use salsa::ParallelDatabase;
 use std::sync::Arc;
 use std::sync::Mutex;
+use std::thread;
+use std::time::Duration;
 use warp::{http::Response, Filter};
 
+use latin_db::query_system::gc::GCollectable;
 use latin_db::arguments::load_configuration;
 use latin_db::graphql_queries::context::Context;
 use latin_db::graphql_queries::schema;
@@ -17,6 +20,15 @@ fn main() {
 
     // Initialize the db
     let db = Arc::new(Mutex::new(driver_init(load_configuration()).unwrap()));
+    let garbage_copy = db.clone();
+
+    thread::spawn(move || {
+        loop {
+            thread::sleep(Duration::new(30, 0));
+            let db = garbage_copy.lock().unwrap();
+            db.garbage_sweep();
+        }
+    });
 
     let log = warp::log("warp_server");
 
@@ -57,5 +69,5 @@ fn main() {
                 .with(log)
                 .with(cors),
     )
-    .run(([0, 0, 0, 0], 8088));
+    .run(([127, 0, 0, 1], 8088));
 }
