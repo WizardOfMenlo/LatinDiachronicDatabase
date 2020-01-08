@@ -1,5 +1,5 @@
-//! A crate that encompasses the concept of a lemmatizer  
-//! A lemmatizer, formally speaking, is a way to resolve a form to a determinate lemma  
+//! A crate that encompasses the concept of a lemmatizer
+//! A lemmatizer, formally speaking, is a way to resolve a form to a determinate lemma
 //! For example, a lemmatizer could feasibly resolve the word `rosae` to the lemma `rosa`
 
 pub mod parsers;

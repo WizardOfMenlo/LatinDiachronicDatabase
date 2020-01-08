@@ -1,11 +1,11 @@
+use latin_db::arguments::load_configuration;
 use latin_db::query_driver::driver_init;
 use latin_db::query_system::ids::*;
 use latin_db::query_system::lit_subset::LitSubset;
 use latin_db::query_system::traits::*;
-use latin_db::arguments::load_configuration;
 
-use std::fs::File;
 use std::collections::{BTreeMap, HashMap, HashSet};
+use std::fs::File;
 use std::io::{self, prelude::*};
 
 const AUTHOR_SCALE_FACTOR: usize = 1_000;
@@ -96,7 +96,8 @@ impl Entry {
             write!(w, "{},{:.2},", count, freq)?;
         }
         // Split the authors by century
-        let buckets = latin_db::authors_chrono::split_by_century(authors.iter().map(|(_, a)| a).cloned());
+        let buckets =
+            latin_db::authors_chrono::split_by_century(authors.iter().map(|(_, a)| a).cloned());
         let mut centuries: BTreeMap<_, _> = (-6..=6_i32).map(|i| (i, (0, 0.0))).collect();
         for (cent, authors_b) in buckets.into_iter() {
             // How many we had for each century

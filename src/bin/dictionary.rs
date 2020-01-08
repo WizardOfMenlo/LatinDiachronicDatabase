@@ -1,11 +1,11 @@
+use latin_db::arguments::load_configuration;
 use latin_db::query_driver::driver_init;
 use latin_db::query_system::ids::*;
 use latin_db::query_system::lit_subset::LitSubset;
 use latin_db::query_system::traits::*;
-use latin_db::arguments::load_configuration;
 
-use std::fs::File;
 use std::collections::{HashMap, HashSet};
+use std::fs::File;
 use std::io::{self, prelude::*};
 
 #[derive(Debug, Clone, Copy)]
@@ -188,8 +188,9 @@ impl Entry {
                 if config.include_centuries.0 {
                     let scale = config.include_centuries.2;
 
-                    let buckets =
-                        latin_db::authors_chrono::split_by_century(authors.iter().map(|(_, a)| a).cloned());
+                    let buckets = latin_db::authors_chrono::split_by_century(
+                        authors.iter().map(|(_, a)| a).cloned(),
+                    );
                     for (cent, mut authors_b) in buckets.into_iter() {
                         let aggregated = authors_b
                             .iter()

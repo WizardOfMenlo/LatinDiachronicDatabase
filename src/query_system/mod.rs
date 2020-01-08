@@ -3,13 +3,13 @@
 //! The ids contains all the various id types that are used directly into salsa
 //! Types are all the expanded types those ids refer to
 
+pub mod gc;
 pub mod ids;
 pub mod lit_subset;
 pub mod middle;
 pub mod sources;
 pub mod traits;
 pub mod types;
-pub mod gc;
 
 pub mod mock;
 
@@ -110,6 +110,6 @@ fn authors_count(db: &impl MainDatabase, sub: LitSubset) -> Arc<HashMap<AuthorId
     {
         *res.entry(author).or_insert(0) += 1;
     }
-    
+
     Arc::new(res)
 }

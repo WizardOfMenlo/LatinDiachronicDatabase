@@ -5,11 +5,11 @@ use std::thread;
 use std::time::Duration;
 use warp::{http::Response, Filter};
 
-use latin_db::query_system::gc::GCollectable;
 use latin_db::arguments::load_configuration;
 use latin_db::graphql_queries::context::Context;
 use latin_db::graphql_queries::schema;
 use latin_db::query_driver::driver_init;
+use latin_db::query_system::gc::GCollectable;
 
 fn main() {
     // If I fail, I want to see it :)
@@ -22,12 +22,10 @@ fn main() {
     let db = Arc::new(Mutex::new(driver_init(load_configuration()).unwrap()));
     let garbage_copy = db.clone();
 
-    thread::spawn(move || {
-        loop {
-            thread::sleep(Duration::new(30, 0));
-            let db = garbage_copy.lock().unwrap();
-            db.garbage_sweep();
-        }
+    thread::spawn(move || loop {
+        thread::sleep(Duration::new(30, 0));
+        let db = garbage_copy.lock().unwrap();
+        db.garbage_sweep();
     });
 
     let log = warp::log("warp_server");
@@ -66,8 +64,8 @@ fn main() {
                 .and(juniper_warp::graphiql_filter("/graphql"))
                 .or(homepage)
                 .or(warp::path("graphql").and(graphql_filter)))
-                .with(log)
-                .with(cors),
+            .with(log)
+            .with(cors),
     )
     .run(([127, 0, 0, 1], 8088));
 }

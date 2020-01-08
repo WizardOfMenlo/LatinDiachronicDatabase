@@ -1,4 +1,4 @@
-//! A crate that encompasses various utilities for working with Latin String  
+//! A crate that encompasses various utilities for working with Latin String
 //! In particular, it aims to standardize latin string representation to a
 //! format that resembles closely Italian.
 //! The high level concept is to normalize unicode, remove all non alphabetical

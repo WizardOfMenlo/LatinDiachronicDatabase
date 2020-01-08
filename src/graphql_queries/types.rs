@@ -1,4 +1,4 @@
-use chrono::prelude::Datelike;
+use super::context::Context;
 use crate::query_system::ids::AuthorId;
 use crate::query_system::ids::FormDataId;
 use crate::query_system::ids::FormId;
@@ -7,7 +7,7 @@ use crate::query_system::ids::SourceId;
 use crate::query_system::lit_subset::LitSubset;
 use crate::query_system::traits::*;
 use crate::query_system::types;
-use super::context::Context;
+use chrono::prelude::Datelike;
 
 pub struct Author {
     id: AuthorId,
@@ -52,7 +52,10 @@ impl Author {
     fn sources(&self, context: &Context) -> Vec<Source> {
         let db = context.get();
         let sources = db.associated_sources(self.id);
-        db.sources().right_values().map(|v| Source::new(*v)).collect()
+        db.sources()
+            .right_values()
+            .map(|v| Source::new(*v))
+            .collect()
     }
 
     fn time_span(&self, context: &Context) -> Option<TimeSpan> {

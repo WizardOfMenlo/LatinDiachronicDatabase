@@ -2,7 +2,6 @@ use super::ids::{AuthorId, SourceId};
 use super::traits::*;
 use crate::authors_chrono::{Author, TimeSpan};
 
-
 use std::collections::BTreeSet;
 use std::sync::Arc;
 

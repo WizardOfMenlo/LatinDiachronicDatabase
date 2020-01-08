@@ -4,9 +4,9 @@ use super::ids::{AuthorId, FormDataId, SourceId};
 use super::types::{Form, FormData, InternDatabase};
 use crate::latin_utilities::StandardLatinConverter;
 
+use log::info;
 use std::collections::HashSet;
 use std::sync::Arc;
-use log::info;
 
 /// The trait that is used to parse sources
 /// Usage: set the source text, define the relation between sources and authors

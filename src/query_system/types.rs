@@ -6,7 +6,6 @@ use super::ids::{AuthorId, FormDataId, FormId, LemmaId, SourceId};
 use super::traits::MainDatabase;
 use crate::latin_utilities::NormalizedLatinString;
 
-
 #[salsa::query_group(InternersGroup)]
 pub trait InternDatabase {
     #[salsa::interned]

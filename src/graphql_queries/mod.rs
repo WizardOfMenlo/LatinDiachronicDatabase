@@ -2,14 +2,13 @@ pub mod context;
 mod inputs;
 mod types;
 
+use crate::latin_utilities::NormalizedLatinString;
+use crate::query_system::traits::*;
 use context::Context;
 use inputs::{AuthorsInput, Filter, SpanInput};
 use types::{Author, Form, Lemma};
-use crate::latin_utilities::NormalizedLatinString;
-use crate::query_system::traits::*;
 
 use juniper::{graphql_value, EmptyMutation, FieldError, FieldResult, RootNode};
-
 
 pub type Schema = RootNode<'static, Query, EmptyMutation<Context>>;
 

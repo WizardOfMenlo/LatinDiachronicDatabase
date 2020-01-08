@@ -3,7 +3,6 @@ use std::io;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
-
 use latin_db::authors_chrono::parsers::WeirdParser;
 
 #[derive(StructOpt)]

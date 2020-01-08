@@ -8,10 +8,10 @@ use super::types::InternDatabase;
 
 use crate::latin_lemmatizer::NaiveLemmatizer;
 
+use log::info;
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 use std::sync::Arc;
-use log::info;
 
 /// This trait defines ways to aggregate lemmas and forms based on both authors and sources  
 /// Usage: Load the source database, then run any query

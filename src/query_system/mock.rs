@@ -10,7 +10,6 @@ use super::MainQueries;
 use crate::authors_chrono::Author;
 use crate::latin_lemmatizer::NaiveLemmatizer;
 
-
 use std::collections::HashMap;
 use std::sync::Arc;
 

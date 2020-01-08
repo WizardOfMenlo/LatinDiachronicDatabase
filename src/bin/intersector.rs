@@ -1,10 +1,10 @@
+use latin_db::arguments::load_configuration;
 use latin_db::authors_chrono::TimeSpan;
 use latin_db::query_driver::driver_init;
 use latin_db::query_system::ids::*;
 use latin_db::query_system::lit_subset::LitSubset;
 use latin_db::query_system::traits::*;
 use latin_db::query_system::types::Author;
-use latin_db::arguments::load_configuration;
 
 use std::collections::HashMap;
 use std::collections::HashSet;
