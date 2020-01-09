@@ -117,6 +117,16 @@ impl Occurrence {
         let fd = db.lookup_intern_form_data(self.id);
         Source::new(fd.source())
     }
+
+    fn ambiguos(&self, context: &Context) -> bool {
+        let db = context.get();
+        let fd = db.lookup_intern_form_data(self.id);
+        // TODO: Global empty vec 
+        let form = Form::new(fd.form(), Arc::new(Vec::new()));
+        drop(db);
+        form.is_ambig(context)
+    }
+
 }
 
 pub struct Form {
@@ -134,6 +144,14 @@ impl Form {
 
     pub(crate) fn from_iter(form: FormId, authors: impl IntoIterator<Item = AuthorId>) -> Self {
         Form::new(form, Arc::new(authors.into_iter().collect()))
+    }
+
+    pub(crate) fn is_ambig(&self, context: &Context) -> bool {
+        let db = context.get();
+        let form = db.lookup_intern_form(self.form).0;
+        let lemm = db.lemmatizer();
+
+        lemm.get_possible_lemmas(&form).map(|s| s.len()).unwrap_or(0) > 1
     }
 }
 
@@ -164,6 +182,10 @@ impl Form {
             .unwrap_or_else(Vec::new)
     }
 
+    fn ambiguos(&self, context: &Context) -> bool {
+        self.is_ambig(context)
+    }
+
     fn count(&self, context: &Context) -> i32 {
         let db = context.get();
         db.count_form_occurrences_subset(
@@ -179,6 +201,8 @@ impl Form {
             .map(|s| Occurrence { id: *s })
             .collect()
     }
+
+    
 }
 
 pub struct Lemma {
