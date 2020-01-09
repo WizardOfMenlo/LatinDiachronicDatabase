@@ -7,7 +7,9 @@ use crate::query_system::ids::SourceId;
 use crate::query_system::lit_subset::LitSubset;
 use crate::query_system::traits::*;
 use crate::query_system::types;
+
 use chrono::prelude::Datelike;
+use std::sync::Arc;
 
 pub struct Author {
     id: AuthorId,
@@ -119,15 +121,19 @@ impl Occurrence {
 
 pub struct Form {
     form: FormId,
-    authors: Vec<AuthorId>,
+    authors: Arc<Vec<AuthorId>>,
 }
 
 impl Form {
-    pub(crate) fn new(form: FormId, authors: impl IntoIterator<Item = AuthorId>) -> Self {
+    pub(crate) fn new(form: FormId, authors: Arc<Vec<AuthorId>>) -> Self {
         Form {
             form,
-            authors: authors.into_iter().collect(),
+            authors: authors,
         }
+    }
+
+    pub(crate) fn from_iter(form: FormId, authors: impl IntoIterator<Item = AuthorId>) -> Self {
+        Form::new(form, Arc::new(authors.into_iter().collect()))
     }
 }
 
@@ -140,6 +146,22 @@ impl Form {
             .0
             .inner()
             .to_string()
+    }
+
+    fn lemmas(&self, context: &Context) -> Vec<Lemma> {
+        let db = context.get();
+        let form = db.lookup_intern_form(self.form).0;
+        let lemm = db.lemmatizer();
+
+        lemm.get_possible_lemmas(&form)
+            .cloned()
+            .map(|v| {
+                v.into_iter()
+                    .map(|l| db.intern_lemma(crate::query_system::types::Lemma(l)))
+                    .map(|l| Lemma::new(l, self.authors.clone()))
+                    .collect()
+            })
+            .unwrap_or_else(Vec::new)
     }
 
     fn count(&self, context: &Context) -> i32 {
@@ -161,15 +183,16 @@ impl Form {
 
 pub struct Lemma {
     lemma: LemmaId,
-    authors: Vec<AuthorId>,
+    authors: Arc<Vec<AuthorId>>,
 }
 
 impl Lemma {
-    pub(crate) fn new(lemma: LemmaId, authors: impl IntoIterator<Item = AuthorId>) -> Self {
-        Lemma {
-            lemma,
-            authors: authors.into_iter().collect(),
-        }
+    pub(crate) fn new(lemma: LemmaId, authors: Arc<Vec<AuthorId>>) -> Self {
+        Lemma { lemma, authors }
+    }
+
+    pub(crate) fn from_iter(lemma: LemmaId, authors: impl IntoIterator<Item = AuthorId>) -> Self {
+        Lemma::new(lemma, Arc::new(authors.into_iter().collect()))
     }
 }
 
@@ -182,6 +205,22 @@ impl Lemma {
             .0
             .inner()
             .to_string()
+    }
+
+    fn forms(&self, context: &Context) -> Vec<Form> {
+        let db = context.get();
+        let lemma = db.lookup_intern_lemma(self.lemma).0;
+        let lemm = db.lemmatizer();
+
+        lemm.get_possible_forms(&lemma)
+            .cloned()
+            .map(|v| {
+                v.into_iter()
+                    .map(|f| db.intern_form(crate::query_system::types::Form(f)))
+                    .map(|f| Form::new(f, self.authors.clone()))
+                    .collect()
+            })
+            .unwrap_or_else(Vec::new)
     }
 
     fn count(&self, context: &Context) -> i32 {

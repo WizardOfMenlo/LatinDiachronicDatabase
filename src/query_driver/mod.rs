@@ -78,9 +78,9 @@ impl GCollectable for MainDatabase {
     fn garbage_sweep(&self) {
         use crate::query_system::{
             middle::{
-                FormOccurrencesSubsetQuery, FormsInSubsetQuery, LemmaOccurrencesSubsetQuery,
-                LemmasInSubsetQuery, ParseSubsetQuery, SourceTreeQuery, SubsetTreeQuery, FormsInSourceQuery,
-                LemmasInSourceQuery
+                FormOccurrencesSubsetQuery, FormsInSourceQuery, FormsInSubsetQuery,
+                LemmaOccurrencesSubsetQuery, LemmasInSourceQuery, LemmasInSubsetQuery,
+                ParseSubsetQuery, SourceTreeQuery, SubsetTreeQuery,
             },
             sources::GetLineQuery,
         };

@@ -71,7 +71,7 @@ impl Query {
         let lemma = crate::query_system::types::Lemma(NormalizedLatinString::from(lemma.as_str()));
         let authors = authors.intersect(span).get_authors(context);
 
-        Ok(Lemma::new(context.get().intern_lemma(lemma), authors))
+        Ok(Lemma::from_iter(context.get().intern_lemma(lemma), authors))
     }
 
     #[graphql(
@@ -98,6 +98,6 @@ impl Query {
         let form = crate::query_system::types::Form(NormalizedLatinString::from(form.as_str()));
         let authors = authors.intersect(span).get_authors(context);
 
-        Ok(Form::new(context.get().intern_form(form), authors))
+        Ok(Form::from_iter(context.get().intern_form(form), authors))
     }
 }
