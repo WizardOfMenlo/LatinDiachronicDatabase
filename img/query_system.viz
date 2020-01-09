@@ -1,0 +1,44 @@
+ digraph g{
+  "get_line" -> "source_text";
+  "parse_source" -> "source_text";
+  "parse_source" -> "form_data" [label = "*I"];
+  "parse_source" -> "forms" [label = "*I"];
+  "parse_subset" -> "parse_source" [ label = "*" ];
+  "forms_in_source" -> "parse_source";
+  "forms_in_source" -> "form_data" [label = "*L"];
+  "forms_in_subset" -> "forms_in_source" [label = "*"];
+  "lemmas_in_source" -> "forms_in_source";
+  "lemmas_in_source" -> "forms" [label = "*L"];
+"lemmas_in_source" -> "lemmas" [label = "*I"];
+"lemmas_in_source" -> "lemmatizer" [label = "*"];
+"lemmas_in_subset" -> "lemmas_in_source" [label = "*"];
+"form_occurrences_subset" -> "parse_subset";
+"form_occurrences_subset" -> "form_data" [label = "*L"];
+
+"lemma_occurrences_subset" -> "parse_subset";
+"lemma_occurrences_subset" -> "form_data" [label = "*L"];
+"lemma_occurrences_subset" -> "lemmas" [label = "L"];
+"lemma_occurrences_subset" -> "lemmatizer";
+"lemma_occurrences_subset" -> "forms" [label = "*I"];
+
+"count_lemma_occurrences_subset" -> "lemma_occurrences_subset";
+"count_form_occurrences_subset" -> "form_occurrences_subset";
+
+
+
+subgraph cluster_0 {
+		node [style=filled,color=white];
+		"forms"; "lemmas"; "form_data";
+
+		label = "Interner";
+	}
+
+subgraph cluster_1 {
+		node [style=filled,color=white];
+		"lemmatizer"; "source_text";
+
+		label = "Inputs";
+	}
+
+
+}
