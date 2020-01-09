@@ -79,7 +79,8 @@ impl GCollectable for MainDatabase {
         use crate::query_system::{
             middle::{
                 FormOccurrencesSubsetQuery, FormsInSubsetQuery, LemmaOccurrencesSubsetQuery,
-                LemmasInSubsetQuery, ParseSubsetQuery,
+                LemmasInSubsetQuery, ParseSubsetQuery, SourceTreeQuery, SubsetTreeQuery, FormsInSourceQuery,
+                LemmasInSourceQuery
             },
             sources::GetLineQuery,
         };
@@ -93,7 +94,11 @@ impl GCollectable for MainDatabase {
         self.query(GetLineQuery).sweep(sweep);
         self.query(ParseSubsetQuery).sweep(sweep);
         self.query(FormsInSubsetQuery).sweep(sweep);
+        self.query(FormsInSourceQuery).sweep(sweep);
         self.query(LemmasInSubsetQuery).sweep(sweep);
+        self.query(LemmasInSourceQuery).sweep(sweep);
+        self.query(SourceTreeQuery).sweep(sweep);
+        self.query(SubsetTreeQuery).sweep(sweep);
         self.query(FormOccurrencesSubsetQuery).sweep(sweep);
         self.query(LemmaOccurrencesSubsetQuery).sweep(sweep);
     }

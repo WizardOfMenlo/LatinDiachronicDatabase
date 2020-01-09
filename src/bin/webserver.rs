@@ -22,8 +22,9 @@ fn main() {
     let db = Arc::new(Mutex::new(driver_init(load_configuration()).unwrap()));
     let garbage_copy = db.clone();
 
+    // Spawn a GC daemon
     thread::spawn(move || loop {
-        thread::sleep(Duration::new(30, 0));
+        thread::sleep(Duration::new(100, 0));
         let db = garbage_copy.lock().unwrap();
         db.garbage_sweep();
     });
