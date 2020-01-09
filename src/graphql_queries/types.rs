@@ -54,10 +54,7 @@ impl Author {
     fn sources(&self, context: &Context) -> Vec<Source> {
         let db = context.get();
         let sources = db.associated_sources(self.id);
-        db.sources()
-            .right_values()
-            .map(|v| Source::new(*v))
-            .collect()
+        sources.iter().cloned().map(Source::new).collect()
     }
 
     fn time_span(&self, context: &Context) -> Option<TimeSpan> {
