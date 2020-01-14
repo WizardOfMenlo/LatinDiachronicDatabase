@@ -38,15 +38,15 @@ impl GCollectable for MainDatabase {
 }
 
 pub(super) fn set_lru_sizes(db: &mut MainDatabase) {
-    const FEW: usize = 100;
-    const MANY: usize = 200;
+    const FEW: usize = 32;
+    const MANY: usize = 256;
 
-    db.query_mut(GetLineQuery).set_lru_capacity(FEW);
+    db.query_mut(GetLineQuery).set_lru_capacity(MANY);
     db.query_mut(ParseSubsetQuery).set_lru_capacity(FEW);
     db.query_mut(FormsInSubsetQuery).set_lru_capacity(FEW);
-    db.query_mut(FormsInSourceQuery).set_lru_capacity(MANY);
+    db.query_mut(FormsInSourceQuery).set_lru_capacity(FEW);
     db.query_mut(LemmasInSubsetQuery).set_lru_capacity(FEW);
-    db.query_mut(LemmasInSourceQuery).set_lru_capacity(MANY);
+    db.query_mut(LemmasInSourceQuery).set_lru_capacity(FEW);
     db.query_mut(SourceTreeQuery).set_lru_capacity(FEW);
     db.query_mut(SubsetTreeQuery).set_lru_capacity(FEW);
     db.query_mut(FormOccurrencesSubsetQuery).set_lru_capacity(FEW);
