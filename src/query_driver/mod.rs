@@ -1,6 +1,5 @@
 use crate::authors_chrono::Author;
 use crate::latin_lemmatizer::NaiveLemmatizer;
-use crate::query_system::gc::GCollectable;
 use crate::query_system::ids::*;
 use crate::query_system::middle::IntermediateQueries;
 use crate::query_system::sources::SourcesQueryGroup;
@@ -9,8 +8,6 @@ use crate::query_system::types::InternersGroup;
 use crate::query_system::MainQueries;
 
 use bimap::BiMap;
-use log::info;
-use salsa::{Database, SweepStrategy};
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::error::Error;
@@ -20,6 +17,7 @@ use std::path::PathBuf;
 use walkdir::WalkDir;
 
 pub mod utils;
+pub mod memory;
 
 #[salsa::database(MainQueries, SourcesQueryGroup, InternersGroup, IntermediateQueries)]
 #[derive(Default, Debug)]
@@ -74,35 +72,7 @@ impl AuthorInternDatabase for MainDatabase {
     }
 }
 
-impl GCollectable for MainDatabase {
-    fn garbage_sweep(&self) {
-        use crate::query_system::{
-            middle::{
-                FormOccurrencesSubsetQuery, FormsInSourceQuery, FormsInSubsetQuery,
-                LemmaOccurrencesSubsetQuery, LemmasInSourceQuery, LemmasInSubsetQuery,
-                ParseSubsetQuery, SourceTreeQuery, SubsetTreeQuery,
-            },
-            sources::GetLineQuery,
-        };
 
-        info!("Sweeping garbage");
-
-        let sweep = SweepStrategy::default()
-            .discard_values()
-            .sweep_all_revisions();
-
-        self.query(GetLineQuery).sweep(sweep);
-        self.query(ParseSubsetQuery).sweep(sweep);
-        self.query(FormsInSubsetQuery).sweep(sweep);
-        self.query(FormsInSourceQuery).sweep(sweep);
-        self.query(LemmasInSubsetQuery).sweep(sweep);
-        self.query(LemmasInSourceQuery).sweep(sweep);
-        self.query(SourceTreeQuery).sweep(sweep);
-        self.query(SubsetTreeQuery).sweep(sweep);
-        self.query(FormOccurrencesSubsetQuery).sweep(sweep);
-        self.query(LemmaOccurrencesSubsetQuery).sweep(sweep);
-    }
-}
 
 impl salsa::Database for MainDatabase {
     fn salsa_runtime(&self) -> &salsa::Runtime<Self> {
@@ -180,13 +150,17 @@ impl Configuration {
     }
 }
 
+
+
 // TODO, make async
 pub fn driver_init(config: Configuration) -> Result<MainDatabase, Box<dyn Error>> {
-    let mut db = MainDatabase::new();
     let mut current_author_id = None;
     let mut author_associations = HashMap::new();
     let mut author_counter = 0;
     let mut source_counter = 0;
+
+    let mut db = MainDatabase::new();
+    memory::set_lru_sizes(&mut db);
 
     // First, load lemmatizer
     let lemm = config.make_lemm()?;
