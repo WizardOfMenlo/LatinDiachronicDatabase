@@ -1,3 +1,3 @@
 pub trait GCollectable {
-    fn garbage_sweep(&self);
+    fn garbage_sweep(&mut self);
 }

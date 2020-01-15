@@ -11,14 +11,14 @@ use super::MainDatabase;
 use crate::query_system::gc::GCollectable;
 
 use log::info;
-use salsa::{SweepStrategy, Database};
+use salsa::{SweepStrategy, Database, Durability};
 
 
 impl GCollectable for MainDatabase {
-    fn garbage_sweep(&self) {
-        
-
+    fn garbage_sweep(&mut self) {
         info!("Sweeping garbage");
+
+        self.salsa_runtime_mut().synthetic_write(Durability::MEDIUM);
 
         let sweep = SweepStrategy::default()
             .discard_values()

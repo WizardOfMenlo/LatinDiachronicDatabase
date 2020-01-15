@@ -25,7 +25,7 @@ fn main() {
     // Spawn a GC daemon
     thread::spawn(move || loop {
         thread::sleep(Duration::new(10, 0));
-        let db = garbage_copy.lock().unwrap();
+        let mut db = garbage_copy.lock().unwrap();
         db.garbage_sweep();
     });
 

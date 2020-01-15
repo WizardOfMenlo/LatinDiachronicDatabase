@@ -54,7 +54,7 @@ impl Default for MockDatabase {
 }
 
 impl GCollectable for MockDatabase {
-    fn garbage_sweep(&self) {}
+    fn garbage_sweep(&mut self) {}
 }
 
 impl salsa::Database for MockDatabase {
