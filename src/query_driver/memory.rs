@@ -20,9 +20,7 @@ impl GCollectable for MainDatabase {
 
         self.salsa_runtime_mut().synthetic_write(Durability::MEDIUM);
 
-        let sweep = SweepStrategy::default()
-            .discard_values()
-            .sweep_all_revisions();
+        let sweep = SweepStrategy::discard_outdated();
 
         self.query(GetLineQuery).sweep(sweep);
         self.query(ParseSubsetQuery).sweep(sweep);
@@ -34,6 +32,12 @@ impl GCollectable for MainDatabase {
         self.query(SubsetTreeQuery).sweep(sweep);
         self.query(FormOccurrencesSubsetQuery).sweep(sweep);
         self.query(LemmaOccurrencesSubsetQuery).sweep(sweep);
+    }
+
+    fn deep_sweep(&mut self) {
+        info!("Deep sweep");
+        self.salsa_runtime_mut().synthetic_write(Durability::HIGH);
+        self.sweep_all(SweepStrategy::discard_outdated());
     }
 }
 
