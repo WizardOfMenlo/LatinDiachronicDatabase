@@ -118,12 +118,11 @@ impl Occurrence {
     fn ambiguos(&self, context: &Context) -> bool {
         let db = context.get();
         let fd = db.lookup_intern_form_data(self.id);
-        // TODO: Global empty vec 
+        // TODO: Global empty vec
         let form = Form::new(fd.form(), Arc::new(Vec::new()));
         drop(db);
         form.is_ambig(context)
     }
-
 }
 
 pub struct Form {
@@ -133,10 +132,7 @@ pub struct Form {
 
 impl Form {
     pub(crate) fn new(form: FormId, authors: Arc<Vec<AuthorId>>) -> Self {
-        Form {
-            form,
-            authors: authors,
-        }
+        Form { form, authors }
     }
 
     pub(crate) fn from_iter(form: FormId, authors: impl IntoIterator<Item = AuthorId>) -> Self {
@@ -148,7 +144,10 @@ impl Form {
         let form = db.lookup_intern_form(self.form).0;
         let lemm = db.lemmatizer();
 
-        lemm.get_possible_lemmas(&form).map(|s| s.len()).unwrap_or(0) > 1
+        lemm.get_possible_lemmas(&form)
+            .map(|s| s.len())
+            .unwrap_or(0)
+            > 1
     }
 }
 
@@ -198,8 +197,6 @@ impl Form {
             .map(|s| Occurrence { id: *s })
             .collect()
     }
-
-    
 }
 
 pub struct Lemma {

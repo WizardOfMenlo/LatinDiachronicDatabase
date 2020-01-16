@@ -3,12 +3,12 @@ use crate::latin_lemmatizer::NaiveLemmatizer;
 use crate::query_system::ids::*;
 use crate::query_system::traits::*;
 
+use salsa::Durability;
 use std::collections::HashSet;
 use std::io;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::sync::Arc;
-use salsa::Durability;
 
 /// Load database given a list of authors and some sources
 pub fn load_database<S, T: Read>(

@@ -1,18 +1,17 @@
 use crate::query_system::{
-            middle::{
-                FormOccurrencesSubsetQuery, FormsInSourceQuery, FormsInSubsetQuery,
-                LemmaOccurrencesSubsetQuery, LemmasInSourceQuery, LemmasInSubsetQuery,
-                ParseSubsetQuery, SourceTreeQuery, SubsetTreeQuery,
-            },
-            sources::GetLineQuery,
-        };
+    middle::{
+        FormOccurrencesSubsetQuery, FormsInSourceQuery, FormsInSubsetQuery,
+        LemmaOccurrencesSubsetQuery, LemmasInSourceQuery, LemmasInSubsetQuery, ParseSubsetQuery,
+        SourceTreeQuery, SubsetTreeQuery,
+    },
+    sources::GetLineQuery,
+};
 
 use super::MainDatabase;
 use crate::query_system::gc::GCollectable;
 
 use log::info;
-use salsa::{SweepStrategy, Database, Durability};
-
+use salsa::{Database, Durability, SweepStrategy};
 
 impl GCollectable for MainDatabase {
     fn garbage_sweep(&mut self) {
@@ -33,12 +32,6 @@ impl GCollectable for MainDatabase {
         self.query(FormOccurrencesSubsetQuery).sweep(sweep);
         self.query(LemmaOccurrencesSubsetQuery).sweep(sweep);
     }
-
-    fn deep_sweep(&mut self) {
-        info!("Deep sweep");
-        self.salsa_runtime_mut().synthetic_write(Durability::HIGH);
-        self.sweep_all(SweepStrategy::discard_outdated());
-    }
 }
 
 pub(super) fn set_lru_sizes(db: &mut MainDatabase) {
@@ -53,6 +46,8 @@ pub(super) fn set_lru_sizes(db: &mut MainDatabase) {
     db.query_mut(LemmasInSourceQuery).set_lru_capacity(FEW);
     db.query_mut(SourceTreeQuery).set_lru_capacity(FEW);
     db.query_mut(SubsetTreeQuery).set_lru_capacity(FEW);
-    db.query_mut(FormOccurrencesSubsetQuery).set_lru_capacity(FEW);
-    db.query_mut(LemmaOccurrencesSubsetQuery).set_lru_capacity(FEW);
+    db.query_mut(FormOccurrencesSubsetQuery)
+        .set_lru_capacity(FEW);
+    db.query_mut(LemmaOccurrencesSubsetQuery)
+        .set_lru_capacity(FEW);
 }

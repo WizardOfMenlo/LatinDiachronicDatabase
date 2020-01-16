@@ -23,18 +23,10 @@ fn main() {
     let garbage_copy = db.clone();
 
     // Spawn a GC daemon
-    thread::spawn(move || {
-        let mut count = 0;
-        loop {
-            count = (count + 1) % 6;
-            thread::sleep(Duration::new(10, 0));
-            let mut db = garbage_copy.lock().unwrap();
-            if count % 6 == 0 {
-                db.deep_sweep();
-            } else {
-                db.garbage_sweep();
-            }
-        }
+    thread::spawn(move || loop {
+        thread::sleep(Duration::new(10, 0));
+        let mut db = garbage_copy.lock().unwrap();
+        db.garbage_sweep();
     });
 
     let log = warp::log("warp_server");

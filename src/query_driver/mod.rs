@@ -16,8 +16,8 @@ use std::io;
 use std::path::PathBuf;
 use walkdir::WalkDir;
 
-pub mod utils;
 pub mod memory;
+pub mod utils;
 
 #[salsa::database(MainQueries, SourcesQueryGroup, InternersGroup, IntermediateQueries)]
 #[derive(Default, Debug)]
@@ -71,8 +71,6 @@ impl AuthorInternDatabase for MainDatabase {
         self.authors().get_by_right(&id).unwrap()
     }
 }
-
-
 
 impl salsa::Database for MainDatabase {
     fn salsa_runtime(&self) -> &salsa::Runtime<Self> {
@@ -149,8 +147,6 @@ impl Configuration {
         })
     }
 }
-
-
 
 // TODO, make async
 pub fn driver_init(config: Configuration) -> Result<MainDatabase, Box<dyn Error>> {

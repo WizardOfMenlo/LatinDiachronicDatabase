@@ -22,10 +22,13 @@ pub trait IntermediateDatabase: SourcesDatabase + InternDatabase {
     fn lemmatizer(&self) -> Arc<NaiveLemmatizer>;
 
     /// Parse multiple sources, and combine the result
+    #[salsa::dependencies]
     fn parse_subset(&self, subset: LitSubset) -> Arc<HashSet<FormDataId>>;
 
     // TODO, find a better name
     fn source_tree(&self, id: SourceId) -> Arc<HashMap<LemmaId, HashMap<FormId, Vec<FormDataId>>>>;
+
+    #[salsa::dependencies]
     fn subset_tree(
         &self,
         sub: LitSubset,
@@ -34,9 +37,11 @@ pub trait IntermediateDatabase: SourcesDatabase + InternDatabase {
     // Index all sources for forms ------------------------------------------
 
     /// Get all the forms that appear in a source
+    #[salsa::dependencies]
     fn forms_in_source(&self, source: SourceId) -> Arc<HashSet<FormId>>;
 
     /// Get all the forms that appear in some sources
+    #[salsa::dependencies]
     fn forms_in_subset(&self, subset: LitSubset) -> Arc<HashSet<FormId>>;
 
     // -----------------------------------------------------------------------
@@ -44,14 +49,17 @@ pub trait IntermediateDatabase: SourcesDatabase + InternDatabase {
     // Index all sources for lemmas ------------------------------------------
 
     /// Get all lemmas that appear in a source
+    #[salsa::dependencies]
     fn lemmas_in_source(&self, source: SourceId) -> Arc<HashSet<LemmaId>>;
 
     /// Get all lemmas that appear in some sources
+    #[salsa::dependencies]
     fn lemmas_in_subset(&self, subset: LitSubset) -> Arc<HashSet<LemmaId>>;
 
     // -----------------------------------------------------------------------
 
     /// For a form, get all the occurrences in the subset of the literature
+    #[salsa::dependencies]
     fn form_occurrences_subset(
         &self,
         form_id: FormId,
@@ -59,6 +67,7 @@ pub trait IntermediateDatabase: SourcesDatabase + InternDatabase {
     ) -> Arc<HashSet<FormDataId>>;
 
     /// For a lemma, get all the occurrences in the subset of the literature
+    #[salsa::dependencies]
     fn lemma_occurrences_subset(
         &self,
         lemma_id: LemmaId,
