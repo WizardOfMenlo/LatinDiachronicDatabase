@@ -1,27 +1,30 @@
 use chrono::prelude::*;
-use chrono::Utc;
+use serde::Serialize;
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
 
 pub mod parsers;
 
 /// A struct representing the span between two dates
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize)]
 pub struct TimeSpan {
-    start: Date<Utc>,
-    end: Date<Utc>,
+    start: NaiveDate,
+    end: NaiveDate,
 }
 
 impl TimeSpan {
     /// Instantiate the TimeSpan
-    pub fn new(start: Date<Utc>, end: Date<Utc>) -> Self {
+    pub fn new(start: NaiveDate, end: NaiveDate) -> Self {
         assert!(start <= end);
         Self { start, end }
     }
 
     /// Time span from century
     pub fn new_cent(start: i32, end: i32) -> Self {
-        Self::new(Utc.ymd(100 * start, 1, 1), Utc.ymd(100 * end, 1, 1))
+        Self::new(
+            NaiveDate::from_ymd(100 * start, 1, 1),
+            NaiveDate::from_ymd(100 * end, 1, 1),
+        )
     }
 
     /// Does `self` contain `other`? Note that contains is only a partial order, resembling set inclusion
@@ -32,12 +35,12 @@ impl TimeSpan {
     }
 
     /// Get the start of the interval
-    pub fn start(&self) -> &Date<Utc> {
+    pub fn start(&self) -> &NaiveDate {
         &self.start
     }
 
     /// Get the end of the interval
-    pub fn end(&self) -> &Date<Utc> {
+    pub fn end(&self) -> &NaiveDate {
         &self.end
     }
 
@@ -66,7 +69,7 @@ impl PartialOrd for TimeSpan {
 }
 
 /// Our representation of an Author
-#[derive(Debug, Clone, Eq)]
+#[derive(Debug, Clone, Eq, Serialize)]
 pub struct Author {
     name: String,
     time_span: Option<TimeSpan>,
@@ -167,8 +170,8 @@ impl std::hash::Hash for Author {
 mod tests {
     use super::*;
 
-    fn make_century(century: i32) -> Date<Utc> {
-        Utc.ymd(century * 100, 1, 1)
+    fn make_century(century: i32) -> NaiveDate {
+        NaiveDate::from_ymd(century * 100, 1, 1)
     }
 
     #[test]

@@ -1,6 +1,6 @@
 use super::{Author, TimeSpan};
 
-use chrono::{Date, TimeZone, Utc};
+use chrono::NaiveDate;
 use regex::Regex;
 use std::collections::BTreeSet;
 use std::error::Error;
@@ -33,15 +33,15 @@ impl std::fmt::Display for ParsingError {
 
 impl Error for ParsingError {}
 
-fn parse_segment(s: &str) -> Date<Utc> {
+fn parse_segment(s: &str) -> NaiveDate {
     let re = Regex::new("(\\d)(a|d)").unwrap();
     let captures = re.captures(s).unwrap();
     // Note the first is the whole str
     let century = captures.get(1).unwrap().as_str().parse::<i32>().unwrap();
     let avanti_o_dietro = captures.get(2).unwrap().as_str();
     match avanti_o_dietro {
-        "a" => Utc.ymd(century * -100, 1, 1),
-        "d" => Utc.ymd(century * 100, 1, 1),
+        "a" => NaiveDate::from_ymd(century * -100, 1, 1),
+        "d" => NaiveDate::from_ymd(century * 100, 1, 1),
         _ => unreachable!(),
     }
 }

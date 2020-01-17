@@ -33,7 +33,6 @@ fn main() -> io::Result<()> {
     println!("Authors correctly parsed");
     println!("Num authors {}", authors.len());
 
-    /*
     let json = serde_json::to_string(&authors)?;
 
     if let Some(filename) = args.output {
@@ -41,7 +40,6 @@ fn main() -> io::Result<()> {
     } else {
         println!("{}", json);
     }
-    */
 
     Ok(())
 }

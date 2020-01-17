@@ -1,6 +1,5 @@
 use super::context::Context;
 use crate::query_system::ids::AuthorId;
-use chrono::{TimeZone, Utc};
 use std::collections::BTreeSet;
 use std::collections::HashSet;
 
@@ -95,10 +94,7 @@ impl Filter for SpanInput {
             return db.authors().right_values().cloned().collect();
         }
         let span = self.span.as_ref().cloned().unwrap();
-        let timespan = crate::authors_chrono::TimeSpan::new(
-            Utc.ymd(span.start_year, 1, 1),
-            Utc.ymd(span.end_year, 1, 1),
-        );
+        let timespan = crate::authors_chrono::TimeSpan::new_cent(span.start_year, span.end_year);
         db.authors()
             .iter()
             .filter(|(k, _)| k.in_timespan(&timespan))
