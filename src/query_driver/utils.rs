@@ -3,7 +3,6 @@ use crate::latin_lemmatizer::NaiveLemmatizer;
 use crate::query_system::ids::*;
 use crate::query_system::traits::*;
 
-use salsa::Durability;
 use std::collections::HashSet;
 use std::io;
 use std::io::prelude::*;
@@ -28,10 +27,10 @@ pub fn load_database<S, T: Read>(
         let mut read = BufReader::new(extractor(reader)?);
         let mut s = String::new();
         read.read_to_string(&mut s)?;
-        db.set_source_text_with_durability(source, Arc::new(s), Durability::HIGH);
+        db.set_source_text(source, Arc::new(s));
     }
 
-    db.set_lemmatizer_with_durability(Arc::new(lemma), Durability::MEDIUM);
+    db.set_lemmatizer(Arc::new(lemma));
 
     Ok(())
 }
