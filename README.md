@@ -1,5 +1,7 @@
 # Latin Diachronic Database
 
+![](https://github.com/WizardOfMenlo/LatinDiachronicDatabase/workflows/Rust/badge.svg)
+
 #NOTE:
 The instruction below refer to the old Go version, which still lives in the ```go``` branch of the repo. I will update this ASAP.
 
