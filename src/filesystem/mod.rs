@@ -61,8 +61,17 @@ impl FileSystem for InternerFileSystem {
     type Source = PathBuf;
 
     fn intern_source(&mut self, path: Self::Source) -> SourceId {
-        // TODO: Bound check
-        let new_id = SourceId::from_integer(self.sources.len() as u32);
+        if self.sources.contains_left(&path) {
+            return *self.sources.get_by_left(&path).unwrap();
+        }
+
+        // Guarantee that we never overwrite a value
+        let mut new_id = self.sources.len() as u32;
+        while self.sources.contains_right(&SourceId::from_integer(new_id)) {
+            new_id += 1;
+        }
+
+        let new_id = SourceId::from_integer(new_id);
         self.sources.insert(path, new_id);
         new_id
     }

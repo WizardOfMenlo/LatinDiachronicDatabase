@@ -4,7 +4,7 @@ use super::MainDatabase;
 use crate::query_system::gc::GCollectable;
 
 use log::info;
-use salsa::{Database, SweepStrategy};
+use salsa::Database;
 
 impl GCollectable for MainDatabase {
     fn garbage_sweep(&mut self) {

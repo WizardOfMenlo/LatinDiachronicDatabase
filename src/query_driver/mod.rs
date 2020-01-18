@@ -26,7 +26,6 @@ pub mod memory;
 #[derive(Default, Debug)]
 pub struct MainDatabase {
     runtime: salsa::Runtime<MainDatabase>,
-    // TODO, bidirectionaize this? Use the old interner impl
     authors: BiMap<Author, AuthorId>,
     fs: InternerFileSystem,
 }
@@ -51,14 +50,13 @@ impl MainDatabase {
 
 impl AuthorInternDatabase for MainDatabase {
     fn intern_author(&mut self, auth: Author) -> AuthorId {
-        let authors = self.authors();
-        if authors.contains_left(&auth) {
-            return *authors.get_by_left(&auth).unwrap();
+        if self.authors.contains_left(&auth) {
+            return *self.authors.get_by_left(&auth).unwrap();
         }
 
-        // TODO, we could probably find a better selection
-        let mut new_id = 0;
-        while authors.contains_right(&AuthorId::from_integer(new_id)) {
+        // Guarantee no ovewrite, while having a sensible default
+        let mut new_id = self.authors.len() as u32;
+        while self.authors.contains_right(&AuthorId::from_integer(new_id)) {
             new_id += 1;
         }
 
@@ -163,11 +161,9 @@ impl Configuration {
     }
 }
 
-// TODO, make async
 pub fn driver_init(config: Configuration) -> Result<MainDatabase, Box<dyn Error>> {
     let mut current_author_id = None;
     let mut author_associations = HashMap::new();
-    let mut author_counter = 0;
 
     let mut db = MainDatabase::new();
     memory::set_lru_sizes(&mut db);
@@ -182,13 +178,9 @@ pub fn driver_init(config: Configuration) -> Result<MainDatabase, Box<dyn Error>
         if ft.is_dir() {
             // We create authors from file mapping
             let file_name = entry.file_name().to_string_lossy().into_owned();
-            let new_id = AuthorId::from_integer(author_counter);
 
+            let new_id = db.intern_author(Author::new(file_name));
             current_author_id = Some(new_id);
-
-            db.authors.insert(Author::new(file_name), new_id);
-
-            author_counter += 1;
         }
         // Branch, load into db (skip if no author appeared first)
         else if ft.is_file() && current_author_id.is_some() {
