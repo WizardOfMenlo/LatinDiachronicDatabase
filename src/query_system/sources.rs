@@ -34,6 +34,7 @@ pub trait SourcesDatabase: InternDatabase + FileSystem + salsa::Database {
 }
 
 fn source_text(db: &impl SourcesDatabase, source_id: SourceId) -> Arc<String> {
+    info!("Loading source {:?}", source_id);
     db.salsa_runtime()
         .report_synthetic_read(salsa::Durability::LOW);
     db.watch(source_id);
