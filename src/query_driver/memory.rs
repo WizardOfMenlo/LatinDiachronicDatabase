@@ -10,9 +10,11 @@ impl GCollectable for MainDatabase {
     fn garbage_sweep(&mut self) {
         info!("Sweeping garbage");
 
+        /* TODO: Report salsa bug salsa-0.14.1\src\derived\slot.rs:510
         let sweep = SweepStrategy::default().discard_values();
 
         self.query(GetLineQuery).sweep(sweep);
+        */
     }
 }
 
