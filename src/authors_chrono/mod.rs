@@ -1,4 +1,5 @@
 use chrono::prelude::*;
+use derivative::Derivative;
 use serde::Serialize;
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
@@ -69,9 +70,12 @@ impl PartialOrd for TimeSpan {
 }
 
 /// Our representation of an Author
-#[derive(Debug, Clone, Eq, Serialize)]
+#[derive(Derivative, Serialize)]
+#[derivative(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct Author {
     name: String,
+    #[derivative(PartialEq = "ignore")]
+    #[derivative(Hash = "ignore")]
     time_span: Option<TimeSpan>,
 }
 
@@ -140,13 +144,7 @@ pub fn split_by_century<'a>(
     res
 }
 
-// All these impls ensure comparision are only ever done by name
-
-impl PartialEq for Author {
-    fn eq(&self, other: &Author) -> bool {
-        self.name().eq(other.name())
-    }
-}
+// Ensure comparisons are only ever done by name
 
 impl PartialOrd for Author {
     fn partial_cmp(&self, other: &Author) -> Option<Ordering> {
@@ -157,12 +155,6 @@ impl PartialOrd for Author {
 impl Ord for Author {
     fn cmp(&self, other: &Author) -> Ordering {
         self.name().cmp(other.name())
-    }
-}
-
-impl std::hash::Hash for Author {
-    fn hash<H: std::hash::Hasher>(&self, hasher: &mut H) {
-        self.name().hash(hasher);
     }
 }
 
