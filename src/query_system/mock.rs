@@ -8,6 +8,7 @@ use super::traits::{AuthorInternDatabase, IntermediateDatabase};
 use super::types::InternersGroup;
 use super::MainQueries;
 use crate::authors_chrono::Author;
+use crate::filesystem::{GetFileSystem, MockFileSystem};
 use crate::latin_lemmatizer::NaiveLemmatizer;
 
 use std::collections::HashMap;
@@ -18,6 +19,7 @@ use std::sync::Arc;
 pub struct MockDatabase {
     runtime: salsa::Runtime<MockDatabase>,
     mock: Author,
+    fs: MockFileSystem,
 }
 
 /// A mock database to be used for preliminary testing
@@ -33,6 +35,7 @@ impl MockDatabase {
         MockDatabase {
             runtime: salsa::Runtime::default(),
             mock: Author::new("Mock"),
+            fs: MockFileSystem::default(),
         }
     }
 }
@@ -50,6 +53,18 @@ impl AuthorInternDatabase for MockDatabase {
 impl Default for MockDatabase {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl GetFileSystem for MockDatabase {
+    type Fs = MockFileSystem;
+
+    fn filesystem(&self) -> &Self::Fs {
+        &self.fs
+    }
+
+    fn filesystem_mut(&mut self) -> &mut Self::Fs {
+        &mut self.fs
     }
 }
 
@@ -72,6 +87,7 @@ impl salsa::ParallelDatabase for MockDatabase {
         salsa::Snapshot::new(MockDatabase {
             runtime: self.runtime.snapshot(self),
             mock: self.mock.clone(),
+            fs: self.fs.clone(),
         })
     }
 }

@@ -1,7 +1,10 @@
 use crate::authors_chrono::Author;
+use crate::filesystem::{FileSystem, GetFileSystem, InternerFileSystem};
 use crate::latin_lemmatizer::NaiveLemmatizer;
 use crate::query_system::ids::*;
+use crate::query_system::middle::IntermediateDatabase;
 use crate::query_system::middle::IntermediateQueries;
+use crate::query_system::sources::SourcesDatabase;
 use crate::query_system::sources::SourcesQueryGroup;
 use crate::query_system::traits::AuthorInternDatabase;
 use crate::query_system::types::InternersGroup;
@@ -14,26 +17,26 @@ use std::error::Error;
 use std::fs::File;
 use std::io;
 use std::path::PathBuf;
+use std::sync::Arc;
 use walkdir::WalkDir;
 
 pub mod memory;
-pub mod utils;
 
 #[salsa::database(MainQueries, SourcesQueryGroup, InternersGroup, IntermediateQueries)]
 #[derive(Default, Debug)]
 pub struct MainDatabase {
     runtime: salsa::Runtime<MainDatabase>,
     // TODO, bidirectionaize this? Use the old interner impl
-    sources: BiMap<PathBuf, SourceId>,
     authors: BiMap<Author, AuthorId>,
+    fs: InternerFileSystem,
 }
 
 impl MainDatabase {
     fn new() -> Self {
         Self {
             runtime: Default::default(),
-            sources: BiMap::new(),
             authors: BiMap::new(),
+            fs: InternerFileSystem::new(),
         }
     }
 
@@ -42,7 +45,7 @@ impl MainDatabase {
     }
 
     pub fn sources(&self) -> &BiMap<PathBuf, SourceId> {
-        &self.sources
+        &self.fs.sources()
     }
 }
 
@@ -72,6 +75,18 @@ impl AuthorInternDatabase for MainDatabase {
     }
 }
 
+impl GetFileSystem for MainDatabase {
+    type Fs = InternerFileSystem;
+
+    fn filesystem(&self) -> &Self::Fs {
+        &self.fs
+    }
+
+    fn filesystem_mut(&mut self) -> &mut Self::Fs {
+        &mut self.fs
+    }
+}
+
 impl salsa::Database for MainDatabase {
     fn salsa_runtime(&self) -> &salsa::Runtime<Self> {
         &self.runtime
@@ -86,8 +101,8 @@ impl salsa::ParallelDatabase for MainDatabase {
     fn snapshot(&self) -> salsa::Snapshot<Self> {
         salsa::Snapshot::new(MainDatabase {
             runtime: self.runtime.snapshot(self),
-            sources: self.sources.clone(),
             authors: self.authors.clone(),
+            fs: self.fs.clone(),
         })
     }
 }
@@ -153,7 +168,6 @@ pub fn driver_init(config: Configuration) -> Result<MainDatabase, Box<dyn Error>
     let mut current_author_id = None;
     let mut author_associations = HashMap::new();
     let mut author_counter = 0;
-    let mut source_counter = 0;
 
     let mut db = MainDatabase::new();
     memory::set_lru_sizes(&mut db);
@@ -179,16 +193,13 @@ pub fn driver_init(config: Configuration) -> Result<MainDatabase, Box<dyn Error>
         // Branch, load into db (skip if no author appeared first)
         else if ft.is_file() && current_author_id.is_some() {
             let path = entry.path();
-            let new_id = SourceId::from_integer(source_counter);
 
-            db.sources.insert(path.to_path_buf(), new_id);
+            let new_id = db.intern_source(path.to_path_buf());
             // Add the source to the author
             author_associations
                 .entry(current_author_id.unwrap())
                 .or_insert_with(HashSet::new)
                 .insert(new_id);
-
-            source_counter += 1;
         }
     }
 
@@ -219,15 +230,13 @@ pub fn driver_init(config: Configuration) -> Result<MainDatabase, Box<dyn Error>
             .collect();
     }
 
-    let aux_sources = db.sources.clone();
+    // Load the authors assoc
+    author_associations.into_iter().for_each(|(k, v)| {
+        db.set_associated_sources(k, Arc::new(v.clone()));
+        v.iter().for_each(|&s| db.set_associated_author(s, k))
+    });
 
-    utils::load_database(
-        &mut db,
-        author_associations,
-        aux_sources.into_iter().map(|(k, v)| (v, k)),
-        File::open,
-        lemm,
-    )?;
+    db.set_lemmatizer(Arc::new(lemm));
 
     Ok(db)
 }

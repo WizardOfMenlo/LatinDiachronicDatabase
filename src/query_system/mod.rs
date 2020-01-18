@@ -7,11 +7,10 @@ pub mod gc;
 pub mod ids;
 pub mod lit_subset;
 pub mod middle;
+pub mod mock;
 pub mod sources;
 pub mod traits;
 pub mod types;
-
-pub mod mock;
 
 use ids::*;
 use lit_subset::LitSubset;

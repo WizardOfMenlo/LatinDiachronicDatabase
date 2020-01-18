@@ -2,6 +2,7 @@
 
 use super::ids::{AuthorId, FormDataId, SourceId};
 use super::types::{Form, FormData, InternDatabase};
+use crate::filesystem::FileSystem;
 use crate::latin_utilities::StandardLatinConverter;
 
 use log::info;
@@ -11,9 +12,8 @@ use std::sync::Arc;
 /// The trait that is used to parse sources
 /// Usage: set the source text, define the relation between sources and authors
 #[salsa::query_group(SourcesQueryGroup)]
-pub trait SourcesDatabase: InternDatabase {
+pub trait SourcesDatabase: InternDatabase + FileSystem + salsa::Database {
     /// Get the source text for a specified source
-    #[salsa::input]
     fn source_text(&self, source_id: SourceId) -> Arc<String>;
 
     /// Get the sources for an author
@@ -31,6 +31,13 @@ pub trait SourcesDatabase: InternDatabase {
     // TODO, benchmark and see if hashset actually worth it
     /// Parse a source, returning the FormData that it generates
     fn parse_source(&self, source_id: SourceId) -> Arc<HashSet<FormDataId>>;
+}
+
+fn source_text(db: &impl SourcesDatabase, source_id: SourceId) -> Arc<String> {
+    db.salsa_runtime()
+        .report_synthetic_read(salsa::Durability::LOW);
+    db.watch(source_id);
+    Arc::new(db.load(source_id))
 }
 
 // Note, this function is O(line), so it should be used scarcely
@@ -63,19 +70,18 @@ fn parse_source(db: &impl SourcesDatabase, source_id: SourceId) -> Arc<HashSet<F
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::filesystem::FileSystem;
     use crate::query_system::mock::make_mock;
     use proptest::prelude::*;
     use std::iter;
 
-    fn generate_source_n_lines<T: ToString>(gen: impl Fn(usize) -> T, n: usize) -> Arc<String> {
-        Arc::new(
-            iter::repeat(())
-                .enumerate()
-                .map(|(i, ())| gen(i).to_string())
-                .take(n)
-                .collect::<Vec<_>>()
-                .join("\n"),
-        )
+    fn generate_source_n_lines<T: ToString>(gen: impl Fn(usize) -> T, n: usize) -> String {
+        iter::repeat(())
+            .enumerate()
+            .map(|(i, ())| gen(i).to_string())
+            .take(n)
+            .collect::<Vec<_>>()
+            .join("\n")
     }
 
     #[test]
@@ -95,8 +101,7 @@ mod tests {
     #[test]
     fn test_empty_source_parsing() {
         let mut db = make_mock();
-        let source = SourceId::from_integer(0);
-        db.set_source_text(source, Arc::new(String::new()));
+        let source = db.intern_source(String::new());
         let res = db.parse_source(source);
 
         assert_eq!(res.len(), 0);
@@ -105,8 +110,7 @@ mod tests {
     #[test]
     fn test_source_parsing() {
         let mut db = make_mock();
-        let source = SourceId::from_integer(0);
-        db.set_source_text(source, generate_source_n_lines(|_| "puella", 100));
+        let source = db.intern_source(generate_source_n_lines(|_| "puella", 100));
         let parse_res = db.parse_source(source);
 
         assert_eq!(parse_res.len(), 100);
@@ -124,8 +128,7 @@ mod tests {
     #[test]
     fn test_get_line() {
         let mut db = make_mock();
-        let source = SourceId::from_integer(0);
-        db.set_source_text(source, generate_source_n_lines(|i| i, 100));
+        let source = db.intern_source(generate_source_n_lines(|i| i, 100));
         for i in 0..100 {
             let line = db.get_line(source, i).expect("Line should have been set");
             // Note, since the line is stored as string, not as a normalized one, this should always succeed.
@@ -139,9 +142,8 @@ mod tests {
     #[test]
     fn parse_lorem_ipsum() {
         let mut db = make_mock();
-        let source = SourceId::from_integer(0);
-        db.set_source_text(source, Arc::new(String::from(
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.")));
+        let source = db.intern_source(String::from(
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."));
         let parse_res = db.parse_source(source);
         let form_data: BTreeSet<_> = parse_res
             .iter()
@@ -164,8 +166,7 @@ cultior in quorundam notitiam ueniat, omnia tibi nota
 perlaturus ad te primum liber iste festinet, apud te"#;
 
         let mut db = make_mock();
-        let source = SourceId::from_integer(0);
-        db.set_source_text(source, Arc::new(text.to_string()));
+        let source = db.intern_source(text.to_string());
         let parse_res = db.parse_source(source);
         let form_data: BTreeSet<_> = parse_res
             .iter()
@@ -180,8 +181,7 @@ perlaturus ad te primum liber iste festinet, apud te"#;
         #[test]
         fn doesnt_crash(s in "\\PC*") {
             let mut db = make_mock();
-            let source = SourceId::from_integer(0);
-            db.set_source_text(source, Arc::new(s));
+            let source = db.intern_source(s);
             let _parse_res = db.parse_source(source);
         }
     }
