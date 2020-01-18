@@ -151,7 +151,7 @@ impl Dictionary {
             })
         }
 
-        let mut res = Dictionary { ls: ls.clone() };
+        let mut res = Dictionary { ls };
 
         res.sort_alpha(db);
 
