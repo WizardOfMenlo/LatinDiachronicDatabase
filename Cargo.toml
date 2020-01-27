@@ -27,7 +27,7 @@ juniper = { version = "0.14.2", default-features = true, features = ["serde_json
 
 [dev-dependencies]
 proptest = "0.9.5"
-insta = "0.12.0"
+insta = "0.13.1"
 criterion = "0.3.0"
 color-backtrace = "0.3"
 structopt = "0.3.7"
