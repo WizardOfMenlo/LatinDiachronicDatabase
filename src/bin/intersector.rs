@@ -19,20 +19,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut map = HashMap::new();
 
+    // For all author after 1ac
+    // Get the words that are used by only that author
     for (auth, id) in db.authors() {
         if auth.tspan().is_some() && auth.tspan().unwrap().get_century().0 >= -1 {
             map.insert(auth, uniquely_his(auth.clone(), *id, &db));
         }
     }
 
+    // Filter out everything whose resolution failed
     let mut arr: Vec<_> = map
         .into_iter()
         .filter(|(_, s)| s.is_some())
         .map(|(a, s)| (a, s.unwrap()))
         .collect();
 
+    // Sort by how many they have
     arr.sort_by(|(_, f), (_, s)| s.len().cmp(&f.len()));
 
+    // Print the lis
     for (auth, list) in arr {
         println!("{} \t ({})", auth.name(), list.len());
     }
@@ -45,13 +50,17 @@ fn uniquely_his(
     id: AuthorId,
     db: &latin_db::query_driver::MainDatabase,
 ) -> Option<Arc<HashSet<LemmaId>>> {
-    auth.tspan()?;
+    // Get the author span
+    let tspan = auth.tspan()?;
 
-    let tspan = auth.tspan().unwrap();
+    // Get the end
     let (_, end) = tspan.get_century();
+
+    // Compute what the rest of the literature is
     let rest_of_lit =
         LitSubset::from_timespan(&TimeSpan::new_cent(-10, end), db.authors(), &db.snapshot());
 
+    // Get the intersection
     let intersection = db.intersect_sources(
         LitSubset::from_authors(vec![id].iter(), &db.snapshot()),
         rest_of_lit,
