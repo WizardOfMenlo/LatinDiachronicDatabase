@@ -6,7 +6,7 @@ use crate::latin_utilities::NormalizedLatinString;
 use crate::query_system::traits::*;
 use context::Context;
 use inputs::{AuthorsInput, Filter, SpanInput};
-use types::{Author, Form, Lemma};
+use types::{Author, Form, Lemma, WordType};
 
 use juniper::{graphql_value, EmptyMutation, FieldError, FieldResult, RootNode};
 
@@ -45,6 +45,18 @@ impl Query {
             .map(|v| Author::new(*v))
             .take(limit)
             .collect())
+    }
+
+    fn word_type(context: &Context, word: String) -> FieldResult<WordType> {
+        let lemm = context.get().lemmatizer();
+        let word = NormalizedLatinString::from(word.as_str());
+        Ok(if lemm.has_lemma(&word) {
+            WordType::Lemma
+        } else if lemm.has_form(&word) {
+            WordType::Form
+        } else {
+            WordType::NotFound
+        })
     }
 
     #[graphql(

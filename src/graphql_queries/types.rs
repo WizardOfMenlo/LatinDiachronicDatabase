@@ -125,6 +125,13 @@ impl Occurrence {
     }
 }
 
+#[derive(juniper::GraphQLEnum)]
+pub enum WordType {
+    Form,
+    Lemma,
+    NotFound,
+}
+
 pub struct Form {
     form: FormId,
     authors: Arc<Vec<AuthorId>>,
