@@ -16,7 +16,7 @@ pub struct Author {
 }
 
 pub struct TimeSpan {
-    time_span: crate::authors_chrono::TimeSpan,
+    pub(crate) time_span: crate::authors_chrono::TimeSpan,
 }
 
 #[juniper::object]
@@ -43,6 +43,13 @@ impl Author {
             .cloned()
             .expect("No authorid should be created")
     }
+
+    pub(crate) fn tspan(&self, context: &Context) -> Option<TimeSpan> {
+        let auth = self.author(context);
+        auth.tspan()
+            .cloned()
+            .map(|time_span| TimeSpan { time_span })
+    }
 }
 
 #[juniper::object(Context = Context)]
@@ -58,10 +65,7 @@ impl Author {
     }
 
     fn time_span(&self, context: &Context) -> Option<TimeSpan> {
-        let auth = self.author(context);
-        auth.tspan()
-            .cloned()
-            .map(|time_span| TimeSpan { time_span })
+        self.tspan(context)
     }
 }
 

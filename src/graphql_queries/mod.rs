@@ -48,8 +48,8 @@ impl Query {
     }
 
     fn word_type(context: &Context, word: String) -> FieldResult<WordType> {
-        let lemm = context.get().lemmatizer();
         let word = NormalizedLatinString::from(word.as_str());
+        let lemm = context.get().lemmatizer();
         Ok(if lemm.has_lemma(&word) {
             WordType::Lemma
         } else if lemm.has_form(&word) {
@@ -57,6 +57,44 @@ impl Query {
         } else {
             WordType::NotFound
         })
+    }
+
+    fn intersection_hist(context: &Context, authors: AuthorsInput) -> FieldResult<Vec<Lemma>> {
+        use super::authors_chrono::TimeSpan;
+        use super::query_system::lit_subset::LitSubset;
+        let authors = authors.get_authors(context);
+        let max_timespan = authors
+            .iter()
+            .cloned()
+            .map(Author::new)
+            .flat_map(|a| a.tspan(context))
+            .map(|t| t.time_span.get_century().1)
+            .max();
+
+        if max_timespan.is_none() {
+            return Err(FieldError::new(
+                "Intersection Historical Called with no historical author",
+                graphql_value!({ "input_error" : "i"}),
+            ));
+        }
+
+        let max_timespan = max_timespan.unwrap();
+        let db = context.get();
+        let rest_of_lit = LitSubset::from_timespan(
+            &TimeSpan::new_cent(-10, max_timespan),
+            db.authors(),
+            &db.snapshot(),
+        );
+
+        let lemmas = db.intersect_sources(
+            LitSubset::from_authors(authors.iter(), &db.snapshot()),
+            rest_of_lit,
+        );
+
+        Ok(lemmas
+            .iter()
+            .map(|l| Lemma::from_iter(*l, authors.iter().cloned()))
+            .collect())
     }
 
     #[graphql(
