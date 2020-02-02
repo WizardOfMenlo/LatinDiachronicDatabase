@@ -26,6 +26,7 @@ pub trait SourcesDatabase: InternDatabase + FileSystem + salsa::Database {
 
     // Low level
     /// Get a determined line in a source, if possible
+    #[salsa::dependencies]
     fn get_line(&self, source_id: SourceId, line: usize) -> Option<Arc<String>>;
 
     // TODO, benchmark and see if hashset actually worth it
