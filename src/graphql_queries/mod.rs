@@ -59,6 +59,28 @@ impl Query {
         })
     }
 
+    fn intersection(
+        context: &Context,
+        authors: AuthorsInput,
+        rest_of_lit: SpanInput,
+    ) -> FieldResult<Vec<Lemma>> {
+        use super::query_system::lit_subset::LitSubset;
+
+        let authors = authors.get_authors(context);
+        let rest_of_lit = rest_of_lit.get_authors(context);
+        let db = context.get();
+
+        let lemmas = db.intersect_sources(
+            LitSubset::from_authors(authors.iter(), &db.snapshot()),
+            LitSubset::from_authors(rest_of_lit.iter(), &db.snapshot()),
+        );
+
+        Ok(lemmas
+            .iter()
+            .map(|l| Lemma::from_iter(*l, authors.iter().cloned()))
+            .collect())
+    }
+
     fn intersection_hist(context: &Context, authors: AuthorsInput) -> FieldResult<Vec<Lemma>> {
         use super::authors_chrono::TimeSpan;
         use super::query_system::lit_subset::LitSubset;
