@@ -327,17 +327,17 @@ impl Dictionary {
 
     fn sort_alpha(&mut self, db: &impl MainDatabase) {
         self.ls.sort_by(|a, b| {
-            let lemm_a = db.lookup_intern_lemma(a.lemma);
-            let lemm_b = db.lookup_intern_lemma(b.lemma);
+            let lemm_a = id_to_str(db, db.lookup_intern_lemma(a.lemma).0);
+            let lemm_b = id_to_str(db, db.lookup_intern_lemma(b.lemma).0);
 
-            lemm_a.0.cmp(&lemm_b.0)
+            lemm_a.cmp(&lemm_b)
         });
 
         for entry in &mut self.ls {
             entry.forms.sort_by(|(a, _), (b, _)| {
-                let form_a = db.lookup_intern_form(*a);
-                let form_b = db.lookup_intern_form(*b);
-                form_a.0.cmp(&form_b.0)
+                let form_a = id_to_str(db, db.lookup_intern_form(*a).0);
+                let form_b = id_to_str(db, db.lookup_intern_form(*b).0);
+                form_a.cmp(&form_b)
             });
         }
     }
