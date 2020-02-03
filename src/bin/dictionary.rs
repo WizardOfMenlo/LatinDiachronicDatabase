@@ -115,6 +115,10 @@ struct Entry {
     authors: HashSet<AuthorId>,
 }
 
+fn id_to_str(db: &impl MainDatabase, id: WordId) -> String {
+    db.lookup_word(id).inner().to_string()
+}
+
 impl Entry {
     fn write(
         &self,
@@ -128,7 +132,7 @@ impl Entry {
             w,
             "-------{:6}------{} count: {} (C: {}, A: {})",
             self.corresponding_index,
-            resolved_lemma.0.inner().to_uppercase(),
+            id_to_str(db, resolved_lemma.0).to_uppercase(),
             self.count,
             self.count - self.ambig_count,
             self.ambig_count
@@ -140,9 +144,9 @@ impl Entry {
                 writeln!(
                     w,
                     "\t{}: {} {}",
-                    resolved_form.0.inner(),
+                    id_to_str(db, resolved_form.0),
                     count,
-                    if db.lemmatizer().is_ambig(&resolved_form.0) {
+                    if db.lemmatizer().is_ambig(resolved_form.0) {
                         "(*)"
                     } else {
                         ""
@@ -255,7 +259,7 @@ impl Dictionary {
             let count = forms.values().map(|v| v.len()).sum();
             let ambig_count = forms
                 .iter()
-                .filter(|(&k, _)| db.lemmatizer().is_ambig(&db.lookup_intern_form(k).0))
+                .filter(|(&k, _)| db.lemmatizer().is_ambig(db.lookup_intern_form(k).0))
                 .map(|(_, v)| v.len())
                 .sum();
 

@@ -6,7 +6,7 @@ use super::lit_subset::LitSubset;
 use super::sources::SourcesDatabase;
 use super::types::InternDatabase;
 
-use crate::latin_lemmatizer::NaiveLemmatizer;
+use crate::latin_lemmatizer::compressed::CompressedLemmatizer;
 
 use log::info;
 use std::collections::{HashMap, HashSet};
@@ -19,7 +19,7 @@ use std::sync::Arc;
 pub trait IntermediateDatabase: SourcesDatabase + InternDatabase {
     /// The lemmatizer that is used
     #[salsa::input]
-    fn lemmatizer(&self) -> Arc<NaiveLemmatizer>;
+    fn lemmatizer(&self) -> Arc<CompressedLemmatizer>;
 
     /// Parse multiple sources, and combine the result
     #[salsa::dependencies]
@@ -94,7 +94,7 @@ fn lemmatize_form(db: &impl IntermediateDatabase, form_id: FormId) -> HashSet<Le
     let form = db.lookup_intern_form(form_id).0;
     let lemm = db.lemmatizer();
 
-    lemm.get_possible_lemmas(&form)
+    lemm.get_possible_lemmas(form)
         .cloned()
         .unwrap_or_else(HashSet::new)
         .into_iter()
@@ -106,7 +106,7 @@ fn get_forms_lemma(db: &impl IntermediateDatabase, lemma_id: LemmaId) -> HashSet
     let lemma = db.lookup_intern_lemma(lemma_id).0;
     let lemm = db.lemmatizer();
 
-    lemm.get_possible_forms(&lemma)
+    lemm.get_possible_forms(lemma)
         .cloned()
         .unwrap_or_else(HashSet::new)
         .into_iter()

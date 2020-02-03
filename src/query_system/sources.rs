@@ -58,7 +58,8 @@ fn parse_source(db: &impl SourcesDatabase, source_id: SourceId) -> Arc<HashSet<F
     for (i, line) in text.lines().enumerate() {
         for word in line.split(' ') {
             let lw = converter.convert(word);
-            let form = Form(lw);
+            let id = db.intern_word(lw);
+            let form = Form(id);
             let form_id = db.intern_form(form);
             let form_data = FormData::new(source_id, i, form_id);
             let form_data_id = db.intern_form_data(form_data);

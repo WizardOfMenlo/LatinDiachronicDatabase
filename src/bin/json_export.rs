@@ -46,11 +46,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn lemma_id_to_string(db: &impl IntermediateDatabase, lemma: LemmaId) -> String {
-    db.lookup_intern_lemma(lemma).0.inner().to_string()
+    let id = db.lookup_intern_lemma(lemma).0;
+    db.lookup_word(id).inner().to_string()
 }
 
 fn form_id_to_string(db: &impl IntermediateDatabase, form: FormId) -> String {
-    db.lookup_intern_form(form).0.inner().to_string()
+    let id = db.lookup_intern_form(form).0;
+    db.lookup_word(id).inner().to_string()
 }
 
 fn form_data_normalize(db: &latin_db::query_driver::MainDatabase, fd: FormDataId) -> FormData {

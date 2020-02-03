@@ -7,6 +7,7 @@ use crate::query_system::ids::SourceId;
 use crate::query_system::lit_subset::LitSubset;
 use crate::query_system::traits::*;
 use crate::query_system::types;
+use crate::word_db::WordDatabase;
 
 use chrono::prelude::Datelike;
 use std::sync::Arc;
@@ -155,22 +156,20 @@ impl Form {
         let form = db.lookup_intern_form(self.form).0;
         let lemm = db.lemmatizer();
 
-        lemm.get_possible_lemmas(&form)
-            .map(|s| s.len())
-            .unwrap_or(0)
-            > 1
+        lemm.get_possible_lemmas(form).map(|s| s.len()).unwrap_or(0) > 1
     }
 }
 
 #[juniper::object(Context = Context)]
 impl Form {
     fn form(&self, context: &Context) -> String {
-        context
-            .get()
-            .lookup_intern_form(self.form)
-            .0
-            .inner()
-            .to_string()
+        let db = context.get();
+
+        let id = db.lookup_intern_form(self.form).0;
+
+        let word = db.lookup_word(id);
+
+        word.inner().to_string()
     }
 
     fn lemmas(&self, context: &Context) -> Vec<Lemma> {
@@ -178,7 +177,7 @@ impl Form {
         let form = db.lookup_intern_form(self.form).0;
         let lemm = db.lemmatizer();
 
-        lemm.get_possible_lemmas(&form)
+        lemm.get_possible_lemmas(form)
             .cloned()
             .map(|v| {
                 v.into_iter()
@@ -228,12 +227,13 @@ impl Lemma {
 #[juniper::object(Context = Context)]
 impl Lemma {
     fn lemma(&self, context: &Context) -> String {
-        context
-            .get()
-            .lookup_intern_lemma(self.lemma)
-            .0
-            .inner()
-            .to_string()
+        let db = context.get();
+
+        let id = db.lookup_intern_lemma(self.lemma).0;
+
+        let word = db.lookup_word(id);
+
+        word.inner().to_string()
     }
 
     fn forms(&self, context: &Context) -> Vec<Form> {
@@ -241,7 +241,7 @@ impl Lemma {
         let lemma = db.lookup_intern_lemma(self.lemma).0;
         let lemm = db.lemmatizer();
 
-        lemm.get_possible_forms(&lemma)
+        lemm.get_possible_forms(lemma)
             .cloned()
             .map(|v| {
                 v.into_iter()

@@ -4,10 +4,10 @@
 
 use super::ids::{AuthorId, FormDataId, FormId, LemmaId, SourceId};
 use super::traits::MainDatabase;
-use crate::latin_utilities::NormalizedLatinString;
+use crate::word_db::{WordDatabase, WordId};
 
 #[salsa::query_group(InternersGroup)]
-pub trait InternDatabase {
+pub trait InternDatabase: WordDatabase {
     #[salsa::interned]
     fn intern_form_data(&self, fd: FormData) -> FormDataId;
 
@@ -31,10 +31,10 @@ pub struct FormData {
 }
 
 #[derive(shrinkwraprs::Shrinkwrap, Debug, Hash, Eq, PartialEq, Clone, Ord, PartialOrd)]
-pub struct Lemma(pub NormalizedLatinString);
+pub struct Lemma(pub WordId);
 
 #[derive(shrinkwraprs::Shrinkwrap, Debug, Hash, Eq, PartialEq, Clone, Ord, PartialOrd)]
-pub struct Form(pub NormalizedLatinString);
+pub struct Form(pub WordId);
 
 pub use crate::authors_chrono::Author;
 

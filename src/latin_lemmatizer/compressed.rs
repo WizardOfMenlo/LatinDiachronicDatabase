@@ -10,7 +10,7 @@ pub struct CompressedLemmatizer {
 }
 
 impl CompressedLemmatizer {
-    pub fn new(lemm: NaiveLemmatizer, db: &mut impl WordDatabase) -> Self {
+    pub fn new(lemm: NaiveLemmatizer, db: &impl WordDatabase) -> Self {
         let mut form_to_lemma = HashMap::new();
 
         for (form, lemmas) in lemm.form_to_lemma {

@@ -9,9 +9,10 @@ use super::types::InternersGroup;
 use super::MainQueries;
 use crate::authors_chrono::Author;
 use crate::filesystem::{GetFileSystem, MockFileSystem};
-use crate::latin_lemmatizer::NaiveLemmatizer;
+use crate::latin_lemmatizer::compressed::CompressedLemmatizer;
+use crate::latin_utilities::NormalizedLatinString;
+use crate::word_db::{WordDatabase, WordDb, WordId};
 
-use std::collections::HashMap;
 use std::sync::Arc;
 
 /// A simplified database, which we use for testing
@@ -20,13 +21,14 @@ pub struct MockDatabase {
     runtime: salsa::Runtime<MockDatabase>,
     mock: Author,
     fs: MockFileSystem,
+    word_db: WordDb,
 }
 
 /// A mock database to be used for preliminary testing
 /// Note, we have empty lemm, so this will fail complex queries
 pub fn make_mock() -> MockDatabase {
     let mut res = MockDatabase::new();
-    res.set_lemmatizer(Arc::new(NaiveLemmatizer::new(HashMap::new())));
+    res.set_lemmatizer(Arc::new(CompressedLemmatizer::default()));
     res
 }
 
@@ -36,6 +38,7 @@ impl MockDatabase {
             runtime: salsa::Runtime::default(),
             mock: Author::new("Mock"),
             fs: MockFileSystem::default(),
+            word_db: WordDb::default(),
         }
     }
 }
@@ -72,6 +75,20 @@ impl GCollectable for MockDatabase {
     fn garbage_sweep(&mut self) {}
 }
 
+impl WordDatabase for MockDatabase {
+    fn intern_word(&self, s: NormalizedLatinString) -> WordId {
+        self.word_db.intern_word(s)
+    }
+
+    fn lookup_word(&self, id: WordId) -> NormalizedLatinString {
+        self.word_db.lookup_word(id)
+    }
+
+    fn lookup_interned_word(&self, s: NormalizedLatinString) -> Option<WordId> {
+        self.word_db.lookup_interned_word(s)
+    }
+}
+
 impl salsa::Database for MockDatabase {
     fn salsa_runtime(&self) -> &salsa::Runtime<Self> {
         &self.runtime
@@ -88,6 +105,7 @@ impl salsa::ParallelDatabase for MockDatabase {
             runtime: self.runtime.snapshot(self),
             mock: self.mock.clone(),
             fs: self.fs.clone(),
+            word_db: self.word_db.clone(),
         })
     }
 }
