@@ -6,6 +6,7 @@ pub use super::query_system::ids::WordId;
 pub trait WordDatabase {
     fn intern_word(&mut self, s: NormalizedLatinString) -> WordId;
     fn lookup_word(&self, id: WordId) -> Option<&NormalizedLatinString>;
+    fn lookup_interned(&self, s: NormalizedLatinString) -> Option<WordId>;
 }
 
 #[derive(Debug, Default, Clone)]
@@ -27,6 +28,10 @@ impl WordDb {
 
 impl WordDatabase for WordDb {
     fn intern_word(&mut self, s: NormalizedLatinString) -> WordId {
+        if let Some(id) = self.words.get_by_right(&s).cloned() {
+            return id;
+        }
+
         let id = self.next_id();
         self.words.insert(id, s);
         id
@@ -34,5 +39,9 @@ impl WordDatabase for WordDb {
 
     fn lookup_word(&self, id: WordId) -> Option<&NormalizedLatinString> {
         self.words.get_by_left(&id)
+    }
+
+    fn lookup_interned(&self, s: NormalizedLatinString) -> Option<WordId> {
+        self.words.get_by_right(&s).cloned()
     }
 }
