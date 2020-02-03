@@ -182,7 +182,7 @@ impl Form {
             .cloned()
             .map(|v| {
                 v.into_iter()
-                    .map(|l| types::Lemma(l))
+                    .map(types::Lemma)
                     .map(|l| Lemma::new(l, self.authors.clone()))
                     .collect()
             })
@@ -249,7 +249,7 @@ impl Lemma {
             .cloned()
             .map(|v| {
                 v.into_iter()
-                    .map(|f| types::Form(f))
+                    .map(types::Form)
                     .map(|f| Form::new(f, self.authors.clone()))
                     .collect()
             })
