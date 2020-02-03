@@ -8,8 +8,8 @@ pub struct Stats {}
 
 #[derive(juniper::GraphQLObject)]
 pub struct MemoryStats {
-    memory_used: String,
-    memory_free: String,
+    total_memory_used: String,
+    total_memory_free: String,
 }
 
 #[juniper::object(Context = Context)]
@@ -30,8 +30,8 @@ impl Stats {
         let sys = System::new();
         let mem = sys.memory().expect("Could not get sys info");
         Ok(MemoryStats {
-            memory_used: mem.total.to_string_as(true),
-            memory_free: mem.free.to_string_as(true),
+            total_memory_used: mem.total.to_string_as(true),
+            total_memory_free: mem.free.to_string_as(true),
         })
     }
 }
