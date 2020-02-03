@@ -6,3 +6,4 @@ pub mod latin_lemmatizer;
 pub mod latin_utilities;
 pub mod query_driver;
 pub mod query_system;
+pub mod word_db;
