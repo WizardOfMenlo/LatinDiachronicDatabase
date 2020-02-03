@@ -16,6 +16,7 @@ use ids::*;
 use lit_subset::LitSubset;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
+use types::{Form, Lemma};
 
 /// The main trait, which any database should implement
 #[salsa::query_group(MainQueries)]
@@ -31,21 +32,21 @@ pub trait MainDatabase:
     // TODO, this is really slow (I think? It is)
 
     /// Count the number of occurrences of lemma in a subset of the literature
-    fn count_lemma_occurrences_subset(&self, id: LemmaId, subset: LitSubset) -> usize;
+    fn count_lemma_occurrences_subset(&self, id: Lemma, subset: LitSubset) -> usize;
 
     /// Count the number of occurrences of a form in a subset of the literature
-    fn count_form_occurrences_subset(&self, id: FormId, subset: LitSubset) -> usize;
+    fn count_form_occurrences_subset(&self, id: Form, subset: LitSubset) -> usize;
 
-    fn intersect_sources(&self, sources: LitSubset, subset: LitSubset) -> Arc<HashSet<LemmaId>>;
+    fn intersect_sources(&self, sources: LitSubset, subset: LitSubset) -> Arc<HashSet<Lemma>>;
 
     fn authors_count(&self, sub: LitSubset) -> Arc<HashMap<AuthorId, usize>>;
 }
 
-fn count_lemma_occurrences_subset(db: &impl MainDatabase, id: LemmaId, subset: LitSubset) -> usize {
+fn count_lemma_occurrences_subset(db: &impl MainDatabase, id: Lemma, subset: LitSubset) -> usize {
     db.lemma_occurrences_subset(id, subset).len()
 }
 
-fn count_form_occurrences_subset(db: &impl MainDatabase, id: FormId, subset: LitSubset) -> usize {
+fn count_form_occurrences_subset(db: &impl MainDatabase, id: Form, subset: LitSubset) -> usize {
     db.form_occurrences_subset(id, subset).len()
 }
 
@@ -53,7 +54,7 @@ fn intersect_sources(
     db: &impl MainDatabase,
     sources: LitSubset,
     subset: LitSubset,
-) -> Arc<HashSet<LemmaId>> {
+) -> Arc<HashSet<Lemma>> {
     // Get all the authors, and the selected sources
     let mut authors = HashMap::new();
     for (source, auth) in sources
@@ -86,7 +87,7 @@ fn intersect_sources(
     let first = lemma_lists.get(0).unwrap();
     let intersection: HashSet<_> = first
         .iter()
-        .filter(|l| lemma_lists.iter().all(|s| s.contains(l)))
+        .filter(|l| lemma_lists.iter().all(|s| s.contains(*l)))
         .cloned()
         .collect();
 

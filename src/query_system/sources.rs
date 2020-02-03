@@ -58,9 +58,9 @@ fn parse_source(db: &impl SourcesDatabase, source_id: SourceId) -> Arc<HashSet<F
     for (i, line) in text.lines().enumerate() {
         for word in line.split(' ') {
             let lw = converter.convert(word);
-            let form = Form(lw);
-            let form_id = db.intern_form(form);
-            let form_data = FormData::new(source_id, i, form_id);
+            let id = db.intern_word(lw);
+            let form = Form(id);
+            let form_data = FormData::new(source_id, i, form);
             let form_data_id = db.intern_form_data(form_data);
             form_data_ids.insert(form_data_id);
         }
@@ -150,7 +150,7 @@ mod tests {
         let form_data: BTreeSet<_> = parse_res
             .iter()
             .map(|&fd| db.lookup_intern_form_data(fd))
-            .map(|fd| (db.lookup_intern_form(fd.form()), fd.source(), fd.line_no()))
+            .map(|fd| (fd.form(), fd.source(), fd.line_no()))
             .collect();
 
         assert_debug_snapshot!("lorem_ipusm", form_data)
@@ -173,7 +173,7 @@ perlaturus ad te primum liber iste festinet, apud te"#;
         let form_data: BTreeSet<_> = parse_res
             .iter()
             .map(|&fd| db.lookup_intern_form_data(fd))
-            .map(|fd| (db.lookup_intern_form(fd.form()), fd.source(), fd.line_no()))
+            .map(|fd| (fd.form(), fd.source(), fd.line_no()))
             .collect();
 
         assert_debug_snapshot!("notum_est_omnibus", form_data)

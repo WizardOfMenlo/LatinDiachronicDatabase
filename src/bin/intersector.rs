@@ -5,6 +5,7 @@ use latin_db::query_system::ids::*;
 use latin_db::query_system::lit_subset::LitSubset;
 use latin_db::query_system::traits::*;
 use latin_db::query_system::types::Author;
+use latin_db::query_system::types::Lemma;
 
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -49,7 +50,7 @@ fn uniquely_his(
     auth: Author,
     id: AuthorId,
     db: &latin_db::query_driver::MainDatabase,
-) -> Option<Arc<HashSet<LemmaId>>> {
+) -> Option<Arc<HashSet<Lemma>>> {
     // Get the author span
     let tspan = auth.tspan()?;
 

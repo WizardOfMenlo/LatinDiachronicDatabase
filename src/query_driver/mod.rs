@@ -1,6 +1,8 @@
 use crate::authors_chrono::Author;
 use crate::filesystem::{FileSystem, GetFileSystem, InternerFileSystem};
+use crate::latin_lemmatizer::compressed::CompressedLemmatizer;
 use crate::latin_lemmatizer::NaiveLemmatizer;
+use crate::latin_utilities::NormalizedLatinString;
 use crate::query_system::ids::*;
 use crate::query_system::middle::IntermediateDatabase;
 use crate::query_system::middle::IntermediateQueries;
@@ -9,6 +11,7 @@ use crate::query_system::sources::SourcesQueryGroup;
 use crate::query_system::traits::AuthorInternDatabase;
 use crate::query_system::types::InternersGroup;
 use crate::query_system::MainQueries;
+use crate::word_db::{WordDatabase, WordDb};
 
 use bimap::BiMap;
 use std::collections::HashMap;
@@ -28,6 +31,7 @@ pub struct MainDatabase {
     runtime: salsa::Runtime<MainDatabase>,
     authors: BiMap<Author, AuthorId>,
     fs: InternerFileSystem,
+    word_db: WordDb,
 }
 
 impl MainDatabase {
@@ -36,6 +40,7 @@ impl MainDatabase {
             runtime: Default::default(),
             authors: BiMap::new(),
             fs: InternerFileSystem::new(),
+            word_db: WordDb::default(),
         }
     }
 
@@ -85,6 +90,20 @@ impl GetFileSystem for MainDatabase {
     }
 }
 
+impl WordDatabase for MainDatabase {
+    fn intern_word(&self, s: NormalizedLatinString) -> WordId {
+        self.word_db.intern_word(s)
+    }
+
+    fn lookup_word(&self, id: WordId) -> NormalizedLatinString {
+        self.word_db.lookup_word(id)
+    }
+
+    fn lookup_interned_word(&self, s: NormalizedLatinString) -> Option<WordId> {
+        self.word_db.lookup_interned_word(s)
+    }
+}
+
 impl salsa::Database for MainDatabase {
     fn salsa_runtime(&self) -> &salsa::Runtime<Self> {
         &self.runtime
@@ -101,6 +120,7 @@ impl salsa::ParallelDatabase for MainDatabase {
             runtime: self.runtime.snapshot(self),
             authors: self.authors.clone(),
             fs: self.fs.clone(),
+            word_db: self.word_db.clone(),
         })
     }
 }
@@ -170,6 +190,7 @@ pub fn driver_init(config: Configuration) -> Result<MainDatabase, Box<dyn Error>
 
     // First, load lemmatizer
     let lemm = config.make_lemm()?;
+    let compressed = CompressedLemmatizer::new(lemm, &db);
 
     for entry in WalkDir::new(config.data_dir).max_depth(2) {
         let entry = entry?;
@@ -228,7 +249,7 @@ pub fn driver_init(config: Configuration) -> Result<MainDatabase, Box<dyn Error>
         v.iter().for_each(|&s| db.set_associated_author(s, k))
     });
 
-    db.set_lemmatizer(Arc::new(lemm));
+    db.set_lemmatizer(Arc::new(compressed));
 
     Ok(db)
 }

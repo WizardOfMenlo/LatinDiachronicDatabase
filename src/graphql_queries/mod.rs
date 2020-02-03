@@ -4,6 +4,7 @@ mod types;
 
 use crate::latin_utilities::NormalizedLatinString;
 use crate::query_system::traits::*;
+use crate::word_db::WordDatabase;
 use context::Context;
 use inputs::{AuthorsInput, Filter, SpanInput};
 use types::{Author, Form, Lemma, WordType};
@@ -49,14 +50,21 @@ impl Query {
 
     fn word_type(context: &Context, word: String) -> FieldResult<WordType> {
         let word = NormalizedLatinString::from(word.as_str());
-        let lemm = context.get().lemmatizer();
-        Ok(if lemm.has_lemma(&word) {
-            WordType::Lemma
-        } else if lemm.has_form(&word) {
-            WordType::Form
+        let db = context.get();
+        let possible_id = db.lookup_interned_word(word);
+
+        if let Some(id) = possible_id {
+            let lemm = db.lemmatizer();
+            Ok(if lemm.has_lemma(id) {
+                WordType::Lemma
+            } else if lemm.has_form(id) {
+                WordType::Form
+            } else {
+                WordType::NotFound
+            })
         } else {
-            WordType::NotFound
-        })
+            Ok(WordType::NotFound)
+        }
     }
 
     fn intersection(
@@ -140,10 +148,14 @@ impl Query {
         authors: AuthorsInput,
         span: SpanInput,
     ) -> FieldResult<Lemma> {
-        let lemma = crate::query_system::types::Lemma(NormalizedLatinString::from(lemma.as_str()));
+        let nw = NormalizedLatinString::from(lemma.as_str());
         let authors = authors.intersect(span).get_authors(context);
 
-        Ok(Lemma::from_iter(context.get().intern_lemma(lemma), authors))
+        let db = context.get();
+        let id = db.intern_word(nw);
+        let lemma = crate::query_system::types::Lemma(id);
+
+        Ok(Lemma::from_iter(lemma, authors))
     }
 
     #[graphql(
@@ -167,9 +179,13 @@ impl Query {
         authors: AuthorsInput,
         span: SpanInput,
     ) -> FieldResult<Form> {
-        let form = crate::query_system::types::Form(NormalizedLatinString::from(form.as_str()));
+        let nw = NormalizedLatinString::from(form.as_str());
         let authors = authors.intersect(span).get_authors(context);
 
-        Ok(Form::from_iter(context.get().intern_form(form), authors))
+        let db = context.get();
+        let id = db.intern_word(nw);
+        let form = crate::query_system::types::Form(id);
+
+        Ok(Form::from_iter(form, authors))
     }
 }

@@ -35,4 +35,5 @@ macro_rules! impl_intern_key {
     };
 }
 
-create_ids!(AuthorId, FormDataId, FormId, LemmaId, SourceId);
+// TODO: Move this somewhere global?
+create_ids!(AuthorId, FormDataId, SourceId, WordId);

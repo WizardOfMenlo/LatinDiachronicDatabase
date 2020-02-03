@@ -1,12 +1,11 @@
 use super::context::Context;
 use crate::query_system::ids::AuthorId;
 use crate::query_system::ids::FormDataId;
-use crate::query_system::ids::FormId;
-use crate::query_system::ids::LemmaId;
 use crate::query_system::ids::SourceId;
 use crate::query_system::lit_subset::LitSubset;
 use crate::query_system::traits::*;
 use crate::query_system::types;
+use crate::word_db::WordDatabase;
 
 use chrono::prelude::Datelike;
 use std::sync::Arc;
@@ -137,52 +136,53 @@ pub enum WordType {
 }
 
 pub struct Form {
-    form: FormId,
+    form: types::Form,
     authors: Arc<Vec<AuthorId>>,
 }
 
 impl Form {
-    pub(crate) fn new(form: FormId, authors: Arc<Vec<AuthorId>>) -> Self {
+    pub(crate) fn new(form: types::Form, authors: Arc<Vec<AuthorId>>) -> Self {
         Form { form, authors }
     }
 
-    pub(crate) fn from_iter(form: FormId, authors: impl IntoIterator<Item = AuthorId>) -> Self {
+    pub(crate) fn from_iter(
+        form: types::Form,
+        authors: impl IntoIterator<Item = AuthorId>,
+    ) -> Self {
         Form::new(form, Arc::new(authors.into_iter().collect()))
     }
 
     pub(crate) fn is_ambig(&self, context: &Context) -> bool {
         let db = context.get();
-        let form = db.lookup_intern_form(self.form).0;
+        let id = self.form.0;
         let lemm = db.lemmatizer();
 
-        lemm.get_possible_lemmas(&form)
-            .map(|s| s.len())
-            .unwrap_or(0)
-            > 1
+        lemm.get_possible_lemmas(id).map(|s| s.len()).unwrap_or(0) > 1
     }
 }
 
 #[juniper::object(Context = Context)]
 impl Form {
     fn form(&self, context: &Context) -> String {
-        context
-            .get()
-            .lookup_intern_form(self.form)
-            .0
-            .inner()
-            .to_string()
+        let db = context.get();
+
+        let id = self.form.0;
+
+        let word = db.lookup_word(id);
+
+        word.inner().to_string()
     }
 
     fn lemmas(&self, context: &Context) -> Vec<Lemma> {
         let db = context.get();
-        let form = db.lookup_intern_form(self.form).0;
+        let id = self.form.0;
         let lemm = db.lemmatizer();
 
-        lemm.get_possible_lemmas(&form)
+        lemm.get_possible_lemmas(id)
             .cloned()
             .map(|v| {
                 v.into_iter()
-                    .map(|l| db.intern_lemma(crate::query_system::types::Lemma(l)))
+                    .map(|l| types::Lemma(l))
                     .map(|l| Lemma::new(l, self.authors.clone()))
                     .collect()
             })
@@ -211,16 +211,19 @@ impl Form {
 }
 
 pub struct Lemma {
-    lemma: LemmaId,
+    lemma: types::Lemma,
     authors: Arc<Vec<AuthorId>>,
 }
 
 impl Lemma {
-    pub(crate) fn new(lemma: LemmaId, authors: Arc<Vec<AuthorId>>) -> Self {
+    pub(crate) fn new(lemma: types::Lemma, authors: Arc<Vec<AuthorId>>) -> Self {
         Lemma { lemma, authors }
     }
 
-    pub(crate) fn from_iter(lemma: LemmaId, authors: impl IntoIterator<Item = AuthorId>) -> Self {
+    pub(crate) fn from_iter(
+        lemma: types::Lemma,
+        authors: impl IntoIterator<Item = AuthorId>,
+    ) -> Self {
         Lemma::new(lemma, Arc::new(authors.into_iter().collect()))
     }
 }
@@ -228,24 +231,25 @@ impl Lemma {
 #[juniper::object(Context = Context)]
 impl Lemma {
     fn lemma(&self, context: &Context) -> String {
-        context
-            .get()
-            .lookup_intern_lemma(self.lemma)
-            .0
-            .inner()
-            .to_string()
+        let db = context.get();
+
+        let id = self.lemma.0;
+
+        let word = db.lookup_word(id);
+
+        word.inner().to_string()
     }
 
     fn forms(&self, context: &Context) -> Vec<Form> {
         let db = context.get();
-        let lemma = db.lookup_intern_lemma(self.lemma).0;
+        let id = self.lemma.0;
         let lemm = db.lemmatizer();
 
-        lemm.get_possible_forms(&lemma)
+        lemm.get_possible_forms(id)
             .cloned()
             .map(|v| {
                 v.into_iter()
-                    .map(|f| db.intern_form(crate::query_system::types::Form(f)))
+                    .map(|f| types::Form(f))
                     .map(|f| Form::new(f, self.authors.clone()))
                     .collect()
             })
