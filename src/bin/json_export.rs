@@ -3,6 +3,7 @@ use latin_db::query_driver::driver_init;
 use latin_db::query_system::ids::*;
 use latin_db::query_system::lit_subset::LitSubset;
 use latin_db::query_system::traits::*;
+use latin_db::query_system::types::{Form, Lemma};
 use serde::Serialize;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -45,14 +46,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn lemma_id_to_string(db: &impl IntermediateDatabase, lemma: LemmaId) -> String {
-    let id = db.lookup_intern_lemma(lemma).0;
-    db.lookup_word(id).inner().to_string()
+fn lemma_id_to_string(db: &impl IntermediateDatabase, lemma: Lemma) -> String {
+    db.lookup_word(lemma.0).inner().to_string()
 }
 
-fn form_id_to_string(db: &impl IntermediateDatabase, form: FormId) -> String {
-    let id = db.lookup_intern_form(form).0;
-    db.lookup_word(id).inner().to_string()
+fn form_id_to_string(db: &impl IntermediateDatabase, form: Form) -> String {
+    db.lookup_word(form.0).inner().to_string()
 }
 
 fn form_data_normalize(db: &latin_db::query_driver::MainDatabase, fd: FormDataId) -> FormData {

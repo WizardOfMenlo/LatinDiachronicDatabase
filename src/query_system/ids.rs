@@ -36,4 +36,4 @@ macro_rules! impl_intern_key {
 }
 
 // TODO: Move this somewhere global?
-create_ids!(AuthorId, FormDataId, FormId, LemmaId, SourceId, WordId);
+create_ids!(AuthorId, FormDataId, SourceId, WordId);

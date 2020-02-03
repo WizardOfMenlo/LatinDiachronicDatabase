@@ -155,7 +155,7 @@ impl Query {
         let id = db.intern_word(nw);
         let lemma = crate::query_system::types::Lemma(id);
 
-        Ok(Lemma::from_iter(db.intern_lemma(lemma), authors))
+        Ok(Lemma::from_iter(lemma, authors))
     }
 
     #[graphql(
@@ -186,6 +186,6 @@ impl Query {
         let id = db.intern_word(nw);
         let form = crate::query_system::types::Form(id);
 
-        Ok(Form::from_iter(db.intern_form(form), authors))
+        Ok(Form::from_iter(form, authors))
     }
 }

@@ -2,7 +2,7 @@
 //! In most cases, the types are created by direct computation on
 //! the sources, and are then interned in order to speed up computation
 
-use super::ids::{AuthorId, FormDataId, FormId, LemmaId, SourceId};
+use super::ids::{AuthorId, FormDataId, SourceId};
 use super::traits::MainDatabase;
 use crate::word_db::{WordDatabase, WordId};
 
@@ -10,12 +10,6 @@ use crate::word_db::{WordDatabase, WordId};
 pub trait InternDatabase: WordDatabase {
     #[salsa::interned]
     fn intern_form_data(&self, fd: FormData) -> FormDataId;
-
-    #[salsa::interned]
-    fn intern_form(&self, fd: Form) -> FormId;
-
-    #[salsa::interned]
-    fn intern_lemma(&self, fd: Lemma) -> LemmaId;
 }
 
 pub trait AuthorInternDatabase {
@@ -27,19 +21,19 @@ pub trait AuthorInternDatabase {
 pub struct FormData {
     source: SourceId,
     line_no: usize,
-    form: FormId,
+    form: Form,
 }
 
-#[derive(shrinkwraprs::Shrinkwrap, Debug, Hash, Eq, PartialEq, Clone, Ord, PartialOrd)]
+#[derive(shrinkwraprs::Shrinkwrap, Debug, Hash, Eq, PartialEq, Clone, Copy, Ord, PartialOrd)]
 pub struct Lemma(pub WordId);
 
-#[derive(shrinkwraprs::Shrinkwrap, Debug, Hash, Eq, PartialEq, Clone, Ord, PartialOrd)]
+#[derive(shrinkwraprs::Shrinkwrap, Debug, Hash, Eq, PartialEq, Clone, Copy, Ord, PartialOrd)]
 pub struct Form(pub WordId);
 
 pub use crate::authors_chrono::Author;
 
 impl FormData {
-    pub fn new(source: SourceId, line_no: usize, form: FormId) -> Self {
+    pub fn new(source: SourceId, line_no: usize, form: Form) -> Self {
         Self {
             source,
             line_no,
@@ -55,7 +49,7 @@ impl FormData {
         self.line_no
     }
 
-    pub fn form(&self) -> FormId {
+    pub fn form(&self) -> Form {
         self.form
     }
 

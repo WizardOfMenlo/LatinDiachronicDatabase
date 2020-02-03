@@ -3,6 +3,7 @@ use latin_db::query_driver::driver_init;
 use latin_db::query_system::ids::*;
 use latin_db::query_system::lit_subset::LitSubset;
 use latin_db::query_system::traits::*;
+use latin_db::query_system::types::{Form, Lemma};
 
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
@@ -107,11 +108,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 #[derive(Debug, Clone)]
 struct Entry {
-    lemma: LemmaId,
+    lemma: Lemma,
     count: usize,
     ambig_count: usize,
     corresponding_index: usize,
-    forms: Vec<(FormId, Vec<FormDataId>)>,
+    forms: Vec<(Form, Vec<FormDataId>)>,
     authors: HashSet<AuthorId>,
 }
 
@@ -127,12 +128,11 @@ impl Entry {
         config: Configuration,
         global_authors_count: &HashMap<AuthorId, usize>,
     ) -> io::Result<()> {
-        let resolved_lemma = db.lookup_intern_lemma(self.lemma);
         writeln!(
             w,
             "-------{:6}------{} count: {} (C: {}, A: {})",
             self.corresponding_index,
-            id_to_str(db, resolved_lemma.0).to_uppercase(),
+            id_to_str(db, self.lemma.0).to_uppercase(),
             self.count,
             self.count - self.ambig_count,
             self.ambig_count
@@ -140,13 +140,12 @@ impl Entry {
 
         if let FormMode::IncludeForms = config.form_mode {
             for (form, count) in self.forms.iter().map(|(k, v)| (k, v.len())) {
-                let resolved_form = db.lookup_intern_form(*form);
                 writeln!(
                     w,
                     "\t{}: {} {}",
-                    id_to_str(db, resolved_form.0),
+                    id_to_str(db, form.0),
                     count,
-                    if db.lemmatizer().is_ambig(resolved_form.0) {
+                    if db.lemmatizer().is_ambig(form.0) {
                         "(*)"
                     } else {
                         ""
@@ -259,7 +258,7 @@ impl Dictionary {
             let count = forms.values().map(|v| v.len()).sum();
             let ambig_count = forms
                 .iter()
-                .filter(|(&k, _)| db.lemmatizer().is_ambig(db.lookup_intern_form(k).0))
+                .filter(|(&k, _)| db.lemmatizer().is_ambig(k.0))
                 .map(|(_, v)| v.len())
                 .sum();
 
@@ -327,16 +326,16 @@ impl Dictionary {
 
     fn sort_alpha(&mut self, db: &impl MainDatabase) {
         self.ls.sort_by(|a, b| {
-            let lemm_a = id_to_str(db, db.lookup_intern_lemma(a.lemma).0);
-            let lemm_b = id_to_str(db, db.lookup_intern_lemma(b.lemma).0);
+            let lemm_a = id_to_str(db, a.lemma.0);
+            let lemm_b = id_to_str(db, b.lemma.0);
 
             lemm_a.cmp(&lemm_b)
         });
 
         for entry in &mut self.ls {
             entry.forms.sort_by(|(a, _), (b, _)| {
-                let form_a = id_to_str(db, db.lookup_intern_form(*a).0);
-                let form_b = id_to_str(db, db.lookup_intern_form(*b).0);
+                let form_a = id_to_str(db, a.0);
+                let form_b = id_to_str(db, b.0);
                 form_a.cmp(&form_b)
             });
         }

@@ -1,10 +1,11 @@
 //! Probably the most important mod, contains the traits needed to convert from
 //! parsed files to highlevel representations
 
-use super::ids::{FormDataId, FormId, LemmaId, SourceId};
+use super::ids::{FormDataId, SourceId};
 use super::lit_subset::LitSubset;
 use super::sources::SourcesDatabase;
 use super::types::InternDatabase;
+use super::types::{Form, Lemma};
 
 use crate::latin_lemmatizer::compressed::CompressedLemmatizer;
 
@@ -26,23 +27,20 @@ pub trait IntermediateDatabase: SourcesDatabase + InternDatabase {
     fn parse_subset(&self, subset: LitSubset) -> Arc<HashSet<FormDataId>>;
 
     // TODO, find a better name
-    fn source_tree(&self, id: SourceId) -> Arc<HashMap<LemmaId, HashMap<FormId, Vec<FormDataId>>>>;
+    fn source_tree(&self, id: SourceId) -> Arc<HashMap<Lemma, HashMap<Form, Vec<FormDataId>>>>;
 
     #[salsa::dependencies]
-    fn subset_tree(
-        &self,
-        sub: LitSubset,
-    ) -> Arc<HashMap<LemmaId, HashMap<FormId, Vec<FormDataId>>>>;
+    fn subset_tree(&self, sub: LitSubset) -> Arc<HashMap<Lemma, HashMap<Form, Vec<FormDataId>>>>;
 
     // Index all sources for forms ------------------------------------------
 
     /// Get all the forms that appear in a source
     #[salsa::dependencies]
-    fn forms_in_source(&self, source: SourceId) -> Arc<HashSet<FormId>>;
+    fn forms_in_source(&self, source: SourceId) -> Arc<HashSet<Form>>;
 
     /// Get all the forms that appear in some sources
     #[salsa::dependencies]
-    fn forms_in_subset(&self, subset: LitSubset) -> Arc<HashSet<FormId>>;
+    fn forms_in_subset(&self, subset: LitSubset) -> Arc<HashSet<Form>>;
 
     // -----------------------------------------------------------------------
 
@@ -50,29 +48,22 @@ pub trait IntermediateDatabase: SourcesDatabase + InternDatabase {
 
     /// Get all lemmas that appear in a source
     #[salsa::dependencies]
-    fn lemmas_in_source(&self, source: SourceId) -> Arc<HashSet<LemmaId>>;
+    fn lemmas_in_source(&self, source: SourceId) -> Arc<HashSet<Lemma>>;
 
     /// Get all lemmas that appear in some sources
     #[salsa::dependencies]
-    fn lemmas_in_subset(&self, subset: LitSubset) -> Arc<HashSet<LemmaId>>;
+    fn lemmas_in_subset(&self, subset: LitSubset) -> Arc<HashSet<Lemma>>;
 
     // -----------------------------------------------------------------------
 
     /// For a form, get all the occurrences in the subset of the literature
     #[salsa::dependencies]
-    fn form_occurrences_subset(
-        &self,
-        form_id: FormId,
-        subset: LitSubset,
-    ) -> Arc<HashSet<FormDataId>>;
+    fn form_occurrences_subset(&self, form: Form, subset: LitSubset) -> Arc<HashSet<FormDataId>>;
 
     /// For a lemma, get all the occurrences in the subset of the literature
     #[salsa::dependencies]
-    fn lemma_occurrences_subset(
-        &self,
-        lemma_id: LemmaId,
-        subset: LitSubset,
-    ) -> Arc<HashSet<FormDataId>>;
+    fn lemma_occurrences_subset(&self, lemma: Lemma, subset: LitSubset)
+        -> Arc<HashSet<FormDataId>>;
 }
 
 // Sum sets of sources together
@@ -90,27 +81,25 @@ fn combine<'a, T: Hash + Eq + Clone + 'a>(
 }
 
 // Lemmatizes a form, in an interface that works well with above
-fn lemmatize_form(db: &impl IntermediateDatabase, form_id: FormId) -> HashSet<LemmaId> {
-    let form = db.lookup_intern_form(form_id).0;
+fn lemmatize_form(db: &impl IntermediateDatabase, form: Form) -> HashSet<Lemma> {
     let lemm = db.lemmatizer();
 
-    lemm.get_possible_lemmas(form)
+    lemm.get_possible_lemmas(form.0)
         .cloned()
         .unwrap_or_else(HashSet::new)
         .into_iter()
-        .map(|l| db.intern_lemma(super::types::Lemma(l)))
+        .map(Lemma)
         .collect()
 }
 
-fn get_forms_lemma(db: &impl IntermediateDatabase, lemma_id: LemmaId) -> HashSet<FormId> {
-    let lemma = db.lookup_intern_lemma(lemma_id).0;
+fn get_forms_lemma(db: &impl IntermediateDatabase, lemma: Lemma) -> HashSet<Form> {
     let lemm = db.lemmatizer();
 
-    lemm.get_possible_forms(lemma)
+    lemm.get_possible_forms(lemma.0)
         .cloned()
         .unwrap_or_else(HashSet::new)
         .into_iter()
-        .map(|l| db.intern_form(super::types::Form(l)))
+        .map(Form)
         .collect()
 }
 
@@ -121,7 +110,7 @@ fn parse_subset(db: &impl IntermediateDatabase, subset: LitSubset) -> Arc<HashSe
 fn source_tree(
     db: &impl IntermediateDatabase,
     id: SourceId,
-) -> Arc<HashMap<LemmaId, HashMap<FormId, Vec<FormDataId>>>> {
+) -> Arc<HashMap<Lemma, HashMap<Form, Vec<FormDataId>>>> {
     let data = db.parse_source(id);
     let mut res = HashMap::new();
     for fd_id in data.iter() {
@@ -142,7 +131,7 @@ fn source_tree(
 fn subset_tree(
     db: &impl IntermediateDatabase,
     sub: LitSubset,
-) -> Arc<HashMap<LemmaId, HashMap<FormId, Vec<FormDataId>>>> {
+) -> Arc<HashMap<Lemma, HashMap<Form, Vec<FormDataId>>>> {
     let mut res = HashMap::new();
     for source in sub.sources() {
         let tree = db.source_tree(*source);
@@ -161,7 +150,7 @@ fn subset_tree(
     Arc::new(res)
 }
 
-fn forms_in_source(db: &impl IntermediateDatabase, source: SourceId) -> Arc<HashSet<FormId>> {
+fn forms_in_source(db: &impl IntermediateDatabase, source: SourceId) -> Arc<HashSet<Form>> {
     let mut res = HashSet::new();
     for fd_id in db.parse_source(source).iter() {
         res.insert(db.lookup_intern_form_data(*fd_id).form());
@@ -169,11 +158,11 @@ fn forms_in_source(db: &impl IntermediateDatabase, source: SourceId) -> Arc<Hash
     Arc::new(res)
 }
 
-fn forms_in_subset(db: &impl IntermediateDatabase, subset: LitSubset) -> Arc<HashSet<FormId>> {
+fn forms_in_subset(db: &impl IntermediateDatabase, subset: LitSubset) -> Arc<HashSet<Form>> {
     combine(subset.sources().iter().map(|s| db.forms_in_source(*s)))
 }
 
-fn lemmas_in_source(db: &impl IntermediateDatabase, source: SourceId) -> Arc<HashSet<LemmaId>> {
+fn lemmas_in_source(db: &impl IntermediateDatabase, source: SourceId) -> Arc<HashSet<Lemma>> {
     combine(
         db.forms_in_source(source)
             .iter()
@@ -182,13 +171,13 @@ fn lemmas_in_source(db: &impl IntermediateDatabase, source: SourceId) -> Arc<Has
     )
 }
 
-fn lemmas_in_subset(db: &impl IntermediateDatabase, subset: LitSubset) -> Arc<HashSet<LemmaId>> {
+fn lemmas_in_subset(db: &impl IntermediateDatabase, subset: LitSubset) -> Arc<HashSet<Lemma>> {
     combine(subset.sources().iter().map(|s| db.lemmas_in_source(*s)))
 }
 
 fn form_occurrences_subset(
     db: &impl IntermediateDatabase,
-    id: FormId,
+    id: Form,
     subset: LitSubset,
 ) -> Arc<HashSet<FormDataId>> {
     info!(
@@ -207,7 +196,7 @@ fn form_occurrences_subset(
 
 fn lemma_occurrences_subset(
     db: &impl IntermediateDatabase,
-    id: LemmaId,
+    id: Lemma,
     subset: LitSubset,
 ) -> Arc<HashSet<FormDataId>> {
     info!(

@@ -3,6 +3,7 @@ use latin_db::query_driver::driver_init;
 use latin_db::query_system::ids::*;
 use latin_db::query_system::lit_subset::LitSubset;
 use latin_db::query_system::traits::*;
+use latin_db::query_system::types::{Form, Lemma};
 
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fs::File;
@@ -45,10 +46,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 #[derive(Debug, Clone)]
 struct Entry {
-    lemma: LemmaId,
+    lemma: Lemma,
     count: usize,
     ambig_count: usize,
-    forms: Vec<(FormId, Vec<FormDataId>)>,
+    forms: Vec<(Form, Vec<FormDataId>)>,
     authors: HashSet<AuthorId>,
 }
 
@@ -64,11 +65,10 @@ impl Entry {
         global_authors_count: &HashMap<AuthorId, usize>,
         authors_names: &BTreeMap<&str, AuthorId>,
     ) -> io::Result<()> {
-        let resolved_lemma = db.lookup_intern_lemma(self.lemma);
         write!(
             w,
             "{},{},{},{},",
-            id_to_str(db, resolved_lemma.0).to_uppercase(),
+            id_to_str(db, self.lemma.0).to_uppercase(),
             self.count,
             self.count - self.ambig_count,
             self.ambig_count
@@ -137,7 +137,7 @@ impl Dictionary {
             let count = forms.values().map(|v| v.len()).sum();
             let ambig_count = forms
                 .iter()
-                .filter(|(&k, _)| db.lemmatizer().is_ambig(db.lookup_intern_form(k).0))
+                .filter(|(&k, _)| db.lemmatizer().is_ambig(k.0))
                 .map(|(_, v)| v.len())
                 .sum();
 
@@ -164,17 +164,17 @@ impl Dictionary {
 
     fn sort_alpha(&mut self, db: &impl MainDatabase) {
         self.ls.sort_by(|a, b| {
-            let lemm_a = db.lookup_intern_lemma(a.lemma);
-            let lemm_b = db.lookup_intern_lemma(b.lemma);
+            let lemm_a = id_to_str(db, a.lemma.0);
+            let lemm_b = id_to_str(db, b.lemma.0);
 
-            lemm_a.0.cmp(&lemm_b.0)
+            lemm_a.cmp(&lemm_b)
         });
 
         for entry in &mut self.ls {
             entry.forms.sort_by(|(a, _), (b, _)| {
-                let form_a = db.lookup_intern_form(*a);
-                let form_b = db.lookup_intern_form(*b);
-                form_a.0.cmp(&form_b.0)
+                let form_a = id_to_str(db, a.0);
+                let form_b = id_to_str(db, b.0);
+                form_a.cmp(&form_b)
             });
         }
     }
