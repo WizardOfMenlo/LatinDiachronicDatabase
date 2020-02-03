@@ -2,10 +2,12 @@
 //! A lemmatizer, formally speaking, is a way to resolve a form to a determinate lemma
 //! For example, a lemmatizer could feasibly resolve the word `rosae` to the lemma `rosa`
 
+pub mod compressed;
 pub mod parsers;
 
 use crate::latin_utilities::{NormalizedLatinString, StandardLatinConverter};
 use std::collections::{HashMap, HashSet};
+use std::hash::Hash;
 
 type Mapping = HashMap<NormalizedLatinString, HashSet<NormalizedLatinString>>;
 
@@ -17,32 +19,36 @@ pub struct NaiveLemmatizer {
     converter: StandardLatinConverter,
 }
 
+pub(crate) fn invert_mapping<K, V>(form_to_lemma: &HashMap<K, HashSet<V>>) -> HashMap<V, HashSet<K>>
+where
+    K: Hash + Eq + Clone,
+    V: Hash + Eq + Clone,
+{
+    // Invert the mapping
+    let lemma_to_form_pairs = form_to_lemma
+        .iter()
+        .map(|(k, v)| v.iter().map(|e| (e.clone(), k.clone())).collect::<Vec<_>>())
+        .flatten();
+
+    let mut lemma_to_form = HashMap::new();
+    for (k, v) in lemma_to_form_pairs {
+        lemma_to_form
+            .entry(k)
+            .or_insert_with(HashSet::new)
+            .insert(v);
+    }
+
+    lemma_to_form
+}
+
 impl NaiveLemmatizer {
     pub fn new(form_to_lemma: Mapping) -> Self {
         // TODO, deduplicate similar mappings
         NaiveLemmatizer {
-            lemma_to_form: Self::invert_mapping(&form_to_lemma),
+            lemma_to_form: invert_mapping(&form_to_lemma),
             form_to_lemma,
             converter: StandardLatinConverter::default(),
         }
-    }
-
-    fn invert_mapping(form_to_lemma: &Mapping) -> Mapping {
-        // Invert the mapping
-        let lemma_to_form_pairs = form_to_lemma
-            .iter()
-            .map(|(k, v)| v.iter().map(|e| (e.clone(), k.clone())).collect::<Vec<_>>())
-            .flatten();
-
-        let mut lemma_to_form = HashMap::new();
-        for (k, v) in lemma_to_form_pairs {
-            lemma_to_form
-                .entry(k)
-                .or_insert_with(HashSet::new)
-                .insert(v);
-        }
-
-        lemma_to_form
     }
 
     pub fn num_lemmas(&self) -> usize {
