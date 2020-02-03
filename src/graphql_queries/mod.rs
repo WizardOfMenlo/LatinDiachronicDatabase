@@ -1,5 +1,6 @@
 pub mod context;
 mod inputs;
+mod stats;
 mod types;
 
 use crate::latin_utilities::NormalizedLatinString;
@@ -23,6 +24,10 @@ pub struct Query;
 impl Query {
     fn apiVersion() -> &str {
         "0.1"
+    }
+
+    fn stats() -> stats::Stats {
+        stats::Stats {}
     }
 
     fn authors(context: &Context, first: Option<i32>) -> FieldResult<Vec<Author>> {
