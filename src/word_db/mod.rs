@@ -28,6 +28,10 @@ impl WordDb {
 
         WordId::from_integer(candidate)
     }
+
+    pub fn len(&self) -> usize {
+        self.words.lock().unwrap().borrow().len()
+    }
 }
 
 impl WordDatabase for WordDb {

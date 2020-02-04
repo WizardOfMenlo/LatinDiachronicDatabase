@@ -51,6 +51,10 @@ impl MainDatabase {
     pub fn sources(&self) -> &BiMap<PathBuf, SourceId> {
         &self.fs.sources()
     }
+
+    pub fn word_db(&self) -> &WordDb {
+        &self.word_db
+    }
 }
 
 impl AuthorInternDatabase for MainDatabase {
