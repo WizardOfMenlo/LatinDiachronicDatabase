@@ -85,7 +85,7 @@ impl WordDatabase for MockDatabase {
     }
 
     fn lookup_interned_word(&self, s: NormalizedLatinString) -> Option<WordId> {
-        self.word_db.lookup_interned_word(s)
+        Some(self.word_db.intern_word(s))
     }
 }
 
