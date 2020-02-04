@@ -58,11 +58,13 @@ fn parse_source(db: &impl SourcesDatabase, source_id: SourceId) -> Arc<HashSet<F
     for (i, line) in text.lines().enumerate() {
         for word in line.split(' ') {
             let lw = converter.convert(word);
-            let id = db.intern_word(lw);
-            let form = Form(id);
-            let form_data = FormData::new(source_id, i, form);
-            let form_data_id = db.intern_form_data(form_data);
-            form_data_ids.insert(form_data_id);
+            // Note, this does NOT intern new words, which should reduce allocs
+            db.lookup_interned_word(lw).map(|id| {
+                let form = Form(id);
+                let form_data = FormData::new(source_id, i, form);
+                let form_data_id = db.intern_form_data(form_data);
+                form_data_ids.insert(form_data_id);
+            });
         }
     }
 
