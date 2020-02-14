@@ -1,5 +1,6 @@
 use super::context::Context;
 use crate::query_system::ids::AuthorId;
+use chrono::NaiveDate;
 use std::collections::BTreeSet;
 use std::collections::HashSet;
 
@@ -20,7 +21,7 @@ pub trait Filter {
     }
 }
 
-#[derive(juniper::GraphQLInputObject)]
+#[derive(juniper::GraphQLInputObject, Debug)]
 #[graphql(
     name = "Authors",
     description = "The authors to filter a research with"
@@ -65,11 +66,11 @@ impl Filter for AuthorsInput {
 
 #[derive(juniper::GraphQLInputObject, Debug, Clone)]
 pub struct Span {
-    start_year: i32,
-    end_year: i32,
+    start_year: NaiveDate,
+    end_year: NaiveDate,
 }
 
-#[derive(juniper::GraphQLInputObject)]
+#[derive(juniper::GraphQLInputObject, Debug)]
 #[graphql(
     name = "SpanInput",
     description = "The time span to filter a research with"
@@ -94,7 +95,8 @@ impl Filter for SpanInput {
             return db.authors().right_values().cloned().collect();
         }
         let span = self.span.as_ref().cloned().unwrap();
-        let timespan = crate::authors_chrono::TimeSpan::new_cent(span.start_year, span.end_year);
+        let timespan = crate::authors_chrono::TimeSpan::new(span.start_year, span.end_year);
+
         db.authors()
             .iter()
             .filter(|(k, _)| k.in_timespan(&timespan))
@@ -103,6 +105,7 @@ impl Filter for SpanInput {
     }
 }
 
+#[derive(Debug)]
 pub struct FilterIntersect<A, B>(A, B);
 
 impl<A, B> Filter for FilterIntersect<A, B>
