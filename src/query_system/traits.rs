@@ -5,5 +5,6 @@ pub use super::sources::SourcesDatabase;
 pub use super::types::AuthorInternDatabase;
 pub use super::types::InternDatabase;
 pub use super::MainDatabase;
+pub use crate::word_db::WordDatabase;
 pub use salsa::Database;
 pub use salsa::ParallelDatabase;
