@@ -6,7 +6,7 @@ edition = "2018"
 description = "Low level utilites to work with latin strings"
 
 [dependencies]
-salsa = "0.14.1"
+salsa = "0.15.2"
 shrinkwraprs = "0.3"
 log = "0.4.8"
 unicode-normalization = "0.1.12"
