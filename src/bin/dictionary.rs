@@ -1,9 +1,9 @@
-use latin_db::arguments::load_configuration;
 use latin_db::query_driver::driver_init;
 use latin_db::query_system::ids::*;
 use latin_db::query_system::lit_subset::LitSubset;
 use latin_db::query_system::traits::*;
 use latin_db::query_system::types::{Form, Lemma};
+use latin_db::{arguments::load_configuration, authors_chrono::Author};
 
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
@@ -42,6 +42,7 @@ struct AuthorConfig {
     include_header: bool,
     include_authors: (bool, usize),
     include_centuries: (bool, CenturySettings, usize),
+    spotlight: Option<AuthorId>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -69,25 +70,29 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
     let db = driver_init(load_configuration())?;
     let lit = LitSubset::from_authors(db.authors().right_values(), &db.snapshot());
-    let alpha = Dictionary::new(
-        &db,
-        lit.clone(),
-        Configuration {
-            sorting_mode: SortingMode::Alphabetical,
-            ref_mode: ReferenceMode::FreqLocation,
-            author_mode: AuthorMode::Full(AuthorConfig {
-                include_header: true,
-                include_authors: (false, AUTHOR_SCALE_FACTOR),
-                include_centuries: (
-                    true,
-                    CenturySettings::IncludeAuthors(AUTHOR_SCALE_FACTOR),
-                    HISTORIC_SCALE_FACTOR,
-                ),
-            }),
-            form_mode: FormMode::HideForms,
-        },
-    );
+    let epigraph_id = *db.authors().get_by_left(&Author::new("Epigraphs")).unwrap();
+    /*
+        let alpha = Dictionary::new(
+            &db,
+            lit.clone(),
+            Configuration {
+                sorting_mode: SortingMode::Alphabetical,
+                ref_mode: ReferenceMode::FreqLocation,
+                author_mode: AuthorMode::Full(AuthorConfig {
+                    include_header: true,
+                    include_authors: (false, AUTHOR_SCALE_FACTOR),
+                    include_centuries: (
+                        true,
+                        CenturySettings::IncludeAuthors(AUTHOR_SCALE_FACTOR),
+                        HISTORIC_SCALE_FACTOR,
+                    ),
+                    spotlight: Some(epigraph_id),
+                }),
+                form_mode: FormMode::HideForms,
+            },
+        );
 
+    */
     let freq = Dictionary::new(
         &db,
         lit.clone(),
@@ -95,13 +100,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             sorting_mode: SortingMode::ByFrequency,
             ref_mode: ReferenceMode::Identity,
             author_mode: AuthorMode::Nothing,
-            form_mode: FormMode::IncludeForms,
+            form_mode: FormMode::HideForms,
         },
     );
 
     let author_count = db.authors_count(lit);
 
-    alpha.write(&db, &mut File::create("alpha.txt")?, &author_count)?;
+    //alpha.write(&db, &mut File::create("alpha.txt")?, &author_count)?;
     freq.write(&db, &mut File::create("freq.txt")?, &author_count)?;
     Ok(())
 }
@@ -174,7 +179,20 @@ impl Entry {
             AuthorMode::Nothing => (),
             AuthorMode::Full(config) => {
                 if config.include_header {
-                    writeln!(w, "\t\tUsed by {} authors", authors.len())?;
+                    if let Some(spot_id) = config.spotlight {
+                        let spot = db.lookup_intern_author(spot_id);
+
+                        let spot_count = authors_count.get(spot).copied().unwrap_or_default();
+                        writeln!(
+                            w,
+                            "\t\tUsed by {} authors, {} occ. in {}",
+                            authors.len(),
+                            spot_count,
+                            spot.name()
+                        )?;
+                    } else {
+                        writeln!(w, "\t\tUsed by {} authors", authors.len())?;
+                    }
                 }
 
                 if config.include_authors.0 {
