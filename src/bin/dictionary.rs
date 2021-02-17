@@ -71,28 +71,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let db = driver_init(load_configuration())?;
     let lit = LitSubset::from_authors(db.authors().right_values(), &db.snapshot());
     let epigraph_id = *db.authors().get_by_left(&Author::new("Epigraphs")).unwrap();
-    /*
-        let alpha = Dictionary::new(
-            &db,
-            lit.clone(),
-            Configuration {
-                sorting_mode: SortingMode::Alphabetical,
-                ref_mode: ReferenceMode::FreqLocation,
-                author_mode: AuthorMode::Full(AuthorConfig {
-                    include_header: true,
-                    include_authors: (false, AUTHOR_SCALE_FACTOR),
-                    include_centuries: (
-                        true,
-                        CenturySettings::IncludeAuthors(AUTHOR_SCALE_FACTOR),
-                        HISTORIC_SCALE_FACTOR,
-                    ),
-                    spotlight: Some(epigraph_id),
-                }),
-                form_mode: FormMode::HideForms,
-            },
-        );
+    let alpha = Dictionary::new(
+        &db,
+        lit.clone(),
+        Configuration {
+            sorting_mode: SortingMode::Alphabetical,
+            ref_mode: ReferenceMode::FreqLocation,
+            author_mode: AuthorMode::Full(AuthorConfig {
+                include_header: true,
+                include_authors: (false, AUTHOR_SCALE_FACTOR),
+                include_centuries: (
+                    true,
+                    CenturySettings::IncludeAuthors(AUTHOR_SCALE_FACTOR),
+                    HISTORIC_SCALE_FACTOR,
+                ),
+                spotlight: Some(epigraph_id),
+            }),
+            form_mode: FormMode::HideForms,
+        },
+    );
 
-    */
     let freq = Dictionary::new(
         &db,
         lit.clone(),
@@ -100,13 +98,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             sorting_mode: SortingMode::ByFrequency,
             ref_mode: ReferenceMode::Identity,
             author_mode: AuthorMode::Nothing,
-            form_mode: FormMode::HideForms,
+            form_mode: FormMode::IncludeForms,
         },
     );
 
     let author_count = db.authors_count(lit);
 
-    //alpha.write(&db, &mut File::create("alpha.txt")?, &author_count)?;
+    alpha.write(&db, &mut File::create("alpha.txt")?, &author_count)?;
     freq.write(&db, &mut File::create("freq.txt")?, &author_count)?;
     Ok(())
 }
