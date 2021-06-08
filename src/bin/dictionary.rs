@@ -234,7 +234,7 @@ impl Entry {
 
                         write!(
                             w,
-                            "\t\t\t•{} {}: {} author{} ({:.2}) ",
+                            "\t\t\t•{} {}: {} author{} ({:.2}), ",
                             cent.abs(),
                             if cent > 0 { "CE" } else { "BCE" },
                             authors_b.len(),
