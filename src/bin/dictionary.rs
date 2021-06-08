@@ -91,7 +91,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         },
     );
 
-    let freq = Dictionary::new(
+    let freq_with_forms = Dictionary::new(
         &db,
         lit.clone(),
         Configuration {
@@ -102,10 +102,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         },
     );
 
+
+    let freq_without_forms = Dictionary::new(
+        &db,
+        lit.clone(),
+        Configuration {
+            sorting_mode: SortingMode::ByFrequency,
+            ref_mode: ReferenceMode::Identity,
+            author_mode: AuthorMode::Nothing,
+            form_mode: FormMode::HideForms,
+        },
+    );
+
     let author_count = db.authors_count(lit);
 
     alpha.write(&db, &mut File::create("alpha.txt")?, &author_count)?;
-    freq.write(&db, &mut File::create("freq.txt")?, &author_count)?;
+    freq_with_forms.write(&db, &mut File::create("freq_forms.txt")?, &author_count)?;
+    freq_without_forms.write(&db, &mut File::create("freq_no_forms.txt")?, &author_count)?;
     Ok(())
 }
 
@@ -133,13 +146,14 @@ impl Entry {
     ) -> io::Result<()> {
         writeln!(
             w,
-            "-------{:6}------{} count: {} (C: {}, A: {})",
-            self.corresponding_index,
+            "{}: {} total occurence{} (certain: {}, ambiguous: {}, frequential_order: {})",
             id_to_str(db, self.lemma.0).to_uppercase(),
             self.count,
+            if self.count == 1 { "" } else { "s" },
             self.count - self.ambig_count,
-            self.ambig_count
-        )?;
+            self.ambig_count,
+            self.corresponding_index
+            )?;
 
         if let FormMode::IncludeForms = config.form_mode {
             for (form, count) in self.forms.iter().map(|(k, v)| (k, v.len())) {
@@ -183,13 +197,14 @@ impl Entry {
                         let spot_count = authors_count.get(spot).copied().unwrap_or_default();
                         writeln!(
                             w,
-                            "\t\tUsed by {} authors, {} occ. in {}",
+                            "\t\tAttested in {} author{}, {} occ. in {}",
                             authors.len(),
+                            if authors.len() == 1 { "" } else { "s" },
                             spot_count,
                             spot.name()
                         )?;
                     } else {
-                        writeln!(w, "\t\tUsed by {} authors", authors.len())?;
+                        writeln!(w, "\t\tAttested in {} author{}", authors.len(), if authors.len() == 1 { "" } else { "s" })?;
                     }
                 }
 
@@ -219,10 +234,11 @@ impl Entry {
 
                         write!(
                             w,
-                            "\t\t\t{} {}: {} ({:.2}) ",
+                            "\t\t\t•{} {}: {} author{} ({:.2}) ",
                             cent.abs(),
                             if cent > 0 { "CE" } else { "BCE" },
                             authors_b.len(),
+                            if authors_b.len() == 1 { "" } else { "s" },
                             relative_freq
                         )?;
 
