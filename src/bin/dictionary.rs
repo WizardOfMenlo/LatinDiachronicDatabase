@@ -188,7 +188,7 @@ impl Entry {
             {
                 writeln!(w, "-{}", id_to_str(db, self.lemma.0).to_uppercase())?;
             }
-            _ => {}
+            _ => return Ok(()),
         }
 
         match config.form_mode {
