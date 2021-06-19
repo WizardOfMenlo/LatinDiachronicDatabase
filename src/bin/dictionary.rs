@@ -182,6 +182,7 @@ impl Entry {
             self.corresponding_index
         )?;
             }
+            // Note sure if this binds thightly or not
             LemmaMode::Lean | LemmaMode::OnlyAmbig
                 if db.lemmatizer().is_ambig_lemma(self.lemma.0) =>
             {
