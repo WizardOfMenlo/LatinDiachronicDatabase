@@ -20,6 +20,15 @@ enum SortingMode {
 enum FormMode {
     IncludeForms,
     HideForms,
+    OnlyAmbig,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Clone, Copy)]
+enum LemmaMode {
+    Full,
+    OnlyAmbig,
+    Lean,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -58,6 +67,7 @@ struct Configuration {
     ref_mode: ReferenceMode,
     author_mode: AuthorMode,
     form_mode: FormMode,
+    lemma_mode: LemmaMode,
 }
 
 const AUTHOR_SCALE_FACTOR: usize = 1_000;
@@ -88,6 +98,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 spotlight: Some(epigraph_id),
             }),
             form_mode: FormMode::HideForms,
+            lemma_mode: LemmaMode::Full,
+        },
+    );
+
+    let alpha_only_ambig = Dictionary::new(
+        &db,
+        lit.clone(),
+        Configuration {
+            sorting_mode: SortingMode::Alphabetical,
+            ref_mode: ReferenceMode::Identity,
+            author_mode: AuthorMode::Nothing,
+            form_mode: FormMode::OnlyAmbig,
+            lemma_mode: LemmaMode::OnlyAmbig,
         },
     );
 
@@ -99,9 +122,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             ref_mode: ReferenceMode::Identity,
             author_mode: AuthorMode::Nothing,
             form_mode: FormMode::IncludeForms,
+            lemma_mode: LemmaMode::Full,
         },
     );
-
 
     let freq_without_forms = Dictionary::new(
         &db,
@@ -111,12 +134,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             ref_mode: ReferenceMode::Identity,
             author_mode: AuthorMode::Nothing,
             form_mode: FormMode::HideForms,
+            lemma_mode: LemmaMode::Full,
         },
     );
 
     let author_count = db.authors_count(lit);
 
     alpha.write(&db, &mut File::create("alpha.txt")?, &author_count)?;
+    alpha_only_ambig.write(&db, &mut File::create("alpha_ambig.txt")?, &author_count)?;
     freq_with_forms.write(&db, &mut File::create("freq_forms.txt")?, &author_count)?;
     freq_without_forms.write(&db, &mut File::create("freq_no_forms.txt")?, &author_count)?;
     Ok(())
@@ -144,30 +169,72 @@ impl Entry {
         config: Configuration,
         global_authors_count: &HashMap<AuthorId, usize>,
     ) -> io::Result<()> {
-        writeln!(
+        match config.lemma_mode {
+            LemmaMode::Full => {
+                writeln!(
             w,
-            "{}: {} total occurence{} (certain: {}, ambiguous: {}, frequential_order: {})",
+            "-{}: {} total occurrence{} [certain: {}, ambiguous: {}, frequential_order: {}]",
             id_to_str(db, self.lemma.0).to_uppercase(),
             self.count,
             if self.count == 1 { "" } else { "s" },
             self.count - self.ambig_count,
             self.ambig_count,
             self.corresponding_index
-            )?;
+        )?;
+            }
+            LemmaMode::Lean | LemmaMode::OnlyAmbig
+                if db.lemmatizer().is_ambig_lemma(self.lemma.0) =>
+            {
+                writeln!(w, "-{}", id_to_str(db, self.lemma.0).to_uppercase())?;
+            }
+            _ => {}
+        }
 
-        if let FormMode::IncludeForms = config.form_mode {
-            for (form, count) in self.forms.iter().map(|(k, v)| (k, v.len())) {
-                writeln!(
-                    w,
-                    "\t{}: {} {}",
-                    id_to_str(db, form.0),
-                    count,
-                    if db.lemmatizer().is_ambig(form.0) {
-                        "(*)"
-                    } else {
-                        ""
-                    }
-                )?;
+        match config.form_mode {
+            FormMode::HideForms => {}
+            FormMode::IncludeForms => {
+                let forms: Vec<_> = self
+                    .forms
+                    .iter()
+                    .map(|(k, v)| (k, v.len()))
+                    .map(|(f, count)| {
+                        format!(
+                            "{}: {} {}",
+                            id_to_str(db, f.0),
+                            count,
+                            if db.lemmatizer().is_ambig(f.0) {
+                                "(*)"
+                            } else {
+                                ""
+                            }
+                        )
+                    })
+                    .collect();
+
+                writeln!(w, "\t {} @", forms.join(", "))?;
+            }
+            FormMode::OnlyAmbig => {
+                let forms: Vec<_> = self
+                    .forms
+                    .iter()
+                    .map(|(k, v)| (k, v.len()))
+                    .filter(|(k, _)| db.lemmatizer().is_ambig(k.0))
+                    .map(|(f, _)| {
+                        let mut ambig: Vec<_> = db
+                            .lemmatizer()
+                            .get_possible_lemmas(f.0)
+                            .unwrap()
+                            .iter()
+                            .map(|f| id_to_str(db, *f))
+                            .collect();
+                        ambig.sort();
+                        format!("{} ({})", id_to_str(db, f.0), ambig.join(", "))
+                    })
+                    .collect();
+
+                if forms.len() > 0 {
+                    writeln!(w, "\t {} @", forms.join(", "),)?;
+                }
             }
         }
 
@@ -197,14 +264,19 @@ impl Entry {
                         let spot_count = authors_count.get(spot).copied().unwrap_or_default();
                         writeln!(
                             w,
-                            "\t\tAttested in {} author{}, {} occ. in {}",
+                            "\t\tAttested in {} author{}, {} occ. in {} $",
                             authors.len(),
                             if authors.len() == 1 { "" } else { "s" },
                             spot_count,
-                            spot.name()
+                            spot.name().to_lowercase()
                         )?;
                     } else {
-                        writeln!(w, "\t\tAttested in {} author{}", authors.len(), if authors.len() == 1 { "" } else { "s" })?;
+                        writeln!(
+                            w,
+                            "\t\tAttested in {} author{}",
+                            authors.len(),
+                            if authors.len() == 1 { "" } else { "s" }
+                        )?;
                     }
                 }
 
@@ -266,7 +338,7 @@ impl Entry {
                             }
                             CenturySettings::Nothing => (),
                         }
-                        writeln!(w)?;
+                        writeln!(w, "!")?;
                     }
                 }
             }

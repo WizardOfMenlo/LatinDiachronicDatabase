@@ -57,4 +57,11 @@ impl CompressedLemmatizer {
             None => false,
         }
     }
+
+    pub fn is_ambig_lemma(&self, lemma: WordId) -> bool {
+        match self.get_possible_forms(lemma) {
+            Some(set) => set.iter().any(|f| self.is_ambig(*f)),
+            None => false,
+        }
+    }
 }

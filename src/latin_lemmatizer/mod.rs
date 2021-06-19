@@ -101,6 +101,13 @@ impl NaiveLemmatizer {
             None => false,
         }
     }
+
+    pub fn is_ambig_lemma(&self, lemma: &NormalizedLatinString) -> bool {
+        match self.get_possible_forms(lemma) {
+            Some(set) => set.iter().any(|f| self.is_ambig(f)),
+            None => false,
+        }
+    }
 }
 
 #[cfg(test)]
