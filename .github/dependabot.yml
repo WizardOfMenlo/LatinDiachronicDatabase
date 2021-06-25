@@ -1,0 +1,23 @@
+version: 2
+updates:
+- package-ecosystem: cargo
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "04:00"
+  open-pull-requests-limit: 10
+  ignore:
+  - dependency-name: warp
+    versions:
+    - "> 0.1.8"
+  - dependency-name: juniper
+    versions:
+    - 0.15.3
+    - 0.15.4
+  - dependency-name: juniper_warp
+    versions:
+    - 0.6.2
+    - 0.6.3
+  - dependency-name: proptest
+    versions:
+    - 1.0.0
