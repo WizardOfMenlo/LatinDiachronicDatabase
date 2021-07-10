@@ -404,25 +404,6 @@ impl Dictionary {
 
         // Set the index accordingly
         for entry in &mut res.ls {
-            /*
-            entry.corresponding_index = match (config.ref_mode, config.sorting_mode) {
-                (ReferenceMode::AlphaLocation, _)
-                | (ReferenceMode::Identity, SortingMode::Alphabetical) => {
-                    let entry_lemma = db.lookup_intern_lemma(entry.lemma);
-                    aux.ls.binary_search_by(|probe| {
-                        let probe_lemma = db.lookup_intern_lemma(probe.lemma);
-                        probe_lemma.cmp(&entry_lemma)
-                    })
-                }
-                (ReferenceMode::FreqLocation, _)
-                | (ReferenceMode::Identity, SortingMode::ByFrequency) => aux
-                    .ls
-                    .binary_search_by(|probe| probe.count.cmp(&entry.count)),
-            }
-            .unwrap();
-            */
-
-            // This is simpler, but the above is probably more efficient
             entry.corresponding_index = aux.ls.iter().position(|l| l.lemma == entry.lemma).unwrap();
         }
 
@@ -434,23 +415,32 @@ impl Dictionary {
             let lemm_a = id_to_str(db, a.lemma.0);
             let lemm_b = id_to_str(db, b.lemma.0);
 
-            lemm_a.cmp(&lemm_b)
+            lemm_a.cmp(&lemm_b).then(a.count.cmp(&b.count))
         });
 
         for entry in &mut self.ls {
-            entry.forms.sort_by(|(a, _), (b, _)| {
+            entry.forms.sort_by(|(a, f_a), (b, f_b)| {
                 let form_a = id_to_str(db, a.0);
                 let form_b = id_to_str(db, b.0);
-                form_a.cmp(&form_b)
+                form_a.cmp(&form_b).then(f_a.len().cmp(&f_b.len()))
             });
         }
     }
 
-    fn sort_freq(&mut self, _: &impl MainDatabase) {
+    fn sort_freq(&mut self, db: &impl MainDatabase) {
         // Note b, a instead of a, b to reverse ordering
-        self.ls.sort_by(|b, a| a.count.cmp(&b.count));
+        self.ls.sort_by(|b, a| {
+            let lemm_a = id_to_str(db, a.lemma.0);
+            let lemm_b = id_to_str(db, b.lemma.0);
+
+            a.count.cmp(&b.count).then(lemm_a.cmp(&lemm_b))
+        });
         for entry in &mut self.ls {
-            entry.forms.sort_by(|(_, b), (_, a)| a.len().cmp(&b.len()));
+            entry.forms.sort_by(|(f_a, b), (f_b, a)| {
+                let form_a = id_to_str(db, f_a.0);
+                let form_b = id_to_str(db, f_b.0);
+                a.len().cmp(&b.len()).then(form_a.cmp(&form_b))
+            });
         }
     }
 
