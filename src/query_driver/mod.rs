@@ -227,7 +227,6 @@ pub fn driver_init(config: Configuration) -> Result<MainDatabase, Box<dyn Error>
         .filter(|(_, v)| author_associations.contains_key(v) && !author_associations[v].is_empty())
         .collect();
 
-
     // Update, so that we can get the authors with metadata
     if let Some(authors_path) = config.authors_path {
         let mut authors_hist = crate::authors_chrono::parsers::WeirdParser::default();
@@ -247,7 +246,7 @@ pub fn driver_init(config: Configuration) -> Result<MainDatabase, Box<dyn Error>
             })
             .collect();
     }
-    
+
     // Load the authors assoc
     author_associations.into_iter().for_each(|(k, v)| {
         db.set_associated_sources(k, Arc::new(v.clone()));

@@ -341,6 +341,53 @@ impl Entry {
                         }
                         writeln!(w, "!")?;
                     }
+
+                    // Handle authors with no century
+                    let mut authors_without_cent: Vec<_> = authors
+                        .iter()
+                        .filter(|(_, a)| a.tspan().is_none())
+                        .map(|(_, a)| a)
+                        .collect();
+
+                    if !authors_without_cent.is_empty() {
+                        authors_without_cent.sort_by(|a, b| a.name().cmp(b.name()));
+
+                        write!(
+                            w,
+                            "\t\t\t•Unknown century: {} author{}, ",
+                            authors_without_cent.len(),
+                            if authors_without_cent.len() == 1 {
+                                ""
+                            } else {
+                                "s"
+                            },
+                        )?;
+
+                        match config.include_centuries.1 {
+                            CenturySettings::IncludeAuthors(scale) => {
+                                for author in authors_without_cent {
+                                    let count = authors_count.get(author).unwrap();
+                                    let id = authors
+                                        .iter()
+                                        .find(|(_, a)| a == author)
+                                        .map(|(id, _)| id)
+                                        .unwrap();
+                                    let global_count = *global_authors_count.get(id).unwrap();
+                                    let relative_freq =
+                                        (count * scale) as f64 / global_count as f64;
+                                    write!(
+                                        w,
+                                        "{} {} ({:.2}) ",
+                                        author.name(),
+                                        count,
+                                        relative_freq
+                                    )?;
+                                }
+                            }
+                            CenturySettings::Nothing => (),
+                        }
+                        writeln!(w, "!")?;
+                    }
                 }
             }
         }
