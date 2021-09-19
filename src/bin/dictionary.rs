@@ -354,7 +354,7 @@ impl Entry {
 
                         write!(
                             w,
-                            "\t\t\t•Unknown century: {} author{}, ",
+                            "\t\t\t•Unknown century: {} source{}, ",
                             authors_without_cent.len(),
                             if authors_without_cent.len() == 1 {
                                 ""
