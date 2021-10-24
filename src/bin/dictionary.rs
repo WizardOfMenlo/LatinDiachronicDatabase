@@ -265,7 +265,7 @@ impl Entry {
                         let spot_count = authors_count.get(spot).copied().unwrap_or_default();
                         writeln!(
                             w,
-                            "\t\tAttested in {} author{}, {} occ. in {} $",
+                            "\t\tAttested in {} source{}, {} occ. in {} $",
                             authors.len(),
                             if authors.len() == 1 { "" } else { "s" },
                             spot_count,
@@ -274,7 +274,7 @@ impl Entry {
                     } else {
                         writeln!(
                             w,
-                            "\t\tAttested in {} author{}",
+                            "\t\tAttested in {} source{}",
                             authors.len(),
                             if authors.len() == 1 { "" } else { "s" }
                         )?;
