@@ -78,4 +78,4 @@ See also the list of [contributors](https://github.com/WizardOfMenlo/LatinDiachr
 
 ## License
 
-Copyright reserved by authors Tommaso Spinelli and Giacomo Fenzi. The data deriving from the program are currently being published as a monograph, for any use different from personal use please contact the authors at the following addresses: (gfenzi@ethz.ch, ts206@st-andrews.ac.uk). 
+The data deriving from the program are being reviewed and will be soon made available in an open source format. Currently, the copyright is reserved by the authors. For any use different from personal use please contact the authors at the following addresses: (gfenzi@ethz.ch, ts206@st-andrews.ac.uk). 
